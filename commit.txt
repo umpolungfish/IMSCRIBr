@@ -1,75 +1,40 @@
-IMSCRIBr — Initial Commit
-========================
+cfg_sequences.py: animated token-sequence CFGs for all 12 canonical IMASM classes
 
-What this is
-------------
-IMSCRIBr is the standalone iterator for the IMASM space: the enumeration,
-classification, and structural fingerprinting of all 429,981,696 arrangements
-of 12 tokens across 8 positions (12^8).
+New script: cfg_sequences.py
 
-A single arrangement is one configuration of the alphabet ⟨A C D E G I L M N O S T V⟩
-written into 8 slots.  The combinatorics are immense, but the space collapses
-dramatically under the signature algebra — from 430 million down to 165 family
-signatures, and from there to exactly 12 canonical classes.
+For each of the 12 canonical IMASM arrangement classes (I–XII), generates
+an animated GIF in docs/cfg_seq_{class_key}.gif:
 
-The 12 tokens
--------------
-Each token belongs to one of 4 families:
+  Visualization:
+    - nodes coloured by token family:
+        LOGICAL=#4e79a7  FROBENIUS=#ffd700  DIALETHEIA=#e15759  LINEAR=#59a14f
+    - register state annotated below each node (VOID/T/F/B⬡)
+    - ouroboric back-arc when ouroboricity > O₀
+    - Everson Mono font for Shavian IG-type footer
+    - Phase 1: build — nodes appear step by step
+    - Phase 2: flow — Gaussian pulse travels the sequence
 
-  SACRED (S, A, C)    — the structural triad
-  DARK   (D, L, M)    — the latent / shadow operators
-  LIGHT  (G, I, T)    — the manifest / radiating operators
-  EARTH  (E, N, O, V) — the grounding / material operators
+  Register simulation:
+    - full dialetheic-aware IMASM machine (inline, no imports)
+    - pre-split EVALT tracking for FFUSE dialetheic mode
+    - IFIX/IMSCRIB exception correctly handles fixed-register steps
 
-The 8 positions
----------------
-Position 0 is always A (origin anchor).  Positions 1–7 are free.
-This yields 12^8 = 429,981,696 possible strings.
+  Sequences: all 12 from CANONICAL_CLASSES:
+    I Dialetheic Bootstrap (O₂)  → B⬡ final
+    II Void Genesis (O₀)          → T final
+    III Anchor Protocol (O₁)      → T final
+    IV Dual Bootstrap (O_∞)       → B⬡ final
+    V Linear Chain (O₀)           → VO⌀ final
+    VI Empty Bootstrap (O₁)       → T final
+    VII Parakernel (O₂)            → T final
+    VIII Frobenius Kernel (O₀)    → VO⌀ final  [4 steps]
+    IX Chiral Pairs (O₁)          → B⬡ final
+    X Truth Machine (O₁)          → T final
+    XI Eternal Return (O₂)        → B⬡ final
+    XII ROM Burn (O₀)             → T final
 
-The 12 canonical classes
--------------------------
-Every arrangement reduces, via its coarse structural key, to one of these:
+Output: docs/ (12 GIFs, 343–552 KB each)
+Run: python3 cfg_sequences.py
 
-  Class              Key pattern       Signature family
-  -----              ----------        ----------------
-  1  The Still       A...............   single-token
-  2  The Oscillator  A-_-_-_-_-_-_-_   alternating/dyad
-  3  The Threshold   A__...........    gate/two-phase
-  4  The Vessel      A[....].......    container pattern
-  5  The Furnace     A__[....].....    vessel with gate
-  6  The Mirror      A...|...|...      reflective/symmetry
-  7  The Loom        A:.:.:.:.:.:.:    woven/interleaved
-  8  The Churn       A~~^~~^~~^~~^    turbulent/cyclic
-  9  The Lens        A><><><><><><>    focusing/directional
-  10 The Web         A+_+_+_+_+_+_+    network/mesh
-  11 The Pulse       A~...~...~...     rhythmic/dispersed
-  12 The Flame       A*..*..*..*..*    ignition/catalytic
+---
 
-What was committed
-------------------
-  tokens.py         — Token definitions, 4 families, signature algebra
-  classifier.py     — StructuralFingerprint, coarse/fine keys, 12-class lookup
-  engine.py         — Signature-decomposed enumeration, SpaceMap, search
-  run_map.py        — CLI: --full, --sample N, --search, --classes
-  __init__.py       — Package init, version, all public names
-  pyproject.toml    — Build config, hatchling, console entry point "imasm-map"
-  README.md         — Full usage & API documentation
-  IMASM_SPACE_MAP_REPORT.md — Detailed analysis of the space structure
-  .gitignore        — Excludes __pycache__, JSON checkpoint files, summary
-
-All source is pure stdlib Python (≥3.10), zero external dependencies.
-
-Verified
---------
-  ✓ 165 family signatures identified and keyed
-  ✓ 429,981,696 arrangements enumerable (signature-decomposed)
-  ✓ All 12 canonical classes importable and fingerprintable
-  ✓ Smoke test: iterator generates valid arrangements
-  ✓ uv pip install -e . succeeds
-  ✓ Console entry point imasm-map functional
-  ✓ Git initialized (main branch), initial commit b5bd713
-
-Author
-------
-Lando⊗⊙perator
-IMSCRIBr v1.0.0 — standalone repo
