@@ -347,26 +347,31 @@ def search_cross_branch_wirings(
     """Find arrangements with >= min_pairs matched FSPLIT/FFUSE pairs and
     return their valid cross-branch wiring variants.
 
-    Returns list of (arrangement, [WiredGraph, ...]) — only arrangements
-    that have at least one valid cross-branch wiring are included.
+    Only arrangements with all-empty F-branches will yield valid variants —
+    those are the ones where FSPLIT.F connects directly to matched FFUSE.F
+    with no intermediate tokens on the F side.
+
+    Scans all signatures with frob_count >= 2*min_pairs (need at least
+    min_pairs FSPLITs and min_pairs FFUSEs) so min_pairs=2 requires f>=4.
     """
     from wiring import cross_wiring_variants, match_pairs
-    results = []
-    base_arrs = search_arrangements(
-        length=length,
-        must_have=[Token.FSPLIT.value, Token.FFUSE.value],
-        max_results=50_000,
-    )
-    for arr in base_arrs:
-        toks = tuple(Token(t) for t in arr)
-        pairs = match_pairs(toks)
-        if len(pairs) < min_pairs:
+    results: List[Tuple[Tuple[int, ...], list]] = []
+    sigs = enumerate_signatures(length)
+    frob_floor = 2 * min_pairs  # each pair = 1 FSPLIT + 1 FFUSE
+
+    for sc in sigs:
+        if sc.sig[1] < frob_floor:  # not enough Frobenius tokens
             continue
-        variants = list(itertools.islice(cross_wiring_variants(toks), max_variants))
-        if variants:
-            results.append((arr, variants))
-            if len(results) >= max_results:
-                break
+        for arr in iter_signature_arrangements(sc):
+            toks = tuple(Token(t) for t in arr)
+            pairs = match_pairs(toks)
+            if len(pairs) < min_pairs:
+                continue
+            variants = list(itertools.islice(cross_wiring_variants(toks), max_variants))
+            if variants:
+                results.append((arr, variants))
+                if len(results) >= max_results:
+                    return results
     return results
 
 

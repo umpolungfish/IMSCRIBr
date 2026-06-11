@@ -552,6 +552,88 @@ def main() -> None:
 #   cross-branch   : gold   #ffd700  (dashed)
 #   main/o wires   : blue   #4e79a7
 
+
+def _belnap_join(a: int, b: int) -> int:
+    """Belnap information lattice join (∨): N<T,F<B."""
+    if a == VOID: return b
+    if b == VOID: return a
+    if a == b:    return a
+    return BOTH   # T∨F = F∨T = B; anything with B = B handled above
+
+
+_AFWD_TABLE  = {VOID: TRUE,  TRUE: TRUE,  FALSE: BOTH, BOTH: BOTH}
+_AREV_TABLE  = {VOID: FALSE, TRUE: BOTH,  FALSE: FALSE, BOTH: BOTH}
+_CLINK_TABLE = {VOID: VOID,  TRUE: VOID,  FALSE: VOID,  BOTH: BOTH}
+_IMSCRIB_TABLE = {VOID: TRUE, TRUE: TRUE, FALSE: FALSE, BOTH: BOTH}
+
+
+def simulate_wired(graph) -> list[int]:
+    """Dataflow simulation following the explicit wire topology of a WiredGraph.
+
+    Processes nodes in topological layer order. Each node fires when all its
+    input ports are satisfied (guaranteed by layer ordering). Input values are
+    read from the source node's stored output via the connecting wire.
+    Open input ports (no incoming wire) receive VOID.
+
+    For FSPLIT: the single input value is duplicated to both T and F outputs;
+    node_output stores that value so any downstream node reading from FSPLIT
+    receives the same value regardless of which port it connected to.
+
+    For FFUSE: T and F input port values are joined via Belnap ∨.
+    """
+    n      = len(graph.tokens)
+    output = [VOID] * n
+
+    for layer in graph.topological_layers():
+        for node in layer:
+            tok = graph.tokens[node].value
+            in_ws = graph.in_wires(node)
+
+            if tok == VINIT:
+                output[node] = VOID
+
+            elif tok == FFUSE:
+                t_val = f_val = VOID
+                for w in in_ws:
+                    v = output[w.src_node]
+                    if w.dst_port == 'T':
+                        t_val = v
+                    else:
+                        f_val = v
+                output[node] = _belnap_join(t_val, f_val)
+
+            else:
+                # single input (or open if no wires)
+                in_val = VOID
+                for w in in_ws:
+                    in_val = output[w.src_node]
+
+                if tok == AFWD:
+                    output[node] = _AFWD_TABLE[in_val]
+                elif tok == AREV:
+                    output[node] = _AREV_TABLE[in_val]
+                elif tok == CLINK:
+                    output[node] = _CLINK_TABLE[in_val]
+                elif tok == IMSCRIB:
+                    output[node] = _IMSCRIB_TABLE[in_val]
+                elif tok == FSPLIT:
+                    output[node] = in_val   # same value on both T and F out-ports
+                elif tok == EVALT:
+                    output[node] = TRUE if in_val == TRUE else VOID
+                elif tok == EVALF:
+                    output[node] = FALSE if in_val == FALSE else VOID
+                elif tok == ENGAGR:
+                    output[node] = BOTH
+                elif tok == IFIX:
+                    output[node] = in_val
+                elif tok == TANCH:
+                    output[node] = in_val   # store for display; token sinks it
+                else:
+                    output[node] = in_val
+
+    return output
+
+
 def _wired_layout(
     graph,
 ) -> dict[int, tuple[float, float]]:
@@ -568,18 +650,18 @@ def _wired_layout(
     for li, layer in enumerate(layers):
         x = 0.10 + 0.80 * li / max(n_layers - 1, 1)
         for node in layer:
-            # Determine Y from incoming wire port type
             in_ws = graph.in_wires(node)
             y = Y_MAIN
             if in_ws:
-                p = in_ws[0].dst_port
+                # src_port carries the branch signal: FSPLIT emits 'T' or 'F'
+                # dst_port is always 'i' for non-FFUSE tokens, so useless here
+                p = in_ws[0].src_port
                 if p == 'T':
                     y = Y_T
                 elif p == 'F':
                     y = Y_F
-            # Override: if node itself is FSPLIT/FFUSE keep on main
-            tok = graph.tokens[node]
-            if tok in (Token.FSPLIT, Token.FFUSE):
+            # FSPLIT/FFUSE are decision/merge nodes — keep on the main lane
+            if graph.tokens[node].value in (FSPLIT, FFUSE):
                 y = Y_MAIN
             pos[node] = (x, y)
 
@@ -624,7 +706,7 @@ def render_wired_dag_frame(
                if pulse_d is not None else {node: 0.0 for node in range(n)})
 
     # Branch lane labels
-    has_fork = any(t == Token.FSPLIT for t in graph.tokens)
+    has_fork = any(t.value == FSPLIT for t in graph.tokens)
     if has_fork and visible:
         ax.text(0.5, Y_T + 0.10, "T", ha="center", va="bottom",
                 fontsize=5.5, color="#20c0b0", alpha=0.55, zorder=5)
@@ -676,7 +758,8 @@ def render_wired_dag_frame(
             continue
         xi, yi = pos[node]
         tok  = graph.tokens[node]
-        fam  = TOKEN_FAMILY[tok]
+        tv   = tok.value
+        fam  = TOKEN_FAMILY[tv]
         base = np.array(mcolors.to_rgba(FAM_COLOR[fam]))
         wi   = w_pulse[node]
         if pulse_d is not None:
@@ -695,9 +778,9 @@ def render_wired_dag_frame(
         fsr = 4.2 if nv >= 7 else 5.2
         tc  = "#000000" if fam == 1 else "#ffffff"
 
-        ax.text(xi, yi, TOKEN_SHORT[tok], ha="center", va="center",
+        ax.text(xi, yi, TOKEN_SHORT[tv], ha="center", va="center",
                 fontsize=fsi, color=tc, fontweight="bold", zorder=4)
-        ax.text(xi, yi + 0.105, TOKEN_NAMES[tok], ha="center", va="bottom",
+        ax.text(xi, yi + 0.105, TOKEN_NAMES[tv], ha="center", va="bottom",
                 fontsize=fsn, color="#999999", zorder=4)
         if node < len(states):
             ax.text(xi, yi - 0.090, REG_NAME[states[node]], ha="center", va="top",
@@ -724,8 +807,7 @@ def generate_wired_dag_gif(
     dpi:          int = 200,
 ) -> Path:
     """Generate an animated GIF for a WiredGraph."""
-    seq    = tuple(t.value for t in graph.tokens)
-    states = simulate_register(seq)
+    states = simulate_wired(graph)
     pos    = _wired_layout(graph)
     layers = graph.topological_layers()
     n_layers = len(layers)
@@ -747,8 +829,9 @@ def generate_wired_dag_gif(
             visible.update(layer)
         last_node = layers[target - 1][0]
         tok       = graph.tokens[last_node]
-        title     = (f"{graph.name}  │  {TOKEN_NAMES[tok]} "
-                     f"[{FAM_NAME[TOKEN_FAMILY[tok]]}]  d={depths[last_node]}")
+        tv        = tok.value
+        title     = (f"{graph.name}  │  {TOKEN_NAMES[tv]} "
+                     f"[{FAM_NAME[TOKEN_FAMILY[tv]]}]  d={depths[last_node]}")
         render_wired_dag_frame(ax, graph, pos, states, set(visible), None, sigma, title)
         frames.append(_fig_to_pil(fig, dpi))
 
@@ -756,8 +839,9 @@ def generate_wired_dag_gif(
     for pd in np.linspace(-0.5, n_layers + 0.5, flow_frames):
         nearest = min(range(n), key=lambda i: abs(depths.get(i, 0) - pd))
         tok     = graph.tokens[nearest]
-        title   = (f"{graph.name}  │  ◎ {TOKEN_NAMES[tok]} "
-                   f"[{FAM_NAME[TOKEN_FAMILY[tok]]}]  reg: {REG_NAME[states[nearest]]}")
+        tv      = tok.value
+        title   = (f"{graph.name}  │  ◎ {TOKEN_NAMES[tv]} "
+                   f"[{FAM_NAME[TOKEN_FAMILY[tv]]}]  reg: {REG_NAME[states[nearest]]}")
         render_wired_dag_frame(ax, graph, pos, states, all_i, pd, sigma, title)
         frames.append(_fig_to_pil(fig, dpi))
 

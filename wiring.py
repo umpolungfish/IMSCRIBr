@@ -102,15 +102,24 @@ class WiredGraph:
     # ── topology queries ──
 
     def cross_branch_wires(self) -> List[Wire]:
-        """Wires where a FSPLIT out-port connects to a non-default FFUSE."""
+        """Wires where a FSPLIT F-output connects to a FFUSE other than its matched pair.
+
+        Only FSPLIT→FFUSE arcs are considered; FSPLIT→FSPLIT nesting (T-wire
+        routing outer FSPLIT.T into inner FSPLIT.i) is standard topology, not cross.
+        """
         pairs = match_pairs(self.tokens)
         default_ff = {fs: ff for fs, ff in pairs}
+        ffuse_nodes = {ff for _, ff in pairs}
         result = []
         for w in self.wires:
-            tok = self.tokens[w.src_node]
-            if tok == Token.FSPLIT and w.src_port in ('T', 'F'):
-                if default_ff.get(w.src_node) != w.dst_node:
-                    result.append(w)
+            if self.tokens[w.src_node] != Token.FSPLIT:
+                continue
+            if w.src_port not in ('T', 'F'):
+                continue
+            if w.dst_node not in ffuse_nodes:
+                continue  # not going to a FFUSE — normal nesting, not cross
+            if default_ff.get(w.src_node) != w.dst_node:
+                result.append(w)
         return result
 
     def has_cross_branch(self) -> bool:
@@ -220,11 +229,15 @@ def match_pairs(tokens: Tuple[Token, ...]) -> List[Tuple[int, int]]:
 def imscr_wiring(tokens: Tuple[Token, ...]) -> WiredGraph:
     """Build the standard IMASM wiring matching the existing cfg_dag parse_dag() logic.
 
-    For each FSPLIT/FFUSE pair:
+    For each FSPLIT/FFUSE pair (processed inner-first so outer pairs exclude
+    tokens already claimed by nested pairs):
       - FSPLIT.T → first T-branch node (anchored by EVALT) or directly to FFUSE.T
       - FSPLIT.F → first F-branch node (anchored by EVALF) or directly to FFUSE.F
-      - T-branch chain ends at FFUSE.T; F-branch chain ends at FFUSE.F
-    Linear sections (pre-fork, post-fork) are chained sequentially.
+      - T/F-branch chains end at FFUSE.T / FFUSE.F
+    Linear sections chain sequentially; FFUSE outputs chain to next linear node.
+
+    Nesting: tokens inside a nested FSPLIT/FFUSE block are excluded from the
+    outer pair's branch computation so each token is owned by exactly one pair.
     """
     n = len(tokens)
     pairs = match_pairs(tokens)
@@ -232,15 +245,35 @@ def imscr_wiring(tokens: Tuple[Token, ...]) -> WiredGraph:
     ffuse_to_fsplit = {ff: fs for fs, ff in pairs}
     fork_nodes: Set[int] = set(fsplit_to_ffuse) | set(ffuse_to_fsplit)
 
-    # Determine branch membership for inner nodes
-    t_owner: Dict[int, int] = {}  # node → its FSPLIT
+    # Build nesting depth for each position so outer pairs skip inner-pair tokens.
+    # nesting[i] = nesting depth: 0 = top-level, 1 = inside one pair, etc.
+    nesting = [0] * n
+    depth = 0
+    for i, tok in enumerate(tokens):
+        if tok == Token.FSPLIT:
+            depth += 1
+            nesting[i] = depth
+        elif tok == Token.FFUSE:
+            nesting[i] = depth
+            depth = max(0, depth - 1)
+        else:
+            nesting[i] = depth
+
+    # For each pair, the "own depth" is the depth AT the FSPLIT token.
+    # Branch tokens belong to this pair if their nesting depth == own_depth.
+    pair_depth = {fs: nesting[fs] for fs, _ in pairs}
+
+    t_owner: Dict[int, int] = {}
     f_owner: Dict[int, int] = {}
 
     for fs, ff in pairs:
-        block  = [i for i in range(fs + 1, ff) if i not in fork_nodes]
-        blk    = [tokens[i] for i in block]
-        t_a    = next((j for j, t in enumerate(blk) if t == Token.EVALT), None)
-        f_a    = next((j for j, t in enumerate(blk) if t == Token.EVALF), None)
+        own_d = pair_depth[fs]
+        # Block: tokens strictly between fs and ff at exactly own_d depth
+        block = [i for i in range(fs + 1, ff)
+                 if i not in fork_nodes and nesting[i] == own_d]
+        blk   = [tokens[i] for i in block]
+        t_a   = next((j for j, t in enumerate(blk) if t == Token.EVALT), None)
+        f_a   = next((j for j, t in enumerate(blk) if t == Token.EVALF), None)
 
         if t_a is not None and f_a is not None:
             if t_a < f_a:
@@ -264,13 +297,26 @@ def imscr_wiring(tokens: Tuple[Token, ...]) -> WiredGraph:
         t_nodes = [i for i in range(fs + 1, ff) if t_owner.get(i) == fs]
         f_nodes = [i for i in range(fs + 1, ff) if f_owner.get(i) == fs]
 
+        # T-branch: FSPLIT.T → chain → FFUSE.T
+        # But if T-branch is empty and there's a nested FSPLIT immediately after,
+        # route FSPLIT.T → nested_FSPLIT.i
         if t_nodes:
             wires.append(Wire(fs, 'T', t_nodes[0], 'i'))
             for j in range(len(t_nodes) - 1):
                 wires.append(Wire(t_nodes[j], 'o', t_nodes[j + 1], 'i'))
             wires.append(Wire(t_nodes[-1], 'o', ff, 'T'))
         else:
-            wires.append(Wire(fs, 'T', ff, 'T'))
+            # Check for nested FSPLIT immediately after fs in T position
+            inner_fs = next(
+                (i for i in range(fs + 1, ff) if tokens[i] == Token.FSPLIT
+                 and i not in t_owner and i not in f_owner),
+                None
+            )
+            if inner_fs is not None:
+                wires.append(Wire(fs, 'T', inner_fs, 'i'))
+                # inner_fs output (FFUSE) will connect via the FFUSE-chain below
+            else:
+                wires.append(Wire(fs, 'T', ff, 'T'))
 
         if f_nodes:
             wires.append(Wire(fs, 'F', f_nodes[0], 'i'))
@@ -280,7 +326,9 @@ def imscr_wiring(tokens: Tuple[Token, ...]) -> WiredGraph:
         else:
             wires.append(Wire(fs, 'F', ff, 'F'))
 
-    # Linear chain for nodes outside any branch
+    # Linear chain: connect non-fork, non-branch tokens in sequence.
+    # Skips branch_internal tokens (they're wired by the branch section above).
+    # Does NOT skip fork nodes as j-target — VINIT must connect to FSPLIT, etc.
     for i in range(n - 1):
         tok_i = tokens[i]
         if i in fork_nodes or i in branch_internal:
@@ -288,13 +336,12 @@ def imscr_wiring(tokens: Tuple[Token, ...]) -> WiredGraph:
         j = i + 1
         if j in branch_internal:
             continue
-        if not out_ports(tok_i):
-            continue
-        dp = 'T' if tokens[j] == Token.FFUSE else 'i'
-        if in_ports(tokens[j]):
+        if out_ports(tok_i) and in_ports(tokens[j]):
+            dp = 'T' if tokens[j] == Token.FFUSE else 'i'
             wires.append(Wire(i, 'o', j, dp))
 
-    # FFUSE → next linear node
+    # FFUSE outputs: skip branch_internal tokens, connect to next reachable node.
+    # Works for all depths — inner FFUSEs skip their enclosing branch tokens.
     for ff in ffuse_to_fsplit:
         j = ff + 1
         while j < n and j in branch_internal:

@@ -1,3 +1,47 @@
+wiring.py: port-graph cross-branch model + novel sequences XX–XXIII
+engine.py: search_cross_branch_wirings(); cfg_dag.py: wired DAG renderer
+
+wiring.py (new):
+  Full port-level graph model for IMASM token arrangements. Every token is a
+  node with typed ports: VINIT=(out:o), FSPLIT=(in:i, out:T/F), FFUSE=(in:T/F,
+  out:o), all others=(in:i, out:o).
+
+  Wire, WiredGraph: frozen-slot wire class; WiredGraph dataclass with validate(),
+  topological_layers(), cross_branch_wires(), wire_y_hint().
+
+  cross_branch_wires(): flags only FSPLIT→FFUSE arcs to non-default FFUSE;
+  FSPLIT→FSPLIT nesting (outer T-wire routing into inner FSPLIT.i) excluded.
+
+  imscr_wiring(): nesting-aware branch assignment. Depth computed per-token;
+  each pair claims only tokens at its own depth. Fixes prior bug where outer
+  pair stole inner-pair tokens (VINIT FSPLIT FSPLIT EVALT FFUSE EVALF FFUSE TANCH
+  previously produced duplicate in-port error; now valid). FFUSE outputs use
+  branch_internal-skip to find next reachable node regardless of nesting depth.
+
+  cross_wiring_variants(): F-output permutation iterator; valid only when
+  F-branches are empty (no orphaned tokens, no duplicate in-ports).
+
+  NOVEL_GRAPHS — 4 hand-crafted cross-branch sequences, all validate() == []:
+    XX   Branch Entangle:  X-topology, FSPLIT1.F↔FSPLIT2.F crossed. cross=2.
+    XXI  Paradox Bridge:   ENGAGR outer-F bypasses inner block into inner FFUSE. cross=1.
+    XXII Fold Back:        pure Logical+Frobenius X-topology, no dialetheia. cross=2.
+    XXIII Möbius Fork:     IMSCRIB-bounded self-ref; ENGAGR+outer-F dual-source. cross=2.
+
+engine.py:
+  search_cross_branch_wirings(): scans frob_count >= 2*min_pairs signatures;
+  returns (arrangement, valid_variants) for all cross-wirable arrangements.
+
+cfg_dag.py:
+  Added: _wired_layout, _wire_color, render_wired_dag_frame,
+  generate_wired_dag_gif, main_wired (renders NOVEL_GRAPHS to GIFs).
+  Added simulate_wired(graph): dataflow simulation following WiredGraph wire
+  topology. Topological layer order; Belnap 4-valued token functions; FFUSE
+  joins T/F port values via _belnap_join (∨); FSPLIT distributes input to both
+  T and F outputs; cross-branch wires route values to actual port destinations.
+  generate_wired_dag_gif calls simulate_wired() — not the flat simulate_register().
+
+---
+
 cfg_dag_momonados.py: DAG CFGs for mOMonadOS canonical programs
 
 New script: cfg_dag_momonados.py
