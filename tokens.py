@@ -35,6 +35,33 @@ class Token(IntEnum):
 TOKEN_NAMES: List[str] = [t.name for t in Token]
 TOKEN_COUNT: int = 12
 
+# ─── DAG arity ─────────────────────────────────────────────────────────────────
+# (in-degree, out-degree) for each token as a node in the arrangement DAG.
+# All tokens are (1,1) linear except VINIT (source), FSPLIT (fork), FFUSE (join).
+TOKEN_ARITY: Dict[Token, Tuple[int, int]] = {
+    Token.VINIT:   (0, 1),  # source
+    Token.TANCH:   (1, 1),
+    Token.AFWD:    (1, 1),
+    Token.AREV:    (1, 1),
+    Token.CLINK:   (1, 1),
+    Token.IMSCRIB: (1, 1),
+    Token.FSPLIT:  (1, 2),  # fork: one in, two out (T-branch and F-branch)
+    Token.FFUSE:   (2, 1),  # join: two in (T-branch and F-branch), one out
+    Token.EVALT:   (1, 1),  # constrained to T-branch
+    Token.EVALF:   (1, 1),  # constrained to F-branch
+    Token.ENGAGR:  (1, 1),
+    Token.IFIX:    (1, 1),
+}
+
+# Tokens that are constrained to a specific branch between FSPLIT and FFUSE
+TOKEN_BRANCH: Dict[Token, str] = {
+    Token.EVALT: 'T',
+    Token.EVALF: 'F',
+}
+
+FORK_TOKENS: frozenset = frozenset({Token.FSPLIT})
+JOIN_TOKENS: frozenset = frozenset({Token.FFUSE})
+
 # Family membership
 TOKEN_FAMILY: Dict[Token, Family] = {
     Token.VINIT:   Family.LOGICAL,
@@ -90,5 +117,79 @@ def signature(arr: Tuple[int, ...]) -> Tuple[int, int, int, int]:
     return (counts[0], counts[1], counts[2], counts[3])
 
 def arrangement_str(arr: Tuple[int, ...]) -> str:
-    """Pretty-print arrangement as token chain."""
+    """Pretty-print arrangement as flat token chain (laminated/serialized form)."""
     return " → ".join(token_name(t) for t in arr)
+
+
+def dag_str(arr: Tuple[int, ...]) -> str:
+    """Render arrangement as a DAG expression, unflattened at FSPLIT/FFUSE pairs.
+
+    Sequential: A . B . C
+    Fork block: ⟨ T-branch | F-branch ⟩
+    Unmatched FSPLIT or FFUSE: rendered inline as named tokens.
+    """
+    return _render_segment(list(arr))
+
+
+def _render_segment(tokens: List[int]) -> str:
+    """Recursively render a token list, detecting matched FSPLIT/FFUSE pairs."""
+    # Find first FSPLIT
+    split_idx = next((i for i, t in enumerate(tokens) if t == Token.FSPLIT), None)
+    if split_idx is None:
+        return _linear(tokens)
+
+    # Find first FFUSE after it
+    fuse_idx = next(
+        (i for i, t in enumerate(tokens) if i > split_idx and t == Token.FFUSE), None
+    )
+    if fuse_idx is None:
+        # Unmatched FSPLIT — render linearly
+        return _linear(tokens)
+
+    pre   = tokens[:split_idx]
+    block = tokens[split_idx + 1 : fuse_idx]
+    post  = tokens[fuse_idx + 1 :]
+
+    t_branch, f_branch = _split_branches(block)
+    t_str = _linear(t_branch) if t_branch else "∅"
+    f_str = _linear(f_branch) if f_branch else "∅"
+    fork  = f"⟨ {t_str} | {f_str} ⟩"
+
+    parts = []
+    if pre:
+        parts.append(_linear(pre))
+    parts.append(fork)
+    if post:
+        parts.append(_render_segment(post))  # recurse for additional fork blocks
+
+    return " . ".join(parts)
+
+
+def _linear(tokens: List[int]) -> str:
+    return " . ".join(token_name(t) for t in tokens)
+
+
+def _split_branches(block: List[int]) -> Tuple[List[int], List[int]]:
+    """Split fork-block tokens into (T-branch, F-branch) by branch-typed anchors.
+
+    EVALT anchors the T-branch; EVALF anchors the F-branch.
+    Tokens before the first anchor follow the first-encountered branch.
+    If no anchors present: all tokens go to T-branch (single-sided fork).
+    """
+    t_anchor = next((i for i, t in enumerate(block) if t == Token.EVALT), None)
+    f_anchor = next((i for i, t in enumerate(block) if t == Token.EVALF), None)
+
+    if t_anchor is None and f_anchor is None:
+        return block[:], []
+
+    if t_anchor is not None and f_anchor is None:
+        return block[:], []
+
+    if t_anchor is None and f_anchor is not None:
+        return [], block[:]
+
+    # Both present — split at the later anchor
+    if t_anchor < f_anchor:
+        return block[:f_anchor], block[f_anchor:]
+    else:
+        return block[t_anchor:], block[:t_anchor]

@@ -1,3 +1,59 @@
+cfg_dag.py: DAG-structured CFG animations from decompressed token sequences
+
+New script: cfg_dag.py
+
+Renders the 12 canonical IMASM classes as proper DAGs — FSPLIT/FFUSE pairs
+become genuine fork/join nodes with T-branch (upper lane) and F-branch (lower
+lane). Linear sequences render flat as before.
+
+  Layout:
+    - T-branch: upper lane (Y_T=0.76), teal arrows
+    - F-branch: lower lane (Y_F=0.24), red arrows
+    - Empty branches: dashed bezier arc from FSPLIT to FFUSE at lane height
+    - Lane labels "T" / "F" annotated between fork nodes
+    - Fork-aware build phase: nodes revealed by topological depth group
+    - Fork-aware flow phase: pulse travels by DAG depth (parallel branches
+      activate simultaneously at the same depth)
+
+  Classes with matched FSPLIT/FFUSE (4):
+    I   Dialetheic Bootstrap: fork@d=2, F-branch=[EVALF]
+    II  Void Genesis:         fork@d=3, T-branch=[CLINK]
+    VII Parakernel:           fork@d=2, T-branch=[EVALT, AFWD]
+    VIII Frobenius Kernel:    fork@d=1, both branches empty (pure μ∘δ)
+
+  Classes without fork (8): render flat as before (III, IV, V, VI, IX, X, XI, XII)
+
+Output: docs/cfg_dag_{key}.gif (12 files, 393–597 KB)
+Run: python3 cfg_dag.py
+
+---
+
+tokens.py, engine.py: DAG arity and unflattened dag_str renderer
+
+tokens.py:
+  - TOKEN_ARITY: (in-degree, out-degree) for each of the 12 tokens as DAG nodes.
+    VINIT=(0,1) source; FSPLIT=(1,2) fork; FFUSE=(2,1) join; all others=(1,1).
+  - TOKEN_BRANCH: {EVALT: 'T', EVALF: 'F'} — branch-constrained tokens.
+  - FORK_TOKENS, JOIN_TOKENS: frozensets for structural detection.
+  - dag_str(arr): renders an arrangement as an unflattened DAG expression.
+      Sequential tokens: A . B . C
+      Matched FSPLIT/FFUSE pair: ⟨ T-branch | F-branch ⟩
+      Branch assignment: EVALT anchors T, EVALF anchors F; tokens before
+      the first anchor follow whichever branch is present.
+      Unmatched FSPLIT or inverted FFUSE→FSPLIT: rendered inline (flat).
+      Recursive: post-fuse segment recurses to catch further fork blocks.
+
+engine.py:
+  - Imports TOKEN_ARITY, TOKEN_BRANCH, FORK_TOKENS, JOIN_TOKENS, dag_str.
+
+All 12 canonical classes verified. Examples:
+  I   Dialetheic Bootstrap: IMSCRIB . EVALT . ⟨ ∅ | EVALF ⟩ . ENGAGR . IFIX . IMSCRIB
+  II  Void Genesis:         VINIT . TANCH . AFWD . ⟨ CLINK | ∅ ⟩ . IFIX . IMSCRIB
+  VII Parakernel:           EVALF . AREV . ⟨ EVALT . AFWD | ∅ ⟩ . ENGAGR . IFIX
+  VIII Frobenius Kernel:    VINIT . ⟨ ∅ | ∅ ⟩ . TANCH
+
+---
+
 cfg_sequences.py: animated token-sequence CFGs for all 12 canonical IMASM classes
 
 New script: cfg_sequences.py

@@ -465,7 +465,7 @@ These are the **atoms** of the arrangement space — structurally irreducible re
 
 ### 3. Self-Reference + Frobenius + Dialetheia Is Extremely Rare
 
-Arrangements that are simultaneously self-referential (start = end), contain a Frobenius pair (split→fuse), AND are Dialetheia-complete (all 3 tokens) constitute only **~0.01%** of the space. This matches the ouroboricity hierarchy: O_∞ and O_2 systems are structurally scarce.
+Arrangements that are simultaneously self-referential (start = end), contain a Frobenius pair (split→fuse), AND are Dialetheia-complete (all 3 tokens) constitute only **~0.01%** of the space. This matches the ouroboricity hierarchy: O_∞ and O₂ systems are structurally scarce.
 
 Of the 12 canonicals, only **Class I (Dialetheic Bootstrap)** has all three properties. Class IV (Dual Bootstrap) has self-reference + Frobenius but no Dialetheia. Class VII (Parakernel) has Frobenius + Dialetheia but no self-reference.
 

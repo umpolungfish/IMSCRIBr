@@ -21,7 +21,8 @@ from dataclasses import dataclass, field
 
 from tokens import (
     Token, Family, TOKEN_COUNT, FAMILY_SIZE, FAMILY_TOKENS,
-    token_family, signature, arrangement_str, TOKEN_NAMES,
+    TOKEN_ARITY, TOKEN_BRANCH, FORK_TOKENS, JOIN_TOKENS,
+    token_family, signature, arrangement_str, dag_str, TOKEN_NAMES,
 )
 from classifier import (
     StructuralFingerprint, compute_fingerprint,
