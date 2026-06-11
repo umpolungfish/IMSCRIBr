@@ -338,6 +338,38 @@ def map_space(
     return smap
 
 
+def search_cross_branch_wirings(
+    length: int = 8,
+    min_pairs: int = 2,
+    max_variants: int = 6,
+    max_results: int = 20,
+) -> List[Tuple[Tuple[int, ...], list]]:
+    """Find arrangements with >= min_pairs matched FSPLIT/FFUSE pairs and
+    return their valid cross-branch wiring variants.
+
+    Returns list of (arrangement, [WiredGraph, ...]) — only arrangements
+    that have at least one valid cross-branch wiring are included.
+    """
+    from wiring import cross_wiring_variants, match_pairs
+    results = []
+    base_arrs = search_arrangements(
+        length=length,
+        must_have=[Token.FSPLIT.value, Token.FFUSE.value],
+        max_results=50_000,
+    )
+    for arr in base_arrs:
+        toks = tuple(Token(t) for t in arr)
+        pairs = match_pairs(toks)
+        if len(pairs) < min_pairs:
+            continue
+        variants = list(itertools.islice(cross_wiring_variants(toks), max_variants))
+        if variants:
+            results.append((arr, variants))
+            if len(results) >= max_results:
+                break
+    return results
+
+
 def search_arrangements(
     length: int = 8,
     signature_filter: Optional[Tuple[int,int,int,int]] = None,

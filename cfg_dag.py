@@ -482,7 +482,7 @@ def generate_dag_one(
     build_frames: int = 20,
     flow_frames:  int = 48,
     fps:          int = 14,
-    dpi:          int = 110,
+    dpi:          int = 200,
 ) -> Path:
     seq    = meta.steps
     states = simulate_register(seq)
@@ -537,6 +537,254 @@ def main() -> None:
         print(f"[{i:02d}/{len(SEQUENCES)}] {meta.display}  [{tag}]",
               end="  ", flush=True)
         out = generate_dag_one(key, meta)
+        print(f"→ {out.name}  ({out.stat().st_size/1e3:.0f} KB)")
+    print("\nDone.")
+
+
+# ── Wired graph rendering ──────────────────────────────────────────────────────
+#
+# Renders WiredGraph objects (from wiring.py) — supports multi-fork,
+# nested, and cross-branch topologies.
+#
+# Wire color coding:
+#   T-port wires   : teal   #20d0b8
+#   F-port wires   : red    #ff6688
+#   cross-branch   : gold   #ffd700  (dashed)
+#   main/o wires   : blue   #4e79a7
+
+def _wired_layout(
+    graph,
+) -> dict[int, tuple[float, float]]:
+    """Compute (x, y) for each node in a WiredGraph.
+
+    X: topological layer, linearly spaced 0.10–0.90.
+    Y: determined by the first incoming wire's port:
+       T-input → Y_T (0.76), F-input → Y_F (0.24), otherwise Y_MAIN (0.50).
+    """
+    layers = graph.topological_layers()
+    n_layers = len(layers)
+    pos: dict[int, tuple[float, float]] = {}
+
+    for li, layer in enumerate(layers):
+        x = 0.10 + 0.80 * li / max(n_layers - 1, 1)
+        for node in layer:
+            # Determine Y from incoming wire port type
+            in_ws = graph.in_wires(node)
+            y = Y_MAIN
+            if in_ws:
+                p = in_ws[0].dst_port
+                if p == 'T':
+                    y = Y_T
+                elif p == 'F':
+                    y = Y_F
+            # Override: if node itself is FSPLIT/FFUSE keep on main
+            tok = graph.tokens[node]
+            if tok in (Token.FSPLIT, Token.FFUSE):
+                y = Y_MAIN
+            pos[node] = (x, y)
+
+    return pos
+
+
+def _wire_color(wire, cross_set: set) -> tuple[str, float, float]:
+    """Return (color, linewidth, alpha) for a wire."""
+    is_cross = wire in cross_set
+    if wire.src_port == 'T' or wire.dst_port == 'T':
+        return ("#ffd700" if is_cross else "#20d0b8"), (2.0 if is_cross else 1.3), 0.85
+    if wire.src_port == 'F' or wire.dst_port == 'F':
+        return ("#ffd700" if is_cross else "#ff6688"), (2.0 if is_cross else 1.3), 0.85
+    return "#4e79a7", 0.9, 0.45
+
+
+def render_wired_dag_frame(
+    ax:        "plt.Axes",
+    graph,
+    pos:       dict[int, tuple[float, float]],
+    states:    list[int],
+    visible:   set[int],
+    pulse_d:   "float | None",
+    sigma:     float,
+    title:     str,
+) -> None:
+    """Render one frame of a WiredGraph animation."""
+    n      = graph.n()
+    cross  = set(graph.cross_branch_wires())
+    depths = {node: i for i, layer in enumerate(graph.topological_layers())
+              for node in layer}
+
+    ax.clear()
+    ax.set_facecolor(BG)
+    ax.set_axis_off()
+    ax.set_xlim(0, 1); ax.set_ylim(0, 1)
+    ax.set_aspect("auto")
+    ax.set_title(title, color="#cccccc", fontsize=6.5, pad=4)
+
+    w_pulse = ({node: float(np.exp(-0.5 * ((depths.get(node, 0) - pulse_d) / sigma) ** 2))
+                for node in range(n)}
+               if pulse_d is not None else {node: 0.0 for node in range(n)})
+
+    # Branch lane labels
+    has_fork = any(t == Token.FSPLIT for t in graph.tokens)
+    if has_fork and visible:
+        ax.text(0.5, Y_T + 0.10, "T", ha="center", va="bottom",
+                fontsize=5.5, color="#20c0b0", alpha=0.55, zorder=5)
+        ax.text(0.5, Y_F - 0.10, "F", ha="center", va="top",
+                fontsize=5.5, color="#e04060", alpha=0.55, zorder=5)
+
+    # Draw wires
+    for wire in graph.wires:
+        if wire.src_node not in visible:
+            continue
+        x0, y0 = pos[wire.src_node]
+        x1, y1 = pos[wire.dst_node]
+        pw = max(w_pulse[wire.src_node], w_pulse.get(wire.dst_node, 0.0))
+        col, lw, al = _wire_color(wire, cross)
+
+        if pw > 0.25:
+            col = "#ffd700"
+            lw  = lw * 1.4
+            al  = min(al + 0.1, 1.0)
+
+        is_cross_wire = wire in cross
+        conn = "arc3,rad=0.35" if is_cross_wire else None
+        style = "--" if is_cross_wire else "-"
+
+        if conn:
+            ax.annotate("", xy=(x1, y1), xytext=(x0, y0),
+                        arrowprops=dict(arrowstyle="-|>", color=col, lw=lw,
+                                        alpha=al, connectionstyle=conn),
+                        zorder=2)
+        else:
+            _draw_arrow(ax, x0, y0, x1, y1, col, lw, al)
+
+    # Draw ouroboric back-arc if self-referential
+    first_tok = graph.tokens[0]
+    last_tok  = graph.tokens[n - 1]
+    if first_tok == last_tok and len(visible) == n:
+        x0, y0 = pos[0]; xn, yn = pos[n - 1]
+        pw_back = max(w_pulse[0], w_pulse[n - 1])
+        arc_col = "#ffd700" if pw_back > 0.25 else "#554422"
+        ax.annotate("", xy=(x0, y0), xytext=(xn, yn),
+                    arrowprops=dict(arrowstyle="-|>", color=arc_col, lw=1.2,
+                                    alpha=0.65 if pw_back > 0.25 else 0.25,
+                                    connectionstyle="arc3,rad=0.45"), zorder=2)
+
+    # Draw nodes
+    bsz = max(280.0, 1300.0 / max(n, 1))
+    for node in sorted(visible):
+        if node not in pos:
+            continue
+        xi, yi = pos[node]
+        tok  = graph.tokens[node]
+        fam  = TOKEN_FAMILY[tok]
+        base = np.array(mcolors.to_rgba(FAM_COLOR[fam]))
+        wi   = w_pulse[node]
+        if pulse_d is not None:
+            tgt = _PULSE_GOLD if fam == 1 else _PULSE_WHITE
+            col = np.clip(base * (1 - wi) + tgt * wi, 0, 1)
+            sz  = bsz * (1 + 1.6 * wi)
+        else:
+            col, sz = base, bsz
+
+        ax.scatter([xi], [yi], c=[col], s=[sz], zorder=3,
+                   linewidths=0.7, edgecolors="#ffffff22")
+
+        nv  = len(visible)
+        fsi = 5.0 if nv >= 7 else 6.5
+        fsn = 3.5 if nv >= 7 else 4.5
+        fsr = 4.2 if nv >= 7 else 5.2
+        tc  = "#000000" if fam == 1 else "#ffffff"
+
+        ax.text(xi, yi, TOKEN_SHORT[tok], ha="center", va="center",
+                fontsize=fsi, color=tc, fontweight="bold", zorder=4)
+        ax.text(xi, yi + 0.105, TOKEN_NAMES[tok], ha="center", va="bottom",
+                fontsize=fsn, color="#999999", zorder=4)
+        if node < len(states):
+            ax.text(xi, yi - 0.090, REG_NAME[states[node]], ha="center", va="top",
+                    fontsize=fsr, color=REG_COLOR[states[node]],
+                    fontweight="bold", zorder=4)
+
+    # Footer
+    cross_tag = f"  [×{len(cross)} cross-branch]" if cross else ""
+    ax.text(0.5, 0.04, (graph.name or "") + cross_tag,
+            ha="center", va="center", fontsize=5.5,
+            color="#aaaadd", fontweight="bold", zorder=5)
+    for fi in range(4):
+        lx = 0.70 + fi * 0.075
+        ax.scatter([lx], [0.06], c=[FAM_COLOR[fi]], s=22, zorder=6)
+        ax.text(lx + 0.01, 0.06, FAM_NAME[fi][0], va="center",
+                fontsize=3.5, color="#666666", zorder=6)
+
+
+def generate_wired_dag_gif(
+    graph,
+    build_frames: int = 22,
+    flow_frames:  int = 50,
+    fps:          int = 14,
+    dpi:          int = 200,
+) -> Path:
+    """Generate an animated GIF for a WiredGraph."""
+    seq    = tuple(t.value for t in graph.tokens)
+    states = simulate_register(seq)
+    pos    = _wired_layout(graph)
+    layers = graph.topological_layers()
+    n_layers = len(layers)
+    n      = graph.n()
+    sigma  = max(0.7, n_layers / 7.0)
+    all_i  = set(range(n))
+
+    # Depth map for pulse
+    depths = {node: i for i, layer in enumerate(layers) for node in layer}
+
+    fig, ax = plt.subplots(figsize=(10, 4.4), facecolor=BG)
+    frames: list[Image.Image] = []
+
+    # Build phase: reveal by topological layer
+    visible: set[int] = set()
+    for f in range(build_frames):
+        target = max(1, int((f + 1) / build_frames * n_layers))
+        for layer in layers[:target]:
+            visible.update(layer)
+        last_node = layers[target - 1][0]
+        tok       = graph.tokens[last_node]
+        title     = (f"{graph.name}  │  {TOKEN_NAMES[tok]} "
+                     f"[{FAM_NAME[TOKEN_FAMILY[tok]]}]  d={depths[last_node]}")
+        render_wired_dag_frame(ax, graph, pos, states, set(visible), None, sigma, title)
+        frames.append(_fig_to_pil(fig, dpi))
+
+    # Flow phase: pulse sweeps by DAG depth
+    for pd in np.linspace(-0.5, n_layers + 0.5, flow_frames):
+        nearest = min(range(n), key=lambda i: abs(depths.get(i, 0) - pd))
+        tok     = graph.tokens[nearest]
+        title   = (f"{graph.name}  │  ◎ {TOKEN_NAMES[tok]} "
+                   f"[{FAM_NAME[TOKEN_FAMILY[tok]]}]  reg: {REG_NAME[states[nearest]]}")
+        render_wired_dag_frame(ax, graph, pos, states, all_i, pd, sigma, title)
+        frames.append(_fig_to_pil(fig, dpi))
+
+    plt.close(fig)
+    DOCS.mkdir(parents=True, exist_ok=True)
+    key = graph.name.replace(" ", "_")
+    out = DOCS / f"cfg_dag_{key}.gif"
+    rgb = [fr.convert("RGB") for fr in frames]
+    rgb[0].save(str(out), save_all=True, append_images=rgb[1:],
+                duration=1000 // fps, loop=0, optimize=False)
+    return out
+
+
+def main_wired() -> None:
+    """Render all novel wired graphs."""
+    from wiring import NOVEL_GRAPHS
+    print(f"Generating {len(NOVEL_GRAPHS)} wired DAG CFGs → {DOCS}/\n")
+    for i, (key, graph) in enumerate(NOVEL_GRAPHS.items(), 1):
+        errs = graph.validate()
+        if errs:
+            print(f"[{i:02d}] {key} — INVALID: {errs}")
+            continue
+        cross_n = len(graph.cross_branch_wires())
+        print(f"[{i:02d}/{len(NOVEL_GRAPHS)}] {key}  "
+              f"[{len(graph.tokens)} tokens, {cross_n} cross-branch wires]",
+              end="  ", flush=True)
+        out = generate_wired_dag_gif(graph)
         print(f"→ {out.name}  ({out.stat().st_size/1e3:.0f} KB)")
     print("\nDone.")
 

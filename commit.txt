@@ -1,3 +1,37 @@
+cfg_dag_momonados.py: DAG CFGs for mOMonadOS canonical programs
+
+New script: cfg_dag_momonados.py
+
+Generates DAG CFGs for the 12 mOMonadOS canonical programs (src/tokens.rs).
+Extends cfg_dag.py with multi-segment decomposition: sequences with multiple
+FSPLIT/FFUSE pairs render as consecutive fork blocks.
+
+  Key differences from IMSCRIBr canonicals:
+    II  Void Genesis:        VINIT FSPLIT EVALT FFUSE EVALF CLINK IFIX ISCRIB
+    III Anchor Protocol:     TANCH AFWD EVALT AREV EVALF CLINK IFIX TANCH (linear)
+    VII Parakernel:          ENGAGR AFWD FSPLIT EVALT FFUSE EVALF IFIX ENGAGR
+    VIII Frobenius Kernel:   FSPLIT FFUSE FSPLIT FFUSE — 2 consecutive fork blocks
+    XI  Eternal Return:      TANCH AFWD AREV × period (linear)
+
+  VIII renders as ⟨ ∅ | ∅ ⟩ . ⟨ ∅ | ∅ ⟩: two adjacent Frobenius identity
+  lenses — (μ∘δ)∘(μ∘δ) = id∘id = id — visually showing μ∘δ=id composed twice.
+
+  Ouroboricity computed from mOMonadOS kernel's compute_tier logic:
+    I, VII: O_∞  (dial + self_ref + frob, period ≥ 3)
+    II, IV, VIII, X, XII: O₁
+    III, V, VI, IX, XI: O₀
+
+  Ouroboric arc fires on two conditions (not just ouro != O₀):
+    1. ouroboricity > O₀ (as before)
+    2. visual_period(seq) in (2, n-1) — catches cut-short repeating prefixes
+       e.g. XI (1,2,3,1,2,3,1,2) has vp=3 though 8%3≠0; arc labeled "p=3"
+    Constant sequences (vp=1) excluded — a flat IFIX run isn't "returning."
+
+Output: docs/cfg_dag_momonados_{key}.gif (12 files)
+Run: python3 cfg_dag_momonados.py
+
+---
+
 cfg_dag.py: DAG-structured CFG animations from decompressed token sequences
 
 New script: cfg_dag.py
