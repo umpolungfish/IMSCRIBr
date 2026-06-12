@@ -56,7 +56,7 @@ The Euler characteristic V - E + F = 2 holds for every closed convex polyhedron
 (all five Platonic solids). This is the topological invariant of a sphere —
 any stable, closed, simply-connected 3D boundary satisfies it. In the
 imscriptive model this is the checksum: a composition is "closed" (no dangling
-ports, no orphaned tokens) if and only if its port graph satisfies the analogous
+shunts, no orphaned tokens) if and only if its shunt graph satisfies the analogous
 balance condition. `validate()` in WiredGraph enforces exactly this.
 
 ---
@@ -93,7 +93,7 @@ Holographic: the boundary passively encodes the bulk. The boundary is a record.
 Imscriptive: the boundary actively reads, writes, and executes on the bulk. The
 boundary is an operator. The kernel does not store the world; it runs the world.
 
-In the port-graph model: the wires are the boundary. They are not passive
+In the shunt-graph model: the wires are the boundary. They are not passive
 connections between nodes — they carry values, establish ordering, and define what
 compositions are possible. Rerouting a wire is not renaming something; it changes
 the categorical morphism entirely. This is why cross-branch wiring (wiring.py)
@@ -102,10 +102,10 @@ wiring.
 
 The r/w/x loop:
 - **Read**: EVALT/EVALF sample the stream and return only what matches their type
-- **Write**: FSPLIT distributes a value to two output ports; FFUSE collects two
+- **Write**: FSPLIT distributes a value to two output shunts; FFUSE collects two
   inputs into one; the wire network propagates values forward
 - **Execute**: topological layer ordering is the execution sequence; each layer
-  is one tick; the composition closes when all ports are satisfied
+  is one tick; the composition closes when all shunts are satisfied
 
 ---
 
@@ -145,7 +145,7 @@ sequential gate application. It can only:
 
 Cross-branch wires are specifically the mechanism by which B bypasses gate
 filtering. In XXI_Paradox_Bridge: ENGAGR produces B; gates on the filtered paths
-return VOID; the cross-branch wire delivers B directly to FFUSE's F-port,
+return VOID; the cross-branch wire delivers B directly to FFUSE's F-shunt,
 bypassing the gate entirely. The boundary-level wire is structurally prior to the
 gate. This is the imscriptive claim made concrete: the composition structure (the
 wire) executes at a deeper layer than the token function (the gate).
