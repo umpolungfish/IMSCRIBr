@@ -1,3 +1,11 @@
+Moved ancillary documents to ig-docs (2026-06-14)
+
+2 files moved: demo_solve_coagula_lifted.md, demo_solve_coagula_lifted_v2.md → core-theory/.
+Kept: README.md, IMASM_IG_BRIDGE.md, IMASM_SPACE_MAP_REPORT.md,
+NEWTON_LIFT_DESIGN.md, ONTOLOGY.md, all source code.
+
+---
+
 wiring.py: port-graph cross-branch model + novel sequences XX–XXIII
 engine.py: search_cross_branch_wirings(); cfg_dag.py: wired DAG renderer
 
