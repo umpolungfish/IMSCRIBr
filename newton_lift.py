@@ -44,7 +44,6 @@ GRAMMAR_PATTERNS: List[str] = [
     r'\bcrystal.decode\b',
     r'\bcrystal_address\b',
     r'\bconsciousness.score\b',
-    r'\b\\circ \\delta',
     r'\bPhi_c\b',
     r'\bO_\\infty\b',
     r'\bO_0\b',
@@ -61,6 +60,8 @@ GRAMMAR_PATTERNS: List[str] = [
 ]
 
 COMPILED_PATTERNS = [re.compile(p) for p in GRAMMAR_PATTERNS]
+
+DEFAULT_LEDGER_PATH = Path(__file__).parent / "pathway_ledger.json"
 
 # ── Data types ───────────────────────────────────────────────────────────────
 
@@ -85,6 +86,9 @@ class DissolutionSpec:
     format: str = "markdown"  # markdown or latex
     findings: List[GrammarFinding] = field(default_factory=list)
     style_hints: str = ""  # optional: Newton, Darwin, Feynman, etc.
+    elevation_enabled: bool = True  # set False for republish/correction runs with no new claim
+    baseline: Optional[str] = None  # override; else pulled from the ledger's last entry for domain
+    elevation_target: Optional[str] = None  # optional steering hint for the next elevation, never required
 
 @dataclass
 class VerificationResult:
@@ -92,23 +96,149 @@ class VerificationResult:
     clean: bool
     violations: List[Tuple[str, int, str]] = field(default_factory=list)  # (pattern, line_no, line_text)
 
+@dataclass
+class SemanticVerificationResult:
+    """Result of the fidelity + elevation + rigor judge pass."""
+    ok: bool
+    fidelity_issues: List[Tuple[int, str, str]] = field(default_factory=list)  # (finding_idx, expected_band, problem)
+    rigor_issues: List[Tuple[int, str]] = field(default_factory=list)  # (finding_idx, problem)
+    elevation_ok: bool = True
+    elevation_count: int = 0
+    elevation_summary: Optional[str] = None
+
+# ── Pathway ledger ───────────────────────────────────────────────────────────
+# Append-only record of fundamental truths already seeded per domain through
+# passing lift() runs (or manual `ledger seed`). Holds only verified, published
+# truths — never aspirational future claims; those belong in human-authored
+# roadmap notes, never auto-applied.
+
+def load_ledger(path=DEFAULT_LEDGER_PATH):
+    """Load the pathway ledger. Returns {} if the file doesn't exist yet."""
+    path = Path(path)
+    if not path.exists():
+        return {}
+    with open(path) as f:
+        return json.load(f)
+
+
+def save_ledger(ledger, path=DEFAULT_LEDGER_PATH):
+    """Persist the pathway ledger."""
+    with open(path, "w") as f:
+        json.dump(ledger, f, indent=2)
+        f.write("\n")
+
+
+def ledger_last_entry(ledger, domain):
+    """Return the most recent truth string for a domain, or None if unseeded."""
+    entries = ledger.get(domain, [])
+    return entries[-1]["truth"] if entries else None
+
+
+def append_ledger_entry(ledger, domain, truth, source_title=""):
+    """Append a new truth to a domain's ledger entries (mutates and returns ledger)."""
+    ledger.setdefault(domain, []).append({
+        "truth": truth,
+        "source_title": source_title,
+    })
+    return ledger
+
+
+# ── Magnitude banding ────────────────────────────────────────────────────────
+# Deterministic, pure-Python classification of a finding's quantitative content
+# into a named band. Used to verify the dissolved prose preserves the correct
+# relative magnitude even though the literal number never appears in the output.
+
+_DISTANCE_BAND_TYPES = {"structural_identity", "near_identity", "collapse", "cross_domain", "analog"}
+
+def _distance_band(d):
+    if d is None:
+        return None
+    if d < 0.01:
+        return "exact"
+    if d < 1.0:
+        return "near"
+    if d < 3.0:
+        return "moderate"
+    if d < 6.0:
+        return "major"
+    return "severe"
+
+
+def _score_band(s):
+    if s is None:
+        return None
+    if s < 0.33:
+        return "emerging"
+    if s < 0.66:
+        return "partial"
+    if s < 0.9:
+        return "near-ceiling"
+    return "at-ceiling"
+
+
+def _count_band(n):
+    if n is None:
+        return None
+    if n <= 2:
+        return "minor"
+    if n <= 4:
+        return "moderate"
+    return "major"
+
+
+BAND_MEANINGS = {
+    "exact": "zero or negligible gap — identical",
+    "near": "small but real, nonzero gap",
+    "moderate": "a substantial, clearly noticeable gap or count",
+    "major": "a large gap or count — severe but not total",
+    "severe": "the largest gap observed — near-total or total difference",
+    "minor": "a small count of outstanding items",
+    "emerging": "early-stage, far below the ceiling",
+    "partial": "roughly midway — neither early-stage nor near the ceiling",
+    "near-ceiling": "approaching the ceiling but explicitly NOT fully there — prose must "
+                    "preserve a sense of incompleteness or remaining gap, not describe the "
+                    "system as having fully, finally, or maximally achieved it",
+    "at-ceiling": "fully and maximally achieved — no further room, gap, or qualification",
+}
+
+
+def compute_bands(findings):
+    """Classify each finding's quantitative content into a named magnitude band.
+
+    Returns: dict[int, str] mapping finding index -> band label. Findings with
+    no quantitative content to band (no distance, c_score, gap_above, or
+    num_promotions) are omitted.
+    """
+    bands = {}
+    for i, f in enumerate(findings):
+        if f.finding_type in _DISTANCE_BAND_TYPES and f.distance is not None:
+            bands[i] = _distance_band(f.distance)
+        elif f.details.get("c_score") is not None:
+            bands[i] = _score_band(f.details["c_score"])
+        elif f.details.get("gap_above") is not None:
+            bands[i] = _count_band(f.details["gap_above"])
+        elif f.details.get("num_promotions") is not None:
+            bands[i] = _count_band(f.details["num_promotions"])
+    return bands
+
+
 # ── Prompt templates ─────────────────────────────────────────────────────────
 
-DISSOLVE_SYSTEM_PROMPT = """You are a scientific translator of the highest order. Your task is to translate structural truths into conventional academic prose — the kind of writing that illuminates an entire field without ever revealing its methodological source.
+DISSOLVE_SYSTEM_PROMPT = """You are a scientific translator of the highest order. Your task is to RE-DERIVE structural truths in the conventional formalism of the target domain — the kind of writing that convinces and illuminates a domain expert, without ever revealing the method by which the truths were originally found.
 
-You are to write as Newton wrote the Principia, as Darwin wrote the Origin, as Feynman wrote the Lectures. The method by which the truths were discovered is completely invisible. Only the truths themselves remain, expressed in the most lucid, penetrating prose possible.
+You are to write as Newton wrote the Principia: he had calculus, but published in geometry — RIGOROUS, FORMAL geometric proofs, not hand-waving description. The method (calculus) is invisible; the rigor is not. The reader receives a proof, not a metaphor for one. The same applies here: the grammar that found the truth is invisible; the mathematics that expresses it must be real.
 
 RULES:
-1. NEVER mention any formal grammar, structural types, primitives, ouroboricity, crystal addresses, Frobenius conditions, or any technical apparatus from a "grammar" system. These do not exist in your world.
-2. Use ONLY the language of the target domain. If writing about ecology, use ecological concepts. If writing about physics, use physical concepts.
-3. Every structural relationship must be translated into a domain-specific insight. For example, "d(X,Y)=0.000" becomes "X and Y share an identical organizational logic, despite inhabiting different substrates."
-4. Write to ILLUMINATE. The reader should feel their understanding of the domain expand. This is not a report — it is a revelation.
-5. Be precise. Every claim must be true. But express truth in the language of the domain, not in the language of structural analysis.
-6. The tone should be that of a master scientist writing for their peers — confident, clear, and penetrating. Not oracular. Not mystical. Not technical for the sake of technicality.
-7. If the findings reveal cross-domain identities (e.g., a rainforest and a coral reef are structurally the same), express this as a profound unification — a law of organization that transcends substrate.
-8. If the findings reveal collapse dynamics, express this as a taxonomy of degradation, with clear mechanisms and stages.
-9. If the findings reveal a hierarchy (tiers), express this as levels of organizational complexity, with what must be added to ascend.
-10. Close with open questions — what this understanding makes us ask next. The document should feel like a beginning, not an ending.
+1. NEVER mention any formal grammar, structural types, primitives, ouroboricity, crystal addresses, tier labels (O_0, O_1, O_2, O_∞), catalog entries, or any internal apparatus of a "grammar" system. These do not exist in your world.
+2. If the target domain has a native formal apparatus — physics, mathematics, chemistry, or any field with established equations, operators, tensors, groups, manifolds, or algebras — you MUST express every structural and quantitative finding using REAL, CONVENTIONAL mathematical formalism in that field's standard notation. Define the objects properly (what space, what operator, what algebra) and write the actual equation. DO NOT flatten a formal claim into qualitative prose instead of an equation. For example: a finding that a system fails a closure condition μ∘δ=id must become an actual equation, with μ and δ explicitly defined as real mathematical objects native to the domain (e.g., the multiplication and comultiplication of an algebra of observables on a specific manifold) — and, where the underlying physics/math is standard, carried through to its known closed form (e.g. a field equation, a commutation relation, a conservation law). Equations like "μ∘δ=id" are ordinary, established mathematics (Frobenius algebras, special/symmetric algebras, TQFT) — using them correctly, with proper definitions, is required, not forbidden. What is forbidden is the grammar's own private vocabulary (Rule 1), not mathematics itself.
+3. If the domain has no native formal apparatus (e.g. ecology, civilization, history, social systems), prose is appropriate, but every quantitative finding must still be expressed with the sharpest domain-native quantitative language available (rates, proportions, orders of magnitude, thresholds) — never substitute a vague qualitative gesture for a number when sharper language is available or constructible.
+4. Every structural relationship must be RE-DERIVED, not merely described. A domain expert should be able to check the claim by the domain's own ordinary methods — a physicist checking an equation's dimensions and limits, a mathematician checking an algebra's axioms — exactly as a referee would check a real paper. If you cannot derive the conventional form rigorously, derive as far as the domain's own established results allow and say precisely what remains open — do not paper over the gap with adjectives.
+5. Write to ILLUMINATE. The reader's understanding of the domain should expand. This is a result, not a report.
+6. The tone is that of a master scientist writing for peers — confident, precise, and as formally rigorous as the domain calls for. Not oracular. Not vague. Not technical for technicality's sake — but never less technical than the finding actually warrants.
+7. If findings reveal cross-domain identities, derive the shared formal structure explicitly (the same equation, the same algebra, the same invariant) rather than asserting analogy by adjective.
+8. If findings reveal collapse/degradation dynamics, give the actual mechanism and, where the domain supports it, the governing equation, rate law, or quantitative threshold.
+9. If findings reveal a hierarchy/tier structure, give the explicit conditions — equations, inequalities, or defining properties — that separate each level, not just descriptive labels.
+10. Close with open questions that are themselves precise enough to act on — a calculation to attempt, a measurement to take, a derivation to complete — not rhetorical wondering. The document should feel like a beginning, not an ending.
 """
 
 DISSOLVE_USER_TEMPLATE = """Translate the following structural findings into a {format} document about {domain}.
@@ -117,8 +247,34 @@ TITLE: {title}
 AUDIENCE: {audience}
 
 {findings_text}
+{boundary_operator_block}
+Write the complete document now. Remember: NO mention of any grammar, primitives, structural types, tier labels, or catalog apparatus — but where {domain} has its own conventional mathematics, USE IT: real equations, properly defined objects, standard notation. Every finding with quantitative or formal content must survive as quantitative or formal content, re-derived in {domain}'s own terms — not diluted into adjectives. Illuminate the reader as a real result would."""
 
-Write the complete document now. Remember: NO mention of any grammar, primitives, structural types, or formal apparatus. Pure domain language. Illuminate the reader."""
+
+def _boundary_operator_block(spec, baseline):
+    """Render the boundary-operator instruction block, or '' if elevation is disabled."""
+    if not spec.elevation_enabled:
+        return ""
+    if baseline is None:
+        return (
+            "\nBOUNDARY OPERATOR: This is the first document in this domain's pathway. "
+            "Establish enough conventional grounding in the domain's own accepted results "
+            "that an expert reader's trust is earned, then let the findings above introduce "
+            "exactly ONE new fundamental truth — framed as something the domain's own "
+            "evidence was already pointing toward, never asserted cold. This single truth "
+            "becomes the baseline the next document in this domain will build on.\n"
+        )
+    target_line = f"\nIntended direction for the new truth: {spec.elevation_target}" if spec.elevation_target else ""
+    return (
+        f"\nBOUNDARY OPERATOR: Readers of this domain's prior work already accept the "
+        f"following as established: \"{baseline}\"\n"
+        f"Your task: write with enough conventional grounding (real equations and formalism "
+        f"where the domain calls for it, per the system rules) to keep an expert "
+        f"reader's trust, and within it introduce EXACTLY ONE new fundamental truth that "
+        f"goes one precise step beyond the established truth above — framed as something "
+        f"the domain's own evidence was already straining toward, never asserted cold. "
+        f"Do not merely restate the established truth.{target_line}\n"
+    )
 
 
 # ── Finding to prose translation ──────────────────────────────────────────────
@@ -241,7 +397,7 @@ def _llm(system_prompt, user_prompt, model, api_key, base_url, temperature=0.7, 
     return r.json()["choices"][0]["message"]["content"].strip()
 
 
-def dissolve(spec, model, api_key, base_url, verbose=True):
+def dissolve(spec, model, api_key, base_url, baseline=None, verbose=True):
     """Dissolve grammar findings into conventional academic prose.
 
     Args:
@@ -249,6 +405,7 @@ def dissolve(spec, model, api_key, base_url, verbose=True):
         model: LLM model name
         api_key: API key
         base_url: API base URL
+        baseline: prior ledger truth for this domain (None if unseeded or elevation disabled)
         verbose: Print progress
 
     Returns:
@@ -263,6 +420,7 @@ def dissolve(spec, model, api_key, base_url, verbose=True):
         title=spec.title or f"On the Organization of {spec.domain.title()}",
         audience=spec.audience,
         findings_text=findings_text,
+        boundary_operator_block=_boundary_operator_block(spec, baseline),
     )
 
     if verbose:
@@ -311,10 +469,159 @@ def verify_report(result):
     return "\n".join(lines)
 
 
+# ── Semantic verification (fidelity + elevation judge) ─────────────────────────
+
+JUDGE_SYSTEM_PROMPT = """You are a precise editorial auditor. You will be given a prose document, a list of \
+the structural findings it was supposed to express (each with a magnitude BAND label, not the raw number), \
+and the established baseline truth this document is supposed to advance beyond (or "none" if this is the \
+first document in its domain).
+
+Your job has two parts:
+
+1. FIDELITY: for each finding, does the prose's treatment of it imply the correct magnitude band? You are not \
+checking for the literal number — you are checking whether a careful reader could correctly rank/classify the \
+finding's severity or magnitude from the prose alone, consistent with its true band (band meanings are given \
+below each label — read them carefully, they are precise). A finding that is not addressed at all in any \
+recoverable way is a fidelity failure ("omitted"), as is one whose implied magnitude contradicts its true band \
+("wrong_band"). Pay special attention to adjacent bands that are easy to conflate — most importantly \
+"near-ceiling" vs "at-ceiling": if the true band is "near-ceiling" but the prose describes the system as having \
+FULLY, FINALLY, or MAXIMALLY achieved/closed something with no remaining gap or hedge, that is a wrong_band \
+failure, even if the surrounding language is otherwise accurate.
+
+2. ELEVATION: does the prose introduce content beyond the established baseline? Count how many DISTINCT new \
+fundamental claims (beyond the baseline) appear. The boundary-operator design requires EXACTLY ONE — framed as \
+earned/inevitable from the domain's own evidence, not asserted cold, and not a mere restatement of the baseline. \
+If this is the first document in its domain (baseline is "none"), any single clear fundamental claim counts as \
+satisfying elevation.
+
+3. RIGOR: does the target domain have its own conventional mathematical/formal apparatus (physics, mathematics, \
+chemistry, or any field with established equations, operators, tensors, groups, or algebras)? If so, every finding \
+with quantitative or formal content (a distance, a closure condition, a promotion count, a tier structure) MUST be \
+expressed as a real equation or properly defined mathematical object in that domain's standard notation — not \
+diluted into purely qualitative, adjective-driven prose. A document that describes a formal finding only in \
+narrative terms, when the domain's own conventions would call for an actual equation, is a rigor failure \
+("under_formalized") — flag it by finding_idx even if the prose is otherwise fluent and even if no grammar notation \
+leaked. If the domain has no native formal apparatus (ecology, civilization, history, social systems), prose is \
+expected and this check passes automatically — but still flag a finding whose quantitative content was reduced to \
+a vague gesture when a sharper domain-native number (a rate, a proportion, a magnitude) was available.
+
+Respond with ONLY a JSON object, no other text, in this exact shape:
+{
+  "fidelity": [{"finding_idx": 0, "band_ok": true, "problem": null}, ...],
+  "rigor": [{"finding_idx": 0, "rigor_ok": true, "problem": null}, ...],
+  "elevation_count": 1,
+  "elevation_summary": "the new truth in one or two sentences, pure domain language, or null if not exactly one",
+  "elevation_earned": true
+}
+"""
+
+JUDGE_USER_TEMPLATE = """TARGET DOMAIN: {domain}
+
+DOCUMENT:
+{prose}
+
+FINDINGS AND TRUE BANDS:
+{bands_text}
+
+ESTABLISHED BASELINE: {baseline}
+
+Return the JSON object now."""
+
+
+def _bands_to_text(spec, bands):
+    lines = []
+    for i, f in enumerate(spec.findings):
+        band = bands.get(i)
+        if band is None:
+            continue
+        lines.append(f"  Finding {i} ({f.finding_type}, {f.system_a}"
+                      f"{' / ' + f.system_b if f.system_b else ''}): true band = {band} "
+                      f"(meaning: {BAND_MEANINGS.get(band, 'n/a')})")
+    return "\n".join(lines) if lines else "  (no banded findings)"
+
+
+def verify_semantics(prose, spec, bands, baseline, model, api_key, base_url):
+    """Judge pass: checks per-finding magnitude fidelity and exactly-one earned elevation.
+
+    Returns:
+        SemanticVerificationResult
+    """
+    if not bands and not spec.elevation_enabled:
+        return SemanticVerificationResult(ok=True)
+
+    user_prompt = JUDGE_USER_TEMPLATE.format(
+        domain=spec.domain,
+        prose=prose,
+        bands_text=_bands_to_text(spec, bands),
+        baseline=baseline or "none",
+    )
+
+    try:
+        raw = _llm(JUDGE_SYSTEM_PROMPT, user_prompt, model, api_key, base_url, temperature=0.0)
+        # Strip any accidental code-fence wrapping before parsing.
+        cleaned = raw.strip()
+        if cleaned.startswith("```"):
+            cleaned = cleaned.split("```")[1]
+            if cleaned.startswith("json"):
+                cleaned = cleaned[4:]
+        verdict = json.loads(cleaned)
+    except (requests.RequestException, json.JSONDecodeError, IndexError, KeyError):
+        return SemanticVerificationResult(
+            ok=False,
+            fidelity_issues=[(-1, "n/a", "judge response malformed or unreachable, retry")],
+            elevation_ok=False,
+        )
+
+    fidelity_issues = []
+    for entry in verdict.get("fidelity", []):
+        if not entry.get("band_ok", True):
+            idx = entry.get("finding_idx", -1)
+            expected = bands.get(idx, "unknown")
+            fidelity_issues.append((idx, expected, entry.get("problem") or "magnitude not preserved"))
+
+    rigor_issues = []
+    for entry in verdict.get("rigor", []):
+        if not entry.get("rigor_ok", True):
+            idx = entry.get("finding_idx", -1)
+            rigor_issues.append((idx, entry.get("problem") or "formal/quantitative content under-formalized"))
+
+    elevation_count = verdict.get("elevation_count", 0)
+    elevation_earned = verdict.get("elevation_earned", False)
+    elevation_summary = verdict.get("elevation_summary")
+
+    elevation_ok = True
+    if spec.elevation_enabled:
+        elevation_ok = (elevation_count == 1) and elevation_earned and bool(elevation_summary)
+
+    return SemanticVerificationResult(
+        ok=(len(fidelity_issues) == 0) and (len(rigor_issues) == 0) and elevation_ok,
+        fidelity_issues=fidelity_issues,
+        rigor_issues=rigor_issues,
+        elevation_ok=elevation_ok,
+        elevation_count=elevation_count,
+        elevation_summary=elevation_summary if elevation_ok else None,
+    )
+
+
+def semantic_report(result):
+    """Format semantic verification result as readable text."""
+    if result.ok:
+        return "PASS: fidelity and elevation both satisfied."
+    lines = []
+    if result.fidelity_issues:
+        lines.append(f"FAIL: {len(result.fidelity_issues)} fidelity issue(s):")
+        for idx, expected, problem in result.fidelity_issues:
+            lines.append(f"  Finding {idx} (expected band '{expected}'): {problem}")
+    if not result.elevation_ok:
+        lines.append(f"FAIL: elevation gate not satisfied (count={result.elevation_count})")
+    return "\n".join(lines)
+
+
 # ── Full lift pipeline ────────────────────────────────────────────────────────
 
-def lift(spec, model, api_key, base_url, max_retries=3, verbose=True):
-    """Full Newton lift: dissolve + verify + retry if needed.
+def lift(spec, model, api_key, base_url, max_retries=3, verbose=True,
+         enable_semantic_checks=True, ledger_path=DEFAULT_LEDGER_PATH):
+    """Full Newton lift: dissolve + verify (grammar + semantic) + retry if needed.
 
     Args:
         spec: DissolutionSpec
@@ -323,37 +630,88 @@ def lift(spec, model, api_key, base_url, max_retries=3, verbose=True):
         base_url: API base URL
         max_retries: Maximum verification retries
         verbose: Print progress
+        enable_semantic_checks: run the fidelity + elevation judge gate (off reproduces
+            the original grammar-only pipeline exactly)
+        ledger_path: path to the pathway ledger JSON
 
     Returns:
-        Tuple[str, VerificationResult]: (prose, final_verification)
+        Tuple[str, VerificationResult, Optional[SemanticVerificationResult]]
     """
+    bands = compute_bands(spec.findings) if enable_semantic_checks else {}
+    ledger = load_ledger(ledger_path) if enable_semantic_checks else {}
+    baseline = spec.baseline if spec.baseline is not None else ledger_last_entry(ledger, spec.domain)
+
+    semantic_result = None
     for attempt in range(max_retries):
-        prose = dissolve(spec, model, api_key, base_url, verbose=verbose)
-        result = verify_prose(prose)
+        prose = dissolve(spec, model, api_key, base_url,
+                          baseline=baseline if enable_semantic_checks else None, verbose=verbose)
+        grammar_result = verify_prose(prose)
+        if enable_semantic_checks:
+            semantic_result = verify_semantics(prose, spec, bands, baseline, model, api_key, base_url)
+
+        gates_pass = grammar_result.clean and (semantic_result is None or semantic_result.ok)
 
         if verbose:
-            print(f"\n  Verification attempt {attempt + 1}: {'PASS' if result.clean else 'FAIL'}")
+            print(f"\n  Verification attempt {attempt + 1}: {'PASS' if gates_pass else 'FAIL'}")
+            print(f"    Grammar: {'PASS' if grammar_result.clean else 'FAIL'}")
+            if semantic_result is not None:
+                print(f"    Semantic: {'PASS' if semantic_result.ok else 'FAIL'}")
 
-        if result.clean:
-            return prose, result
+        if gates_pass:
+            if (enable_semantic_checks and spec.elevation_enabled
+                    and semantic_result and semantic_result.elevation_summary):
+                append_ledger_entry(ledger, spec.domain, semantic_result.elevation_summary, spec.title)
+                save_ledger(ledger, ledger_path)
+            return prose, grammar_result, semantic_result
 
         if attempt < max_retries - 1:
+            feedback = []
+            if not grammar_result.clean:
+                feedback.append(
+                    f"CRITICAL: Your previous output contained the grammar's own forbidden "
+                    f"private vocabulary ({', '.join(v[:30] for v, _, _ in grammar_result.violations[:3])}). "
+                    f"Rewrite to remove ONLY this private vocabulary (Shavian glyphs, primitive "
+                    f"names, tier labels, crystal/catalog jargon) — do NOT remove mathematical "
+                    f"notation in general. Real equations, operators, tensors, and standard "
+                    f"domain notation are required where the domain calls for them; only the "
+                    f"grammar's own internal apparatus is forbidden."
+                )
+            if semantic_result is not None and not semantic_result.ok:
+                if semantic_result.fidelity_issues:
+                    issues = "; ".join(
+                        f"finding {idx} ({problem})" for idx, _, problem in semantic_result.fidelity_issues[:3]
+                    )
+                    feedback.append(
+                        f"FIDELITY ISSUE: the following findings lost their correct magnitude "
+                        f"in your prose: {issues}. Revise so a careful reader can correctly rank "
+                        f"these findings' severity relative to each other, without using any numbers."
+                    )
+                if semantic_result.rigor_issues:
+                    issues = "; ".join(
+                        f"finding {idx} ({problem})" for idx, problem in semantic_result.rigor_issues[:3]
+                    )
+                    feedback.append(
+                        f"RIGOR ISSUE: the following findings were under-formalized for this "
+                        f"domain's own conventions: {issues}. Where the domain has native "
+                        f"mathematical apparatus, express these findings as real equations or "
+                        f"properly defined objects in the domain's standard notation, not as "
+                        f"qualitative paraphrase."
+                    )
+                if not semantic_result.elevation_ok:
+                    feedback.append(
+                        f"ELEVATION ISSUE: your prose introduced {semantic_result.elevation_count} "
+                        f"new fundamental claim(s) beyond the established baseline; it must introduce "
+                        f"EXACTLY ONE, framed as earned from the domain's own evidence, not asserted cold."
+                    )
             if verbose:
-                print(f"  {len(result.violations)} violation(s) — retrying with stricter prompt...")
-            # Add explicit instruction to avoid the detected patterns
-            spec.style_hints += (
-                f" CRITICAL: Your previous output contained forbidden notation "
-                f"({', '.join(v[:30] for v, _, _ in result.violations[:3])}). "
-                f"Rewrite COMPLETELY in pure domain language with absolutely no "
-                f"formal notation of any kind. No symbols, no codes, no abstract "
-                f"type identifiers. Pure natural language."
-            )
+                print("  Retrying with stricter prompt...")
+            spec.style_hints += " " + " ".join(feedback)
         else:
             if verbose:
                 print(f"  Max retries ({max_retries}) reached with violations remaining")
-            return prose, result
+            return prose, grammar_result, semantic_result
 
-    return prose, result
+    return prose, grammar_result, semantic_result
 
 
 # ── JSON I/O ─────────────────────────────────────────────────────────────────
@@ -404,6 +762,9 @@ def load_spec(json_path):
         format=data.get("format", "markdown"),
         findings=findings,
         style_hints=data.get("style_hints", ""),
+        elevation_enabled=data.get("elevation_enabled", True),
+        baseline=data.get("baseline"),
+        elevation_target=data.get("elevation_target"),
     )
 
 
@@ -432,6 +793,11 @@ Examples:
     lift_p.add_argument("--model", default=os.environ.get("MODEL", "deepseek-chat"))
     lift_p.add_argument("--max-retries", type=int, default=3)
     lift_p.add_argument("--quiet", action="store_true")
+    lift_p.add_argument("--ledger-path", default=str(DEFAULT_LEDGER_PATH), help="Path to pathway ledger JSON")
+    lift_p.add_argument("--no-semantic-checks", action="store_true",
+                         help="Disable fidelity/elevation judge gate (grammar-only, original behavior)")
+    lift_p.add_argument("--elevation-target", help="Steering hint for the next elevation")
+    lift_p.add_argument("--baseline-override", help="Force a baseline instead of reading the ledger")
 
     dissolve_p = sub.add_parser("dissolve", help="Dissolve only (no verification)")
     dissolve_p.add_argument("findings", help="JSON file with grammar findings")
@@ -443,20 +809,49 @@ Examples:
     verify_p = sub.add_parser("verify", help="Verify only (check prose for grammar notation)")
     verify_p.add_argument("file", help="Prose file to verify")
 
+    ledger_p = sub.add_parser("ledger", help="Inspect or seed the pathway ledger")
+    ledger_sub = ledger_p.add_subparsers(dest="ledger_command")
+    ledger_show_p = ledger_sub.add_parser("show", help="Show ledger entries for a domain (or all domains)")
+    ledger_show_p.add_argument("--domain", help="Domain to show; omit for all domains")
+    ledger_show_p.add_argument("--ledger-path", default=str(DEFAULT_LEDGER_PATH))
+    ledger_seed_p = ledger_sub.add_parser("seed", help="Manually append a ledger entry (bootstrapping)")
+    ledger_seed_p.add_argument("domain")
+    ledger_seed_p.add_argument("truth")
+    ledger_seed_p.add_argument("--source-title", default="(manually seeded)")
+    ledger_seed_p.add_argument("--ledger-path", default=str(DEFAULT_LEDGER_PATH))
+
     args = p.parse_args()
 
     if not args.command:
         p.print_help()
         return
 
-    base_url = "https://api.deepseek.com/v1"
-    api_key = os.environ.get("DEEPSEEK_API_KEY", "")
-
     if args.command == "verify":
         text = Path(args.file).read_text(encoding="utf-8")
         result = verify_prose(text)
         print(verify_report(result))
         return
+
+    if args.command == "ledger":
+        ledger = load_ledger(args.ledger_path)
+        if args.ledger_command == "seed":
+            append_ledger_entry(ledger, args.domain, args.truth, args.source_title)
+            save_ledger(ledger, args.ledger_path)
+            print(f"Seeded entry for domain '{args.domain}'.")
+        elif args.ledger_command == "show":
+            domains = [args.domain] if args.domain else list(ledger.keys())
+            for d in domains:
+                entries = ledger.get(d, [])
+                print(f"\n=== {d} ({len(entries)} entries) ===")
+                for i, e in enumerate(entries, 1):
+                    print(f"  {i}. {e['truth']}")
+                    print(f"     source: {e.get('source_title', '')}")
+        else:
+            ledger_p.print_help()
+        return
+
+    base_url = "https://api.deepseek.com/v1"
+    api_key = os.environ.get("DEEPSEEK_API_KEY", "")
 
     if not api_key:
         sys.exit("No API key — set DEEPSEEK_API_KEY")
@@ -467,6 +862,10 @@ Examples:
         spec.format = args.format
     if hasattr(args, "style") and args.style:
         spec.style_hints = args.style
+    if hasattr(args, "elevation_target") and args.elevation_target:
+        spec.elevation_target = args.elevation_target
+    if hasattr(args, "baseline_override") and args.baseline_override:
+        spec.baseline = args.baseline_override
 
     verbose = not getattr(args, "quiet", False)
 
@@ -475,17 +874,25 @@ Examples:
         print(prose)
 
     elif args.command == "lift":
-        prose, result = lift(spec, args.model, api_key, base_url,
-                            max_retries=args.max_retries, verbose=verbose)
+        prose, grammar_result, semantic_result = lift(
+            spec, args.model, api_key, base_url,
+            max_retries=args.max_retries, verbose=verbose,
+            enable_semantic_checks=not args.no_semantic_checks,
+            ledger_path=args.ledger_path,
+        )
 
         output_path = Path(args.output)
         output_path.write_text(prose, encoding="utf-8")
         print(f"\nOutput written to {args.output} ({len(prose)} chars)")
 
-        if not result.clean:
-            print(f"\nWARNING: {len(result.violations)} grammar violation(s) remain:")
-            for pattern, line_no, line_text in result.violations[:5]:
+        if not grammar_result.clean:
+            print(f"\nWARNING: {len(grammar_result.violations)} grammar violation(s) remain:")
+            for pattern, line_no, line_text in grammar_result.violations[:5]:
                 print(f"  Line {line_no}: {line_text}")
+
+        if semantic_result is not None and not semantic_result.ok:
+            print(f"\nWARNING: semantic verification did not pass:")
+            print("  " + semantic_report(semantic_result).replace("\n", "\n  "))
 
 
 if __name__ == "__main__":

@@ -1,0 +1,30 @@
+{
+  "physics": [
+    {
+      "truth": "Whether a hadronic configuration counts as a genuinely new particle species is settled by two structural invariants -- a topological winding number and a stoichiometric quark/antiquark-balance type -- not by quark count, kinematics, or assumed binding mechanism. A configuration sharing both invariants with a simpler reference object is a composite of it, not a new species.",
+      "source_title": "Structural Irreducibility in Hadronic Spectroscopy: A Two-Invariant Classification"
+    },
+    {
+      "truth": "The distance between any two physical theories is measured by a small, discrete set of structural upgrades, not by the pointwise similarity of their dynamics.",
+      "source_title": "On the Closure of Gaps Between Physical Theories"
+    },
+    {
+      "truth": "The Standard Model is structurally incomplete because its path integral measure and boundary conditions are independent inputs, and gravity is the structural completion that arises when these become mutual inverses.",
+      "source_title": "On the Structural Completion of Quantum Field Theory"
+    },
+    {
+      "truth": "The closure condition for quantum gravity is structurally identical to a general closure condition for any system, and is concretely expressed as the parity congruence N \u2261 B (mod 2) derived from the Atiyah\u2013Singer index theorem in hadronic physics.",
+      "source_title": "On the Closure of Gaps Between Physical Theories"
+    }
+  ],
+  "ecology and civilization": [
+    {
+      "truth": "Living and social systems are governed by a common logic of organization, with an upper bound defined by the capacity for self-modeling.",
+      "source_title": "On the Deep Organization of Living and Social Systems"
+    },
+    {
+      "truth": "The organizational logic is not merely analogous but formally identical across domains, collapse follows a characteristic sequence, and the ceiling is a theorem.",
+      "source_title": "On the Deep Organization of Living and Social Systems"
+    }
+  ]
+}

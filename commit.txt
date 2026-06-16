@@ -1,219 +1,64 @@
-pseudo_voynich.py: Synthetic Pseudo-Voynich Generator
+Newton Lift: math-preservation / rigor correction (2026-06-15)
 
-Proof of concept: the Voynich Manuscript's statistical signature is a
-property of the grammar it encodes, not its surface notation. Generating
-new text from the same grammar in Shavian (zero shared characters with EVA)
-reproduces the Voynich fingerprint at 85–100% across all structural metrics.
+Closed a significant design bug reported directly by the user: the pipeline
+was stripping ALL mathematics out of dissolved prose, for every domain,
+including ones (physics, mathematics, chemistry) whose findings should be
+expressed as real conventional equations and properly defined mathematical
+objects, not narrative paraphrase. This was NOT the intended behavior --
+only the grammar's own private vocabulary (Shavian glyphs, primitive names,
+tier labels, crystal/catalog jargon) was ever supposed to be banned.
 
-Pipeline:
-  1. Parse LSI_ivtff_0d.txt → per-section word lists (IMASM token indices)
-  2. Extract Voynich statistical fingerprint:
-       Zipf exponent (1.14), bigram entropy (2.48 bits/token),
-       type-token ratio (0.084), repetition rate (0.50),
-       spectral gap (0.365), section KL divergences
-  3. Extract IMSCRIBr structural fingerprint per section:
-       dominant 8-cycle from bigram matrix → compute_fingerprint()
-       botanical+balneological → ~X_Truth_Machine (sig 4,1,2,1)
-       cosmological+biological → ~XII_ROM_Burn    (sig 4,0,3,1)
-  4. Build per-section Shavian vocabulary (Zipf-distributed, size = Voynich
-     per-section vocab count: 1788–4227 unique word types)
-  5. Generate synthetic Shavian text by sampling from vocabulary
-  6. Verify all metrics, compare IMSCRIBr coarse keys, confirm zero overlap
+Root causes (two, both fixed):
 
-Verification results at corpus scale (~104K words):
-  Zipf exponent:    96% match  (1.14 vs 1.18)
-  Bigram entropy:   97% match  (2.48 vs 2.56 bits/token)
-  Type-token ratio: 86% match  (0.084 vs 0.073)
-  Spectral gap:     95% match  (0.365 vs 0.384)
-  Surface overlap:  0 characters — proof complete
+1. GRAMMAR_PATTERNS banned the literal text `\circ \delta`, which silently
+   forbade writing the real, standard Frobenius-special-algebra equation
+   `mu . delta = id` -- legitimate, pre-existing category-theory/TQFT
+   terminology, not invented by this grammar. Pattern removed.
 
-EVA glyphs:    {a, ch, d, e, k, o, p, r, s, sh, t, y}  (ASCII)
-Shavian chars: {𐑛 𐑡 𐑩 𐑗 𐑱 𐑘 𐑚 𐑝 ⊙ 𐑓 𐑳 𐑷}  (Unicode plane 1 + U+2609)
-Intersection:  ∅
+2. DISSOLVE_SYSTEM_PROMPT taught the model, via a literal worked example,
+   to flatten a quantitative finding (d(X,Y)=0.000) into a purely
+   qualitative sentence with zero equation content -- correct only for
+   domains with no native formal apparatus (ecology, civilization), wrong
+   as a universal rule. Rewrote the prompt and DISSOLVE_USER_TEMPLATE to
+   mandate real domain-conventional formalism (define the actual objects --
+   Hilbert space, algebra, manifold, tensor -- write the actual equation,
+   carry it to standard closed form) wherever the target domain supports it.
 
-The grammar finds its home in Shavian. The notation is accidental.
+Judge-side enforcement added so this stays fixed going forward:
+- verify_semantics() gained a third check, RIGOR, alongside the existing
+  FIDELITY and ELEVATION checks, in the same single judge call.
+- SemanticVerificationResult gained `rigor_issues: List[Tuple[idx, problem]]`;
+  a non-empty rigor_issues now fails the overall gate exactly like a
+  fidelity or elevation failure.
+- JUDGE_USER_TEMPLATE now passes TARGET DOMAIN so the judge can apply
+  domain-appropriate rigor expectations.
+- lift()'s retry-feedback loop gained a RIGOR ISSUE feedback branch naming
+  the under-formalized findings on retry.
 
----
+Secondary bug found and fixed while wiring the above: the existing
+grammar-violation retry feedback told the model to rewrite with "no
+symbols, no formal notation of any kind" on any private-vocabulary leak --
+which would have silently re-imposed the no-math rule on retry regardless
+of the rigor fix. Narrowed that feedback to target only the grammar's
+private vocabulary, explicit that real domain notation is required.
 
-Moved ancillary documents to ig-docs (2026-06-14)
+Verified end-to-end with the rigor gate live:
+- qg_bridge_findings.json (physics) -> passed on first attempt, producing
+  genuine formalism: a Frobenius algebra object with the real relation
+  (m⊗id)∘(id⊗Δ)=Δ∘m=(id⊗m)∘(Δ⊗id), the Einstein equation as an operator
+  identity G_{μν}+Λg_{μν}=(8πG/c^4)<T_{μν}>, Tomita-Takesaki references,
+  type II_1 factor algebras, partition-function functional equations,
+  braid groups -- not narrative paraphrase of any of these.
+- test_findings.json (ecology/civilization, no native formal apparatus) ->
+  also passed, confirming the rigor gate does not falsely fire when prose
+  is the domain-appropriate register.
+- python3 -m py_compile newton_lift.py -- clean.
+- Removed one duplicate ledger entry that my own verification re-run of
+  qg_bridge_findings.json appended a second time under the same source
+  title (test artifact, not a real new publication); pathway_ledger.json
+  restored to its prior physics/ecology entries plus none added by this
+  session's testing.
 
-2 files moved: demo_solve_coagula_lifted.md, demo_solve_coagula_lifted_v2.md → core-theory/.
-Kept: README.md, IMASM_IG_BRIDGE.md, IMASM_SPACE_MAP_REPORT.md,
-NEWTON_LIFT_DESIGN.md, ONTOLOGY.md, all source code.
-
----
-
-wiring.py: port-graph cross-branch model + novel sequences XX–XXIII
-engine.py: search_cross_branch_wirings(); cfg_dag.py: wired DAG renderer
-
-wiring.py (new):
-  Full port-level graph model for IMASM token arrangements. Every token is a
-  node with typed ports: VINIT=(out:o), FSPLIT=(in:i, out:T/F), FFUSE=(in:T/F,
-  out:o), all others=(in:i, out:o).
-
-  Wire, WiredGraph: frozen-slot wire class; WiredGraph dataclass with validate(),
-  topological_layers(), cross_branch_wires(), wire_y_hint().
-
-  cross_branch_wires(): flags only FSPLIT→FFUSE arcs to non-default FFUSE;
-  FSPLIT→FSPLIT nesting (outer T-wire routing into inner FSPLIT.i) excluded.
-
-  imscr_wiring(): nesting-aware branch assignment. Depth computed per-token;
-  each pair claims only tokens at its own depth. Fixes prior bug where outer
-  pair stole inner-pair tokens (VINIT FSPLIT FSPLIT EVALT FFUSE EVALF FFUSE TANCH
-  previously produced duplicate in-port error; now valid). FFUSE outputs use
-  branch_internal-skip to find next reachable node regardless of nesting depth.
-
-  cross_wiring_variants(): F-output permutation iterator; valid only when
-  F-branches are empty (no orphaned tokens, no duplicate in-ports).
-
-  NOVEL_GRAPHS — 4 hand-crafted cross-branch sequences, all validate() == []:
-    XX   Branch Entangle:  X-topology, FSPLIT1.F↔FSPLIT2.F crossed. cross=2.
-    XXI  Paradox Bridge:   ENGAGR outer-F bypasses inner block into inner FFUSE. cross=1.
-    XXII Fold Back:        pure Logical+Frobenius X-topology, no dialetheia. cross=2.
-    XXIII Möbius Fork:     IMSCRIB-bounded self-ref; ENGAGR+outer-F dual-source. cross=2.
-
-engine.py:
-  search_cross_branch_wirings(): scans frob_count >= 2*min_pairs signatures;
-  returns (arrangement, valid_variants) for all cross-wirable arrangements.
-
-cfg_dag.py:
-  Added: _wired_layout, _wire_color, render_wired_dag_frame,
-  generate_wired_dag_gif, main_wired (renders NOVEL_GRAPHS to GIFs).
-  Added simulate_wired(graph): dataflow simulation following WiredGraph wire
-  topology. Topological layer order; Belnap 4-valued token functions; FFUSE
-  joins T/F port values via _belnap_join (∨); FSPLIT distributes input to both
-  T and F outputs; cross-branch wires route values to actual port destinations.
-  generate_wired_dag_gif calls simulate_wired() — not the flat simulate_register().
-
----
-
-cfg_dag_momonados.py: DAG CFGs for mOMonadOS canonical programs
-
-New script: cfg_dag_momonados.py
-
-Generates DAG CFGs for the 12 mOMonadOS canonical programs (src/tokens.rs).
-Extends cfg_dag.py with multi-segment decomposition: sequences with multiple
-FSPLIT/FFUSE pairs render as consecutive fork blocks.
-
-  Key differences from IMSCRIBr canonicals:
-    II  Void Genesis:        VINIT FSPLIT EVALT FFUSE EVALF CLINK IFIX ISCRIB
-    III Anchor Protocol:     TANCH AFWD EVALT AREV EVALF CLINK IFIX TANCH (linear)
-    VII Parakernel:          ENGAGR AFWD FSPLIT EVALT FFUSE EVALF IFIX ENGAGR
-    VIII Frobenius Kernel:   FSPLIT FFUSE FSPLIT FFUSE — 2 consecutive fork blocks
-    XI  Eternal Return:      TANCH AFWD AREV × period (linear)
-
-  VIII renders as ⟨ ∅ | ∅ ⟩ . ⟨ ∅ | ∅ ⟩: two adjacent Frobenius identity
-  lenses — (μ∘δ)∘(μ∘δ) = id∘id = id — visually showing μ∘δ=id composed twice.
-
-  Ouroboricity computed from mOMonadOS kernel's compute_tier logic:
-    I, VII: O_∞  (dial + self_ref + frob, period ≥ 3)
-    II, IV, VIII, X, XII: O₁
-    III, V, VI, IX, XI: O₀
-
-  Ouroboric arc fires on two conditions (not just ouro != O₀):
-    1. ouroboricity > O₀ (as before)
-    2. visual_period(seq) in (2, n-1) — catches cut-short repeating prefixes
-       e.g. XI (1,2,3,1,2,3,1,2) has vp=3 though 8%3≠0; arc labeled "p=3"
-    Constant sequences (vp=1) excluded — a flat IFIX run isn't "returning."
-
-Output: docs/cfg_dag_momonados_{key}.gif (12 files)
-Run: python3 cfg_dag_momonados.py
-
----
-
-cfg_dag.py: DAG-structured CFG animations from decompressed token sequences
-
-New script: cfg_dag.py
-
-Renders the 12 canonical IMASM classes as proper DAGs — FSPLIT/FFUSE pairs
-become genuine fork/join nodes with T-branch (upper lane) and F-branch (lower
-lane). Linear sequences render flat as before.
-
-  Layout:
-    - T-branch: upper lane (Y_T=0.76), teal arrows
-    - F-branch: lower lane (Y_F=0.24), red arrows
-    - Empty branches: dashed bezier arc from FSPLIT to FFUSE at lane height
-    - Lane labels "T" / "F" annotated between fork nodes
-    - Fork-aware build phase: nodes revealed by topological depth group
-    - Fork-aware flow phase: pulse travels by DAG depth (parallel branches
-      activate simultaneously at the same depth)
-
-  Classes with matched FSPLIT/FFUSE (4):
-    I   Dialetheic Bootstrap: fork@d=2, F-branch=[EVALF]
-    II  Void Genesis:         fork@d=3, T-branch=[CLINK]
-    VII Parakernel:           fork@d=2, T-branch=[EVALT, AFWD]
-    VIII Frobenius Kernel:    fork@d=1, both branches empty (pure μ∘δ)
-
-  Classes without fork (8): render flat as before (III, IV, V, VI, IX, X, XI, XII)
-
-Output: docs/cfg_dag_{key}.gif (12 files, 393–597 KB)
-Run: python3 cfg_dag.py
-
----
-
-tokens.py, engine.py: DAG arity and unflattened dag_str renderer
-
-tokens.py:
-  - TOKEN_ARITY: (in-degree, out-degree) for each of the 12 tokens as DAG nodes.
-    VINIT=(0,1) source; FSPLIT=(1,2) fork; FFUSE=(2,1) join; all others=(1,1).
-  - TOKEN_BRANCH: {EVALT: 'T', EVALF: 'F'} — branch-constrained tokens.
-  - FORK_TOKENS, JOIN_TOKENS: frozensets for structural detection.
-  - dag_str(arr): renders an arrangement as an unflattened DAG expression.
-      Sequential tokens: A . B . C
-      Matched FSPLIT/FFUSE pair: ⟨ T-branch | F-branch ⟩
-      Branch assignment: EVALT anchors T, EVALF anchors F; tokens before
-      the first anchor follow whichever branch is present.
-      Unmatched FSPLIT or inverted FFUSE→FSPLIT: rendered inline (flat).
-      Recursive: post-fuse segment recurses to catch further fork blocks.
-
-engine.py:
-  - Imports TOKEN_ARITY, TOKEN_BRANCH, FORK_TOKENS, JOIN_TOKENS, dag_str.
-
-All 12 canonical classes verified. Examples:
-  I   Dialetheic Bootstrap: IMSCRIB . EVALT . ⟨ ∅ | EVALF ⟩ . ENGAGR . IFIX . IMSCRIB
-  II  Void Genesis:         VINIT . TANCH . AFWD . ⟨ CLINK | ∅ ⟩ . IFIX . IMSCRIB
-  VII Parakernel:           EVALF . AREV . ⟨ EVALT . AFWD | ∅ ⟩ . ENGAGR . IFIX
-  VIII Frobenius Kernel:    VINIT . ⟨ ∅ | ∅ ⟩ . TANCH
-
----
-
-cfg_sequences.py: animated token-sequence CFGs for all 12 canonical IMASM classes
-
-New script: cfg_sequences.py
-
-For each of the 12 canonical IMASM arrangement classes (I–XII), generates
-an animated GIF in docs/cfg_seq_{class_key}.gif:
-
-  Visualization:
-    - nodes coloured by token family:
-        LOGICAL=#4e79a7  FROBENIUS=#ffd700  DIALETHEIA=#e15759  LINEAR=#59a14f
-    - register state annotated below each node (VOID/T/F/B⬡)
-    - ouroboric back-arc when ouroboricity > O₀
-    - Everson Mono font for Shavian IG-type footer
-    - Phase 1: build — nodes appear step by step
-    - Phase 2: flow — Gaussian pulse travels the sequence
-
-  Register simulation:
-    - full dialetheic-aware IMASM machine (inline, no imports)
-    - pre-split EVALT tracking for FFUSE dialetheic mode
-    - IFIX/IMSCRIB exception correctly handles fixed-register steps
-
-  Sequences: all 12 from CANONICAL_CLASSES:
-    I Dialetheic Bootstrap (O₂)  → B⬡ final
-    II Void Genesis (O₀)          → T final
-    III Anchor Protocol (O₁)      → T final
-    IV Dual Bootstrap (O_∞)       → B⬡ final
-    V Linear Chain (O₀)           → VO⌀ final
-    VI Empty Bootstrap (O₁)       → T final
-    VII Parakernel (O₂)            → T final
-    VIII Frobenius Kernel (O₀)    → VO⌀ final  [4 steps]
-    IX Chiral Pairs (O₁)          → B⬡ final
-    X Truth Machine (O₁)          → T final
-    XI Eternal Return (O₂)        → B⬡ final
-    XII ROM Burn (O₀)             → T final
-
-Output: docs/ (12 GIFs, 343–552 KB each)
-Run: python3 cfg_sequences.py
-
----
-
+Files touched: newton_lift.py, NEWTON_LIFT_DESIGN.md (§1.4 correction note,
+new §1.6.1), pathway_ledger.json (cleanup only, no net new entries from
+this round of work).
