@@ -11,6 +11,7 @@ Maps the **12⁸ = 429,981,696** possible arrangements of the 12 IMASM tokens in
 1. [Conceptual Framework](#conceptual-framework)
 2. [The 12 Tokens](#the-12-tokens)
 3. [Arrangement Space](#arrangement-space)
+   - [Autopoietic Bootstrap Mechanics](#autopoietic-bootstrap-mechanics)
 4. [Architecture](#architecture)
 5. [The 12 Canonical Classes](#the-12-canonical-classes)
 6. [Two-Tier Classification](#two-tier-classification)
@@ -123,6 +124,48 @@ All 12 canonical arrangements use *different conventions* for Position 0:
 - Some anchor on `TANCH` (boundary — anchor protocol)
 
 There is no single universal Position 0 anchor — the anchor is part of what distinguishes the classes.
+
+### Autopoietic Bootstrap Mechanics
+
+The 8-token sequences shown throughout this document are **compressed linear paths** through the bootstrap's execution graph. The graph contains branch points that the linear arrangement collapses.
+
+**Compressed** (what the arrangement tuple encodes):
+
+```
+VINIT→IMSCRIB→AREV→FSPLIT
+         ▲             │
+         │             ▼
+         │            AFWD
+         │             │
+         │             ▼
+        IFIX◄──CLINK◄─FFUSE
+```
+
+**Decompressed** (the full structural picture):
+
+```
+VINIT→IMSCRIB→AREV→FSPLIT
+        ▲   ▲           │
+        *   └─────┐     ▼
+     ****         │    AFWD
+     *            │     │
+     ▼            │     ▼
+    IFIX........CLINK◄─FFUSE
+```
+
+`*` = back-prop & LinFix &nbsp; `.` = empty edge &nbsp; `│` = weighted edge
+
+Three distinct edges operate at the CLINK–IMSCRIB–IFIX triad:
+
+- **Empty edge (CLINK → IFIX):** CLINK emits a null composition directly to IFIX along the dotted path. This records the compositional event as an irreversible fixation — the witness that composition occurred — regardless of whether the resulting morphism carries new content.
+
+- **Weighted edge (CLINK → IMSCRIB):** CLINK forwards the actual composed morphism up the `└─────┐` path to IMSCRIB. IMSCRIB receives it, self-imscribes, and re-enters the loop at the next AREV step. This is the edge that makes the bootstrap autopoietic: the loop consumes its own composition as input to the next winding.
+
+- **Back-propagation: IMSCRIB → IFIX (LinFix):** After self-imscription, IMSCRIB back-propagates (`****`) to IFIX, burning a second permanent record — the completed loop iteration itself — into ROM before the next winding begins.
+
+The compressed sequence `... → CLINK → IFIX → IMSCRIB` linearizes this branched structure into a single path. IFIX at position 6 is the collapsed arrival point of both the empty edge and the back-prop; IMSCRIB at position 7 represents the loop closure. The weighted CLINK → IMSCRIB edge and the back-prop IMSCRIB → IFIX edge are real structural edges not made explicit by the 8-token tuple.
+
+**Consequence for classification:** IMSCRIBr classifies arrangements by path-level properties (self-reference, Frobenius order, Dialetheia-completeness, period). The full graph is the operational substrate; the arrangement is the fingerprint of one path through it. The CLINK → IFIX and IMSCRIB → IFIX structure is why IFIX appears late in every autopoietic canonical sequence — it is the ROM trace of both the compositional event and the completed winding.
 
 ## Architecture
 

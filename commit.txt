@@ -1,3 +1,16 @@
+Document autopoietic bootstrap mechanics in README (2026-06-17)
+
+Added "Autopoietic Bootstrap Mechanics" subsection to README.md explaining
+that the displayed 8-token sequences are compressed linear paths through the
+bootstrap's execution graph. The decompressed graph shows: (1) CLINK sends
+an empty edge directly to IFIX (compositional witness fixation); (2) CLINK
+sends a weighted edge back to IMSCRIB (loop continuation); (3) IMSCRIB
+back-propagates to IFIX (LinFix — self-reference witness, ROM record of the
+completed winding). Both ASCII diagrams (compressed + decompressed) included
+with legend. ToC updated to include the new subsection.
+
+---
+
 Expand GRAMMAR_PATTERNS (2026-06-17)
 
 - Full Shavian block ordered U+10450-U+1047F (was unordered subset)
