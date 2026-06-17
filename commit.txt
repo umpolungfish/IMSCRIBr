@@ -1,3 +1,18 @@
+Expand GRAMMAR_PATTERNS (2026-06-17)
+
+- Full Shavian block ordered U+10450-U+1047F (was unordered subset)
+- LaTeX \text{} catch expanded to all Shavian/⊙ glyphs (was only 𐑦, 𐑸)
+- Angle-bracket tuple: ⟨…·…⟩ and ⟨…;…⟩ both caught (was only ·)
+- imscrib stem catches all forms: imscription, imscribed, imscribing, IMSCRIBr
+- O_\d covers O_0–O_9 (was O_0/O_1/O_2 individually); added O_∞ and O_{\infty}
+- Added: imscribing grammar, IG catalog, catalog address, crystal of types,
+  structural address, T-object, ZFC_t/ZFC_fe variants, Belnap FOUR,
+  dialetheic, IMASM, ob3ect, p4rakernel, p4ramill, CL8NK, CLINK, SerpentRod,
+  imscriptionbox, Magnum Opus, stoichiometric type
+- Fixed double-\b typo on Frobenius address
+
+---
+
 Newton Lift: math-preservation / rigor correction (2026-06-15)
 
 Closed a significant design bug reported directly by the user: the pipeline

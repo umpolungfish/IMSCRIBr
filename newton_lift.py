@@ -35,28 +35,75 @@ except ImportError:
 # ── Grammar notation patterns to detect in verification ──────────────────
 
 GRAMMAR_PATTERNS: List[str] = [
-    r'[𐑦𐑛𐑨𐑼𐑸𐑡𐑰𐑥𐑶𐑽𐑩𐑑𐑾𐑹𐑬𐑯𐑿𐑗𐑐𐑱𐑞𐑺𐑪𐑧𐑤𐑘𐑔𐑚𐑲𐑵𐑝𐑜𐑠⊙𐑮𐑻𐑢𐑣𐑓𐑒𐑖𐑫𐑙𐑕𐑳𐑷𐑴𐑭𐑟]',
-    r'\bimscribe\b',
-    r'\bouroboric',
-    r'\bprimitive\b',
-    r'\b\bFrobenius address\b',
-    r'\bcrystal.encode\b',
-    r'\bcrystal.decode\b',
+    # ── Shavian block (U+10450–U+1047F) + ⊙ ──────────────────────────────────
+    r'[𐑐𐑑𐑒𐑓𐑔𐑕𐑖𐑗𐑘𐑙𐑚𐑛𐑜𐑝𐑞𐑟𐑠𐑡𐑢𐑣𐑤𐑥𐑦𐑧𐑨𐑩𐑪𐑫𐑬𐑭𐑮𐑯𐑰𐑱𐑲𐑳𐑴𐑵𐑶𐑷𐑸𐑹𐑺𐑻𐑼𐑽𐑾𐑿⊙]',
+    # LaTeX \text{} containing any Shavian glyph or ⊙
+    r'\\text\{[𐑐𐑑𐑒𐑓𐑔𐑕𐑖𐑗𐑘𐑙𐑚𐑛𐑜𐑝𐑞𐑟𐑠𐑡𐑢𐑣𐑤𐑥𐑦𐑧𐑨𐑩𐑪𐑫𐑬𐑭𐑮𐑯𐑰𐑱𐑲𐑳𐑴𐑵𐑶𐑷𐑸𐑹𐑺𐑻𐑼𐑽𐑾𐑿⊙]\}',
+    # Angle-bracket tuple notation
+    r'⟨[^⟩]*[·;][^⟩]*⟩',
+
+    # ── imscribe / imscription family ─────────────────────────────────────────
+    r'\bimscrib',                   # imscribe, imscribed, imscribing, IMSCRIBr
+    r'\bimscription',               # imscription, imscriptions (different stem: imscri-p not imscri-b)
+    r'\bIMSCRIBr\b',
+
+    # ── Ouroboricity / tier labels ────────────────────────────────────────────
+    r'\bourobor',                   # ouroboric, ouroboricity, ouroboros
+    r'\bO_\d\b',                    # O_0 through O_9
+    r'\bO_\\infty\b',               # O_\infty (LaTeX form in prose)
+    r'\bO_∞',                       # O_∞ (Unicode form — no trailing \b, ∞ is non-word char)
+    r'O_\{\\infty\}',               # O_{\infty} (LaTeX braced form)
+
+    # ── Grammar / catalog / crystal vocabulary ────────────────────────────────
+    r'\bimscribing\s+[Gg]rammar\b',
+    r'\bImscribing\s+Grammar\b',
+    r'\bIG\s+catalog\b',
+    r'\bcatalog\s+(?:entry|entries|address)\b',
+    r'\bcrystal\s+of\s+types\b',
+    r'\bcrystal[._](?:encode|decode|address)\b',
     r'\bcrystal_address\b',
-    r'\bconsciousness.score\b',
+    r'\bstructural\s+typ(?:e|es|ing)\b',
+    r'\bstructural\s+address\b',
+    r'\bFrobenius\s+address\b',
+    r'\bT[-_\s]object\b',
+
+    # ── Primitive / primitive names ───────────────────────────────────────────
+    r'\bprimitive[s]?\b',
+
+    # ── Consciousness / Phi_c ────────────────────────────────────────────────
+    r'\bconsciousness[._]score\b',
     r'\bPhi_c\b',
-    r'\bO_\\infty\b',
-    r'\bO_0\b',
-    r'\bO_1\b',
-    r'\bO_2\b',
-    r'\bprimitives\b',
-    r'\bstructural type\b',
-    r'\bstructural typing\b',
-    r'\bcatalog entry\b',
+
+    # ── Grammar-specific ZFC variants ────────────────────────────────────────
+    r'\bZFC_(?:t|T|fe|FE)\b',
+    r'\bZFCt\b',
+    r'\bZFCfe\b',
+
+    # ── Paraconsistent / Belnap (grammar-specific usage) ─────────────────────
+    r'\bBelnap\s+(?:four|FOUR|Four|[24])\b',
+    r'\bdialetheic\b',
+
+    # ── IMASM token system ────────────────────────────────────────────────────
+    r'\bIMASM\b',
+    r'\bimasm\b',
+
+    # ── Shavian notation keyword ──────────────────────────────────────────────
     r'\bShavian\b',
-    r'⟨.*·.*⟩',
-    r'text\{𐑦\}',
-    r'text\{𐑸\}',
+
+    # ── Repo / tool artifact names ────────────────────────────────────────────
+    r'\bob3ect\b',
+    r'\bp4rakernel\b',
+    r'\bp4ramill\b',
+    r'\bCL8NK\b',
+    r'\bCLINK\b',
+    r'\bSerpentRod\b',
+    r'\bimscriptionbox\b',
+
+    # ── Magnum Opus (alchemy↔grammar mapping) ────────────────────────────────
+    r'\bMagnum\s+Opus\b',
+
+    # ── Stoichiometric type (grammar-specific framing) ────────────────────────
+    r'\bstoichiometric\s+type\b',
 ]
 
 COMPILED_PATTERNS = [re.compile(p) for p in GRAMMAR_PATTERNS]
