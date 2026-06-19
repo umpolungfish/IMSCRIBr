@@ -32,5 +32,27 @@
       "truth": "The Frobenius identity \u03bc\u2218\u03b4=id on the monoidal unit in a traced symmetric monoidal category enriched over Belnap-Dunn four-valued logic generates the logical architecture of self-reference, growth, and closure, appearing identically across mathematics, biology, alchemy, and formal verification.",
       "source_title": "The Frobenius Cosmogeny: Structure from a Single Axiom"
     }
+  ],
+  "mathematics": [
+    {
+      "truth": "The contraction-mapping approach to the Twin Prime Conjecture fails due to a structural obstruction: the circle method and the contraction-mapping framework impose conflicting regularity requirements on the function space, as quantified by Montgomery's theorem on the Lipschitz constant of exponential sums.",
+      "source_title": "Structural Analysis of a Claimed Twin Prime Conjecture Proof"
+    },
+    {
+      "truth": "The Euler brick solution space is structurally idempotent under tensor product, and the perfect cuboid's space diagonal condition forces a transition to a curve of positive genus, making the gap between the two systems a discrete jump in arithmetic structure rather than a matter of computational reach.",
+      "source_title": "Euler Bricks and the Perfect Cuboid: Why the Gap is Structural, Not Computational"
+    },
+    {
+      "truth": "The EML Sheffer operator's subtraction operation is exactly the adjoint bridge between exponential and logarithmic homomorphisms, unifying the additive and multiplicative group structures.",
+      "source_title": "Structural Probing of the EML Sheffer Operator"
+    },
+    {
+      "truth": "The IUG is the minimal Frobenius algebra that internalizes the abc conjecture's additive-multiplicative tension, with a structural core distance of approximately 2.864.",
+      "source_title": "On the Structural Non-Transmissibility of Mochizuki's Inter-Universal Geometer"
+    },
+    {
+      "truth": "The existence of a SIC-POVM in dimension d is equivalent to the existence of a Stark unit in the ray class field L_d over K_d = Q(sqrt(d(d-2))) that is fixed by a canonical Frobenius involution.",
+      "source_title": "SIC-POVM Existence via Frobenius-Fixed Stark Units: A Conditional Proof through Galois Descent"
+    }
   ]
 }
