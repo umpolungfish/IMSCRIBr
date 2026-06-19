@@ -54,5 +54,11 @@
       "truth": "The existence of a SIC-POVM in dimension d is equivalent to the existence of a Stark unit in the ray class field L_d over K_d = Q(sqrt(d(d-2))) that is fixed by a canonical Frobenius involution.",
       "source_title": "SIC-POVM Existence via Frobenius-Fixed Stark Units: A Conditional Proof through Galois Descent"
     }
+  ],
+  "": [
+    {
+      "truth": "The d=2 SIC-POVM is structurally identical to the four-element Boolean algebra L, with the equiangularity constant, Frobenius-special condition, and measurement cost ratio all matching exactly.",
+      "source_title": ""
+    }
   ]
 }

@@ -1,3 +1,88 @@
+proof_scaffold.py: theorem stubs + EVALT/EVALF arm defs + domain annotations (2026-06-19)
+
+Three features added to emit_scaffold():
+
+1. Verification theorem stubs — obligation blocks are now actual named Lean
+   theorems, not comments: _tier (by decide, always closed), _frobenius
+   (apply igFrobAlg_self_fusion + sorry for the .prod arm), _self_ref
+   (constructor · exact igProtoCopy_isDagger · exact igProtoMu_depth),
+   _loop_closure (exact ⟨_, rfl, by decide, by decide⟩). The sorry in
+   _frobenius is an honest obligation — the main protocol term stays sorry-free.
+
+2. EVALT/EVALF branch sub-defs — when EVALT or EVALF appear in the token
+   sequence, emit named noncomputable defs (_true_arm, _false_arm) that
+   restrict the main protocol to each evaluation arm via .restrictToEVALT /
+   .restrictToEVALF. Domain label from opcode_map used as comment header.
+
+3. Domain opcode annotations — emit_scaffold() accepts opcode_map: Dict[str,str]
+   (opcode name → domain-semantic label). Values appear as inline comment
+   suffixes on every .arrow node (e.g. "(Amendment proposal)"). ScaffoldState
+   carries the map; _node_arrow, _emit_chain, _emit_fork all propagate it.
+
+Pipeline wiring:
+  proof_scaffold_ob3ect.py: scaffold_sequence() + ScaffoldOb3ect.run() accept
+    and forward opcode_map.
+  ob3ect/auto.py: extracts domain_opcode_map from bootstrap.steps
+    {opcode → domain_action} and passes to _SCAFFOLD.run().
+  true_agentic_agent.py: _proof_scaffold_emit passes args["opcode_map"];
+    schema extended with opcode_map object property.
+
+All four files py_compile clean. Smoke test on I_Dialetheic_Bootstrap: all
+three features verified present.
+
+---
+
+proof_scaffold.py: eliminate all sorry slots — fill concrete Imscription types (2026-06-19)
+
+_build_flow() computes (src_type, tgt_type) for every arrow-emitting node from
+the token sequence topology: linear nodes flow prev→next, FSPLIT implicit as .prod,
+FFUSE src = own type (branches converge), branch interior gets (types[fs], types[ff]).
+First node self-roots (src = own type), last node closes loop (tgt = types[0]).
+
+Changes:
+  - _node_arrow: label filled with val from _TOKEN_IG (was sorry)
+  - _emit_chain/_emit_fork: src/tgt from flow dict (was sorry/sorry)
+  - .refl slots: filled with FFUSE type (was .refl sorry)
+  - def signature: IGProtocol {start_type} {end_type}, h : imscriptionTier {start_type} = .O_inf
+  - Tier theorem: TierFunctor.obj {start_type} = .O_inf := by decide (was True := trivial)
+  - safe_name: strips all non-identifier chars (handles Gödel's, apostrophes, etc.)
+
+Zero sorrys in all 12 canonical class scaffolds.
+
+---
+
+Add proof_scaffold.py — IGProtocol Lean term scaffold from WiredGraph (2026-06-19)
+
+Closes the agent translation gap: compressed 8-token arrangement tuples lose
+branch topology (FSPLIT/FFUSE fork/join, back-prop edges, Dialetheia arms) that
+an agent needs to construct correct IGProtocol Lean terms. wiring.py
+(imscr_wiring) is already the decompressor — scaffold emitter goes on top.
+
+proof_scaffold.py:
+  - Takes any arrangement tuple or canonical class name
+  - Calls imscr_wiring() to get the full port-level WiredGraph
+  - Walks topological layers: linear nodes → .arrow, FSPLIT/FFUSE pairs → .prod
+  - Emits .withGram/.withMem wrappers when dialetheia/frobenius/self-ref present
+  - Annotates each sorry slot: token name, dominant IG field, value, description
+  - Flags back-prop (IMSCRIB→IFIX LinFix) and cross-branch wires separately
+  - Emits named verification obligations pointing to IGFunctor/IGMorphism axioms:
+    Frobenius (mu_delta_A_id), self-ref (paralogical_copy/dagger),
+    dialetheia (.prod arms + .withMem H_inf), back-prop (igProtoCopy_isDagger),
+    cross-branch (paralogicalLift)
+  - CLI: python3 proof_scaffold.py --all → scaffolds/ dir, one .lean per class
+
+scaffolds/ (12 files generated):
+  i_dialetheic_bootstrap.lean through xii_rom_burn.lean
+  Each: noncomputable def + sorry-slotted IGProtocol term + verification list.
+  Agent fills sorry slots with Imscription literals; type checker enforces
+  reconnection correctness structurally.
+
+Branch insertion is additive only — restores topology always implicit in the
+fingerprint, strictly narrowing valid Lean proof strategies without eliminating
+any correct one.
+
+---
+
 Document autopoietic bootstrap mechanics in README (2026-06-17)
 
 Added "Autopoietic Bootstrap Mechanics" subsection to README.md explaining

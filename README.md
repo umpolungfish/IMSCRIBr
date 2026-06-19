@@ -174,6 +174,8 @@ IMSCRIBr/
 ├── tokens.py          # Token enum, 4 families, signature algebra
 ├── classifier.py      # StructuralFingerprint, two-tier keys, canonical DB
 ├── engine.py          # Signature-decomposed enumeration, SpaceMap, search
+├── wiring.py          # WiredGraph, Wire, imscr_wiring(), match_pairs() — port-level topology
+├── proof_scaffold.py  # emit_scaffold() → typed IGProtocol Lean term from any arrangement
 ├── run_map.py         # CLI runner (sample, full, search modes)
 ├── pyproject.toml     # Build config, hatchling, console entry point
 ├── README.md          # This document
