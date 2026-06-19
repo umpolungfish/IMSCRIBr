@@ -697,6 +697,98 @@ for name, fp in CANONICAL_FINGERPRINTS.items():
 | `search_arrangements(...)` | `engine.py` | Constrained arrangement search |
 | `enumerate_signatures(n)` | `engine.py` | List all family signatures |
 
+## Proof Scaffold
+
+`proof_scaffold.py` converts any arrangement tuple into a typed **IGProtocol Lean term** — a complete, machine-checkable structural proof skeleton with zero `sorry` slots in the main term.
+
+### What it emits
+
+```
+-- Header: fingerprint, FSPLIT/FFUSE pairs, expected tier
+import Imscribing.IGMorphism
+import Imscribing.IGFunctor
+namespace Imscribing
+
+-- Token → IG field mapping with concrete src/tgt types
+-- Back-propagation edge annotations (LinFix)
+
+noncomputable def my_ob3ect_protocol
+    (h : imscriptionTier Gamma_seq = .O_inf) : IGProtocol Gamma_seq Gamma_seq :=
+  .withGram Gamma_seq <|
+  .withMem H_inf <|
+  (.arrow Gamma_seq Gamma_seq P_asym)        -- [0] IMSCRIB | gram
+  (.arrow P_asym Gamma_seq G_beth)           -- [1] AREV    | pol
+  .seq (.prod
+    (.arrow R_lr G_beth one_one)             -- [3] AFWD | rel  (T-branch)
+    (.refl one_one))                         -- F-branch: empty arc
+  (.arrow one_one one_one F_ell)             -- [4] FFUSE | stoi
+  (.arrow F_ell one_one Omega_Z)             -- [5] CLINK | fid
+  (.arrow Omega_Z F_ell Gamma_seq)           -- [6] IFIX  | prot
+  (.arrow Gamma_seq Omega_Z Gamma_seq)       -- [7] IMSCRIB | gram
+
+-- EVALT/EVALF arm sub-defs (feature 2 — when tokens present):
+noncomputable def my_ob3ect_true_arm  : IGProtocol Gamma_seq Gamma_seq :=
+  (my_ob3ect_protocol (by decide)).restrictToEVALT
+noncomputable def my_ob3ect_false_arm : IGProtocol Gamma_seq Gamma_seq :=
+  (my_ob3ect_protocol (by decide)).restrictToEVALF
+
+-- Verification theorems (feature 1):
+theorem my_ob3ect_tier      : TierFunctor.obj Gamma_seq = .O_inf := by decide
+theorem my_ob3ect_frobenius : igFrobeniusAlg.frob (my_ob3ect_protocol (by decide)) := by
+  apply igFrobAlg_self_fusion; sorry  -- one honest sorry: requires library .prod arm proof
+theorem my_ob3ect_self_ref  : (igProtoDelta Gamma_seq (by decide)).isDagger = true ∧ ... := by
+  constructor · exact igProtoCopy_isDagger · exact igProtoMu_depth
+theorem my_ob3ect_loop_closure : ∃ loop, loop = ... ∧ loop.period = 8 ∧ loop.depth = 1 :=
+  ⟨_, rfl, by decide, by decide⟩
+
+end Imscribing
+```
+
+### Three features
+
+| Feature | What it produces |
+|---------|-----------------|
+| **Theorem stubs** | Named Lean `theorem` declarations for tier (`by decide`), Frobenius (`apply igFrobAlg_self_fusion`), self-reference (`exact igProtoCopy_isDagger`), and loop closure (`⟨_, rfl, by decide, by decide⟩`). One `sorry` in the Frobenius theorem is an honest obligation — the main term has none. |
+| **EVALT/EVALF arm defs** | When `EVALT` or `EVALF` appear in the token sequence, emits named `_true_arm` / `_false_arm` `noncomputable def`s restricting the main protocol to each evaluation branch via `.restrictToEVALT` / `.restrictToEVALF`. |
+| **Domain opcode annotations** | Optional `opcode_map: Dict[str, str]` appends domain-semantic labels to each `.arrow` comment (e.g. `(Amendment proposal)`). Supplied automatically by `ob3ect/auto.py` from the artifact's bootstrap step `domain_action` fields. |
+
+### Type flow
+
+All `src_type` / `tgt_type` values are computed deterministically from the token sequence topology — no `sorry` required:
+
+- **Linear node:** `src = type of previous top-level node`, `tgt = type of next`
+- **First node:** `src = types[0]` (self-root — loop begins here)
+- **Last node:** `tgt = types[0]` (close loop back to start)
+- **FSPLIT:** implicit as `.prod δ` — not emitted as `.arrow`
+- **FFUSE:** `src = types[ff]`, `tgt = type of next non-FSPLIT top-level node`
+- **Branch interior:** `src = types[fs]`, `tgt = types[ff]`
+
+### CLI
+
+```bash
+# All 12 canonical classes → scaffolds/ directory
+python3 proof_scaffold.py --all
+
+# Single canonical class
+python3 proof_scaffold.py           # prints all 12
+
+# From ob3ect digital module
+python3 -c "
+from digital.proof_scaffold_ob3ect import ScaffoldOb3ect
+s = ScaffoldOb3ect()
+print(s.canonical('I_Dialetheic_Bootstrap'))
+print(s.run(['IMSCRIB','AREV','FSPLIT','AFWD','FFUSE','CLINK','IFIX','IMSCRIB'],
+            name='my_system',
+            opcode_map={'AFWD': 'amendment proposal', 'FFUSE': 'checks and balances'}))
+"
+```
+
+### Wiring layer
+
+`wiring.py` decompresses the 8-token linear tuple into the full port-level `WiredGraph` — including back-propagation edges (IMSCRIB→IFIX LinFix), cross-branch wires, and the CLINK→IMSCRIB weighted loop edge. `proof_scaffold.py` runs on top of this graph; the scaffold structure is the graph's topology expressed as a typed Lean term.
+
+---
+
 ## Performance
 
 | Mode | Arrangements | Time | Rate |
@@ -763,6 +855,8 @@ Class IV (Dual Bootstrap) is the only O_∞ canonical — it combines self-refer
 | `tokens.py` | 94 | Token enum, 4 families, `signature()`, `arrangement_str()` |
 | `classifier.py` | 240 | `StructuralFingerprint`, coarse/fine keys, 12 canonical arrangements |
 | `engine.py` | 379 | `SignatureClass`, `iter_signature_arrangements()`, `SpaceMap`, `search_arrangements()`, `map_space()` |
+| `wiring.py` | ~220 | `WiredGraph`, `Wire`, `imscr_wiring()`, `match_pairs()` — full port-level topology decompression |
+| `proof_scaffold.py` | ~250 | `emit_scaffold()` — typed IGProtocol Lean term from any arrangement; theorem stubs, EVALT/EVALF arm defs, domain annotations |
 | `run_map.py` | 149 | CLI: `--full`, `--sample N`, `--search`, `--length N` |
 | `pyproject.toml` | — | Hatchling build, `imasm-map` console entry point |
 | `README.md` | — | This document |
@@ -770,7 +864,7 @@ Class IV (Dual Bootstrap) is the only O_∞ canonical — it combines self-refer
 | `initial commit.txt` | 75 | Commit manifest with 12-class summary and verification log |
 | `.gitignore` | — | Excludes `__pycache__/`, `*.json`, `imasm_summary.txt` |
 
-**Total:** ~950 lines of Python, zero external dependencies.
+**Total:** ~1,350 lines of Python, zero external dependencies.
 
 ---
 
