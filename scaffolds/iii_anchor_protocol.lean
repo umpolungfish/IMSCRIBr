@@ -14,40 +14,31 @@ open Primitives Frobenius IGProtocol
 open Dimensionality Topology Relational Polarity Grammar
      Fidelity KineticChar Granularity Criticality Protection Stoichiometry Chirality
 
--- ── Token → IG field mapping (fill sorry slots with these) ──────────────
---   [0] TANCH     top    := T_network       terminal object — connectivity boundary
---   [1] AREV      pol    := P_asym          reverse morphism — parity flip
---   [2] VINIT     dim    := D_wedge         initial object — ground of distinction
---   [3] AFWD      rel    := R_lr            forward morphism — bidirectional arrow
---   [4] TANCH     top    := T_network       terminal object — connectivity boundary
---   [5] CLINK     fid    := F_ell           composition — regime coherence
---   [6] IFIX      prot   := Omega_Z         irreversible fixation — winding number
---   [7] IMSCRIB   gram   := Gamma_seq       identity — self-imscription
+-- ── Token → IG field mapping ──────────────────────────────────────────────
+--   [0] TANCH     top    := 𐑡               𐑡 → 𐑗  | terminal object — connectivity boundary
+--   [1] AREV      pol    := 𐑗               𐑡 → 𐑼  | reverse morphism — parity flip
+--   [2] VINIT     dim    := 𐑼               𐑗 → 𐑾  | initial object — ground of distinction
+--   [3] AFWD      rel    := 𐑾               𐑼 → 𐑡  | forward morphism — bidirectional arrow
+--   [4] TANCH     top    := 𐑡               𐑾 → 𐑱  | terminal object — connectivity boundary
+--   [5] CLINK     fid    := 𐑱               𐑡 → 𐑭  | composition — regime coherence
+--   [6] IFIX      prot   := 𐑭               𐑱 → 𐑠  | irreversible fixation — winding number
+--   [7] IMSCRIB   gram   := 𐑠               𐑭 → 𐑡  | identity — self-imscription
 
--- ── Main IGProtocol scaffold ────────────────────────────────────────────────
--- Fill sorry slots:
---   First sorry  = arrow label Imscription (dominant field annotated above)
---   Second sorry = source Imscription node
---   Third sorry  = target Imscription node
+-- ── Main IGProtocol term ────────────────────────────────────────────────────
 
-noncomputable def iii_anchor_protocol_protocol : IGProtocol sorry sorry :=
-  -- Seq chain (nest as needed for type correctness):
-  (.arrow sorry sorry sorry)  -- [0] TANCH | top := T_network | terminal object — connectivity boundary
-  (.arrow sorry sorry sorry)  -- [1] AREV | pol := P_asym | reverse morphism — parity flip
-  (.arrow sorry sorry sorry)  -- [2] VINIT | dim := D_wedge | initial object — ground of distinction
-  (.arrow sorry sorry sorry)  -- [3] AFWD | rel := R_lr | forward morphism — bidirectional arrow
-  (.arrow sorry sorry sorry)  -- [4] TANCH | top := T_network | terminal object — connectivity boundary
-  (.arrow sorry sorry sorry)  -- [5] CLINK | fid := F_ell | composition — regime coherence
-  (.arrow sorry sorry sorry)  -- [6] IFIX | prot := Omega_Z | irreversible fixation — winding number
-  (.arrow sorry sorry sorry)  -- [7] IMSCRIB | gram := Gamma_seq | identity — self-imscription
+noncomputable def iii_anchor_protocol_protocol : IGProtocol 𐑡 𐑠 :=
+  -- Seq chain:
+  (.arrow 𐑡 𐑡 𐑗)  -- [0] TANCH | top := 𐑡 | terminal object — connectivity boundary
+  (.arrow 𐑗 𐑡 𐑼)  -- [1] AREV | pol := 𐑗 | reverse morphism — parity flip
+  (.arrow 𐑼 𐑗 𐑾)  -- [2] VINIT | dim := 𐑼 | initial object — ground of distinction
+  (.arrow 𐑾 𐑼 𐑡)  -- [3] AFWD | rel := 𐑾 | forward morphism — bidirectional arrow
+  (.arrow 𐑡 𐑾 𐑱)  -- [4] TANCH | top := 𐑡 | terminal object — connectivity boundary
+  (.arrow 𐑱 𐑡 𐑭)  -- [5] CLINK | fid := 𐑱 | composition — regime coherence
+  (.arrow 𐑭 𐑱 𐑠)  -- [6] IFIX | prot := 𐑭 | irreversible fixation — winding number
+  (.arrow 𐑠 𐑭 𐑡)  -- [7] IMSCRIB | gram := 𐑠 | identity — self-imscription
 
--- ── Verification obligations ───────────────────────────────────────────────
--- 1. Tier: TierFunctor.obj <src> = .O₀
---    Close with: by decide  (if src is a concrete Imscription literal)
+-- ── Verification theorems ───────────────────────────────────────────────────
 
--- ── Tier verification ───────────────────────────────────────────────────────
-theorem iii_anchor_protocol_tier_check (s : Imscription)
-    (hs : iii_anchor_protocol_protocol = iii_anchor_protocol_protocol) :
-    True := trivial  -- placeholder: replace with actual tier proof
+theorem iii_anchor_protocol_tier : TierFunctor.obj 𐑡 = .O₀ := by decide
 
 end Imscribing

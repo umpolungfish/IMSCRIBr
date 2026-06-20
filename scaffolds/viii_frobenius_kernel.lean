@@ -14,44 +14,35 @@ open Primitives Frobenius IGProtocol
 open Dimensionality Topology Relational Polarity Grammar
      Fidelity KineticChar Granularity Criticality Protection Stoichiometry Chirality
 
--- ── Token → IG field mapping (fill sorry slots with these) ──────────────
---   [0] VINIT     dim    := D_wedge         initial object — ground of distinction
---   [1] FSPLIT    gran   := G_beth          split δ — range decomposition
---   [2] FFUSE     stoi   := one_one         fuse μ — assembly mode
---   [3] TANCH     top    := T_network       terminal object — connectivity boundary
+-- ── Token → IG field mapping ──────────────────────────────────────────────
+--   [0] VINIT     dim    := 𐑼               𐑼 → 𐑚  | initial object — ground of distinction
+--   [1] FSPLIT    gran   := 𐑚               𐑚 → 𐑚  | split δ — range decomposition
+--   [2] FFUSE     stoi   := 𐑙               𐑙 → 𐑡  | fuse μ — assembly mode
+--   [3] TANCH     top    := 𐑡               𐑙 → 𐑼  | terminal object — connectivity boundary
 
--- ── Main IGProtocol scaffold ────────────────────────────────────────────────
--- Fill sorry slots:
---   First sorry  = arrow label Imscription (dominant field annotated above)
---   Second sorry = source Imscription node
---   Third sorry  = target Imscription node
+-- ── Main IGProtocol term ────────────────────────────────────────────────────
 
-noncomputable def viii_frobenius_kernel_protocol : IGProtocol sorry sorry :=
-  .withGram Gamma_seq <|
-  -- Seq chain (nest as needed for type correctness):
-  (.arrow sorry sorry sorry)  -- [0] VINIT | dim := D_wedge | initial object — ground of distinction
-  -- FSPLIT [1] (gran := G_beth) / FFUSE [2] (stoi := one_one)
+noncomputable def viii_frobenius_kernel_protocol : IGProtocol 𐑼 𐑡 :=
+  .withGram 𐑠 <|
+  -- Seq chain:
+  (.arrow 𐑼 𐑼 𐑚)  -- [0] VINIT | dim := 𐑼 | initial object — ground of distinction
+  -- FSPLIT [1] (gran := 𐑚) / FFUSE [2] (stoi := 𐑙)
   .seq
     (.prod
       -- T-branch (0 nodes)
-      (.refl sorry)  -- T-branch: empty arc (direct to FFUSE.T)
+      (.refl 𐑙)  -- T-branch: empty arc (direct to FFUSE.T)
       -- F-branch (0 nodes)
-      (.refl sorry))  -- F-branch: empty arc (direct to FFUSE.F)
+      (.refl 𐑙))  -- F-branch: empty arc (direct to FFUSE.F)
     -- reconnect at FFUSE [2]: μ closes the Frobenius pair
-    (.arrow sorry sorry sorry)  -- [2] FFUSE | stoi := one_one
-  (.arrow sorry sorry sorry)  -- [3] TANCH | top := T_network | terminal object — connectivity boundary
+    (.arrow 𐑙 𐑙 𐑡)  -- [2] FFUSE | stoi := 𐑙
+  (.arrow 𐑡 𐑙 𐑼)  -- [3] TANCH | top := 𐑡 | terminal object — connectivity boundary
 
--- ── Verification obligations ───────────────────────────────────────────────
--- 1. Tier: TierFunctor.obj <src> = .O₂
---    Close with: by decide  (if src is a concrete Imscription literal)
+-- ── Verification theorems ───────────────────────────────────────────────────
 
--- 2. Frobenius (split → fuse (canonical)):
---    mu_delta_A_id proves igFrobeniusAlg.frob for the .prod branch
---    igFrobAlg_self_fusion closes the tensor self-application
+theorem viii_frobenius_kernel_tier : TierFunctor.obj 𐑼 = .O₂ := by decide
 
--- ── Tier verification ───────────────────────────────────────────────────────
-theorem viii_frobenius_kernel_tier_check (s : Imscription)
-    (hs : viii_frobenius_kernel_protocol = viii_frobenius_kernel_protocol) :
-    True := trivial  -- placeholder: replace with actual tier proof
+-- Frobenius (split → fuse): μ∘δ = id on .prod branch
+-- Proof: apply igFrobAlg_self_fusion; exact mu_delta_A_id
+-- (requires mu_delta_A_id from IGFunctor library)
 
 end Imscribing

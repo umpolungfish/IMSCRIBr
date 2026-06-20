@@ -14,58 +14,53 @@ open Primitives Frobenius IGProtocol
 open Dimensionality Topology Relational Polarity Grammar
      Fidelity KineticChar Granularity Criticality Protection Stoichiometry Chirality
 
--- ── Token → IG field mapping (fill sorry slots with these) ──────────────
---   [0] EVALF     chir   := H2              evaluate-false — chirality check
---   [1] AREV      pol    := P_asym          reverse morphism — parity flip
---   [2] FSPLIT    gran   := G_beth          split δ — range decomposition
---   [3] EVALT     crit   := Phi_c           evaluate-true — criticality gate open
---   [4] AFWD      rel    := R_lr            forward morphism — bidirectional arrow
---   [5] FFUSE     stoi   := one_one         fuse μ — assembly mode
---   [6] ENGAGR    stoi   := n_m             engage paradox — B-state, both arms
---   [7] IFIX      prot   := Omega_Z         irreversible fixation — winding number
+-- ── Token → IG field mapping ──────────────────────────────────────────────
+--   [0] EVALF     chir   := 𐑖               𐑖 → 𐑗  | evaluate-false — chirality check
+--   [1] AREV      pol    := 𐑗               𐑖 → 𐑚  | reverse morphism — parity flip
+--   [2] FSPLIT    gran   := 𐑚               𐑚 → 𐑚  | split δ — range decomposition
+--   [3] EVALT     crit   := ⊙               𐑚 → 𐑙  | evaluate-true — criticality gate open
+--   [4] AFWD      rel    := 𐑾               𐑚 → 𐑙  | forward morphism — bidirectional arrow
+--   [5] FFUSE     stoi   := 𐑙               𐑙 → 𐑳  | fuse μ — assembly mode
+--   [6] ENGAGR    stoi   := 𐑳               𐑙 → 𐑭  | engage paradox — B-state, both arms
+--   [7] IFIX      prot   := 𐑭               𐑳 → 𐑖  | irreversible fixation — winding number
 
--- ── Main IGProtocol scaffold ────────────────────────────────────────────────
--- Fill sorry slots:
---   First sorry  = arrow label Imscription (dominant field annotated above)
---   Second sorry = source Imscription node
---   Third sorry  = target Imscription node
+-- ── Main IGProtocol term ────────────────────────────────────────────────────
 
-noncomputable def vii_parakernel_protocol : IGProtocol sorry sorry :=
-  .withGram Gamma_seq <|
-  -- Seq chain (nest as needed for type correctness):
-  (.arrow sorry sorry sorry)  -- [0] EVALF | chir := H2 | evaluate-false — chirality check
-  (.arrow sorry sorry sorry)  -- [1] AREV | pol := P_asym | reverse morphism — parity flip
-  -- FSPLIT [2] (gran := G_beth) / FFUSE [5] (stoi := one_one)
+noncomputable def vii_parakernel_protocol : IGProtocol 𐑖 𐑭 :=
+  .withGram 𐑠 <|
+  -- Seq chain:
+  (.arrow 𐑖 𐑖 𐑗)  -- [0] EVALF | chir := 𐑖 | evaluate-false — chirality check
+  (.arrow 𐑗 𐑖 𐑚)  -- [1] AREV | pol := 𐑗 | reverse morphism — parity flip
+  -- FSPLIT [2] (gran := 𐑚) / FFUSE [5] (stoi := 𐑙)
   .seq
     (.prod
       -- T-branch (2 nodes)
       .seq
-        (.arrow sorry sorry sorry)  -- [3] EVALT | crit := Phi_c | evaluate-true — criticality gate open
-        (.arrow sorry sorry sorry)  -- [4] AFWD | rel := R_lr | forward morphism — bidirectional arrow
+        (.arrow ⊙ 𐑚 𐑙)  -- [3] EVALT | crit := ⊙ | evaluate-true — criticality gate open
+        (.arrow 𐑾 𐑚 𐑙)  -- [4] AFWD | rel := 𐑾 | forward morphism — bidirectional arrow
       -- F-branch (0 nodes)
-      (.refl sorry))  -- F-branch: empty arc (direct to FFUSE.F)
+      (.refl 𐑙))  -- F-branch: empty arc (direct to FFUSE.F)
     -- reconnect at FFUSE [5]: μ closes the Frobenius pair
-    (.arrow sorry sorry sorry)  -- [5] FFUSE | stoi := one_one
-  (.arrow sorry sorry sorry)  -- [6] ENGAGR | stoi := n_m | engage paradox — B-state, both arms
-  (.arrow sorry sorry sorry)  -- [7] IFIX | prot := Omega_Z | irreversible fixation — winding number
+    (.arrow 𐑙 𐑙 𐑳)  -- [5] FFUSE | stoi := 𐑙
+  (.arrow 𐑳 𐑙 𐑭)  -- [6] ENGAGR | stoi := 𐑳 | engage paradox — B-state, both arms
+  (.arrow 𐑭 𐑳 𐑖)  -- [7] IFIX | prot := 𐑭 | irreversible fixation — winding number
 
--- ── Verification obligations ───────────────────────────────────────────────
--- 1. Tier: TierFunctor.obj <src> = .O₂
---    Close with: by decide  (if src is a concrete Imscription literal)
+-- ── Evaluation arm sub-defs ─────────────────────────────────────────────────
 
--- 2. Frobenius (split → fuse (canonical)):
---    mu_delta_A_id proves igFrobeniusAlg.frob for the .prod branch
---    igFrobAlg_self_fusion closes the tensor self-application
+-- truth arm
+noncomputable def vii_parakernel_true_arm : IGProtocol 𐑖 𐑭 :=
+  (vii_parakernel_protocol).restrictToEVALT
 
--- 4. Dialetheia branches (EVALT / EVALF / ENGAGR):
---    Each arm is a .prod branch with .withGram Gamma_seq wrapper
---    ENGAGR arm: output is B-state; use .withMem H_inf for chirality
---    EVALT arm: crit := Phi_c (gate open)
---    EVALF arm: chir := H2 (chirality check)
+-- false arm
+noncomputable def vii_parakernel_false_arm : IGProtocol 𐑖 𐑭 :=
+  (vii_parakernel_protocol).restrictToEVALF
 
--- ── Tier verification ───────────────────────────────────────────────────────
-theorem vii_parakernel_tier_check (s : Imscription)
-    (hs : vii_parakernel_protocol = vii_parakernel_protocol) :
-    True := trivial  -- placeholder: replace with actual tier proof
+-- ── Verification theorems ───────────────────────────────────────────────────
+
+theorem vii_parakernel_tier : TierFunctor.obj 𐑖 = .O₂ := by decide
+
+-- Frobenius (split → fuse): μ∘δ = id on .prod branch
+-- Proof: apply igFrobAlg_self_fusion; exact mu_delta_A_id
+-- (requires mu_delta_A_id from IGFunctor library)
 
 end Imscribing

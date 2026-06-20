@@ -14,40 +14,31 @@ open Primitives Frobenius IGProtocol
 open Dimensionality Topology Relational Polarity Grammar
      Fidelity KineticChar Granularity Criticality Protection Stoichiometry Chirality
 
--- ── Token → IG field mapping (fill sorry slots with these) ──────────────
---   [0] VINIT     dim    := D_wedge         initial object — ground of distinction
---   [1] IMSCRIB   gram   := Gamma_seq       identity — self-imscription
---   [2] VINIT     dim    := D_wedge         initial object — ground of distinction
---   [3] IMSCRIB   gram   := Gamma_seq       identity — self-imscription
---   [4] VINIT     dim    := D_wedge         initial object — ground of distinction
---   [5] IMSCRIB   gram   := Gamma_seq       identity — self-imscription
---   [6] VINIT     dim    := D_wedge         initial object — ground of distinction
---   [7] IMSCRIB   gram   := Gamma_seq       identity — self-imscription
+-- ── Token → IG field mapping ──────────────────────────────────────────────
+--   [0] VINIT     dim    := 𐑼               𐑼 → 𐑠  | initial object — ground of distinction
+--   [1] IMSCRIB   gram   := 𐑠               𐑼 → 𐑼  | identity — self-imscription
+--   [2] VINIT     dim    := 𐑼               𐑠 → 𐑠  | initial object — ground of distinction
+--   [3] IMSCRIB   gram   := 𐑠               𐑼 → 𐑼  | identity — self-imscription
+--   [4] VINIT     dim    := 𐑼               𐑠 → 𐑠  | initial object — ground of distinction
+--   [5] IMSCRIB   gram   := 𐑠               𐑼 → 𐑼  | identity — self-imscription
+--   [6] VINIT     dim    := 𐑼               𐑠 → 𐑠  | initial object — ground of distinction
+--   [7] IMSCRIB   gram   := 𐑠               𐑼 → 𐑼  | identity — self-imscription
 
--- ── Main IGProtocol scaffold ────────────────────────────────────────────────
--- Fill sorry slots:
---   First sorry  = arrow label Imscription (dominant field annotated above)
---   Second sorry = source Imscription node
---   Third sorry  = target Imscription node
+-- ── Main IGProtocol term ────────────────────────────────────────────────────
 
-noncomputable def vi_empty_bootstrap_protocol : IGProtocol sorry sorry :=
-  -- Seq chain (nest as needed for type correctness):
-  (.arrow sorry sorry sorry)  -- [0] VINIT | dim := D_wedge | initial object — ground of distinction
-  (.arrow sorry sorry sorry)  -- [1] IMSCRIB | gram := Gamma_seq | identity — self-imscription
-  (.arrow sorry sorry sorry)  -- [2] VINIT | dim := D_wedge | initial object — ground of distinction
-  (.arrow sorry sorry sorry)  -- [3] IMSCRIB | gram := Gamma_seq | identity — self-imscription
-  (.arrow sorry sorry sorry)  -- [4] VINIT | dim := D_wedge | initial object — ground of distinction
-  (.arrow sorry sorry sorry)  -- [5] IMSCRIB | gram := Gamma_seq | identity — self-imscription
-  (.arrow sorry sorry sorry)  -- [6] VINIT | dim := D_wedge | initial object — ground of distinction
-  (.arrow sorry sorry sorry)  -- [7] IMSCRIB | gram := Gamma_seq | identity — self-imscription
+noncomputable def vi_empty_bootstrap_protocol : IGProtocol 𐑼 𐑠 :=
+  -- Seq chain:
+  (.arrow 𐑼 𐑼 𐑠)  -- [0] VINIT | dim := 𐑼 | initial object — ground of distinction
+  (.arrow 𐑠 𐑼 𐑼)  -- [1] IMSCRIB | gram := 𐑠 | identity — self-imscription
+  (.arrow 𐑼 𐑠 𐑠)  -- [2] VINIT | dim := 𐑼 | initial object — ground of distinction
+  (.arrow 𐑠 𐑼 𐑼)  -- [3] IMSCRIB | gram := 𐑠 | identity — self-imscription
+  (.arrow 𐑼 𐑠 𐑠)  -- [4] VINIT | dim := 𐑼 | initial object — ground of distinction
+  (.arrow 𐑠 𐑼 𐑼)  -- [5] IMSCRIB | gram := 𐑠 | identity — self-imscription
+  (.arrow 𐑼 𐑠 𐑠)  -- [6] VINIT | dim := 𐑼 | initial object — ground of distinction
+  (.arrow 𐑠 𐑼 𐑼)  -- [7] IMSCRIB | gram := 𐑠 | identity — self-imscription
 
--- ── Verification obligations ───────────────────────────────────────────────
--- 1. Tier: TierFunctor.obj <src> = .O₁
---    Close with: by decide  (if src is a concrete Imscription literal)
+-- ── Verification theorems ───────────────────────────────────────────────────
 
--- ── Tier verification ───────────────────────────────────────────────────────
-theorem vi_empty_bootstrap_tier_check (s : Imscription)
-    (hs : vi_empty_bootstrap_protocol = vi_empty_bootstrap_protocol) :
-    True := trivial  -- placeholder: replace with actual tier proof
+theorem vi_empty_bootstrap_tier : TierFunctor.obj 𐑼 = .O₁ := by decide
 
 end Imscribing

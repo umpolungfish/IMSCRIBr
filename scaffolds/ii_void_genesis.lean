@@ -14,51 +14,42 @@ open Primitives Frobenius IGProtocol
 open Dimensionality Topology Relational Polarity Grammar
      Fidelity KineticChar Granularity Criticality Protection Stoichiometry Chirality
 
--- ── Token → IG field mapping (fill sorry slots with these) ──────────────
---   [0] VINIT     dim    := D_wedge         initial object — ground of distinction
---   [1] TANCH     top    := T_network       terminal object — connectivity boundary
---   [2] AFWD      rel    := R_lr            forward morphism — bidirectional arrow
---   [3] FSPLIT    gran   := G_beth          split δ — range decomposition
---   [4] CLINK     fid    := F_ell           composition — regime coherence
---   [5] FFUSE     stoi   := one_one         fuse μ — assembly mode
---   [6] IFIX      prot   := Omega_Z         irreversible fixation — winding number
---   [7] IMSCRIB   gram   := Gamma_seq       identity — self-imscription
+-- ── Token → IG field mapping ──────────────────────────────────────────────
+--   [0] VINIT     dim    := 𐑼               𐑼 → 𐑡  | initial object — ground of distinction
+--   [1] TANCH     top    := 𐑡               𐑼 → 𐑾  | terminal object — connectivity boundary
+--   [2] AFWD      rel    := 𐑾               𐑡 → 𐑚  | forward morphism — bidirectional arrow
+--   [3] FSPLIT    gran   := 𐑚               𐑚 → 𐑚  | split δ — range decomposition
+--   [4] CLINK     fid    := 𐑱               𐑚 → 𐑙  | composition — regime coherence
+--   [5] FFUSE     stoi   := 𐑙               𐑙 → 𐑭  | fuse μ — assembly mode
+--   [6] IFIX      prot   := 𐑭               𐑙 → 𐑠  | irreversible fixation — winding number
+--   [7] IMSCRIB   gram   := 𐑠               𐑭 → 𐑼  | identity — self-imscription
 
--- ── Main IGProtocol scaffold ────────────────────────────────────────────────
--- Fill sorry slots:
---   First sorry  = arrow label Imscription (dominant field annotated above)
---   Second sorry = source Imscription node
---   Third sorry  = target Imscription node
+-- ── Main IGProtocol term ────────────────────────────────────────────────────
 
-noncomputable def ii_void_genesis_protocol : IGProtocol sorry sorry :=
-  .withGram Gamma_seq <|
-  -- Seq chain (nest as needed for type correctness):
-  (.arrow sorry sorry sorry)  -- [0] VINIT | dim := D_wedge | initial object — ground of distinction
-  (.arrow sorry sorry sorry)  -- [1] TANCH | top := T_network | terminal object — connectivity boundary
-  (.arrow sorry sorry sorry)  -- [2] AFWD | rel := R_lr | forward morphism — bidirectional arrow
-  -- FSPLIT [3] (gran := G_beth) / FFUSE [5] (stoi := one_one)
+noncomputable def ii_void_genesis_protocol : IGProtocol 𐑼 𐑠 :=
+  .withGram 𐑠 <|
+  -- Seq chain:
+  (.arrow 𐑼 𐑼 𐑡)  -- [0] VINIT | dim := 𐑼 | initial object — ground of distinction
+  (.arrow 𐑡 𐑼 𐑾)  -- [1] TANCH | top := 𐑡 | terminal object — connectivity boundary
+  (.arrow 𐑾 𐑡 𐑚)  -- [2] AFWD | rel := 𐑾 | forward morphism — bidirectional arrow
+  -- FSPLIT [3] (gran := 𐑚) / FFUSE [5] (stoi := 𐑙)
   .seq
     (.prod
       -- T-branch (1 nodes)
-      (.arrow sorry sorry sorry)  -- [4] CLINK | fid := F_ell | composition — regime coherence
+      (.arrow 𐑱 𐑚 𐑙)  -- [4] CLINK | fid := 𐑱 | composition — regime coherence
       -- F-branch (0 nodes)
-      (.refl sorry))  -- F-branch: empty arc (direct to FFUSE.F)
+      (.refl 𐑙))  -- F-branch: empty arc (direct to FFUSE.F)
     -- reconnect at FFUSE [5]: μ closes the Frobenius pair
-    (.arrow sorry sorry sorry)  -- [5] FFUSE | stoi := one_one
-  (.arrow sorry sorry sorry)  -- [6] IFIX | prot := Omega_Z | irreversible fixation — winding number
-  (.arrow sorry sorry sorry)  -- [7] IMSCRIB | gram := Gamma_seq | identity — self-imscription
+    (.arrow 𐑙 𐑙 𐑭)  -- [5] FFUSE | stoi := 𐑙
+  (.arrow 𐑭 𐑙 𐑠)  -- [6] IFIX | prot := 𐑭 | irreversible fixation — winding number
+  (.arrow 𐑠 𐑭 𐑼)  -- [7] IMSCRIB | gram := 𐑠 | identity — self-imscription
 
--- ── Verification obligations ───────────────────────────────────────────────
--- 1. Tier: TierFunctor.obj <src> = .O₂
---    Close with: by decide  (if src is a concrete Imscription literal)
+-- ── Verification theorems ───────────────────────────────────────────────────
 
--- 2. Frobenius (split → fuse (canonical)):
---    mu_delta_A_id proves igFrobeniusAlg.frob for the .prod branch
---    igFrobAlg_self_fusion closes the tensor self-application
+theorem ii_void_genesis_tier : TierFunctor.obj 𐑼 = .O₂ := by decide
 
--- ── Tier verification ───────────────────────────────────────────────────────
-theorem ii_void_genesis_tier_check (s : Imscription)
-    (hs : ii_void_genesis_protocol = ii_void_genesis_protocol) :
-    True := trivial  -- placeholder: replace with actual tier proof
+-- Frobenius (split → fuse): μ∘δ = id on .prod branch
+-- Proof: apply igFrobAlg_self_fusion; exact mu_delta_A_id
+-- (requires mu_delta_A_id from IGFunctor library)
 
 end Imscribing

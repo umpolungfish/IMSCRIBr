@@ -14,40 +14,31 @@ open Primitives Frobenius IGProtocol
 open Dimensionality Topology Relational Polarity Grammar
      Fidelity KineticChar Granularity Criticality Protection Stoichiometry Chirality
 
--- ── Token → IG field mapping (fill sorry slots with these) ──────────────
---   [0] IMSCRIB   gram   := Gamma_seq       identity — self-imscription
---   [1] AFWD      rel    := R_lr            forward morphism — bidirectional arrow
---   [2] AREV      pol    := P_asym          reverse morphism — parity flip
---   [3] IMSCRIB   gram   := Gamma_seq       identity — self-imscription
---   [4] AFWD      rel    := R_lr            forward morphism — bidirectional arrow
---   [5] AREV      pol    := P_asym          reverse morphism — parity flip
---   [6] IMSCRIB   gram   := Gamma_seq       identity — self-imscription
---   [7] AFWD      rel    := R_lr            forward morphism — bidirectional arrow
+-- ── Token → IG field mapping ──────────────────────────────────────────────
+--   [0] IMSCRIB   gram   := 𐑠               𐑠 → 𐑾  | identity — self-imscription
+--   [1] AFWD      rel    := 𐑾               𐑠 → 𐑗  | forward morphism — bidirectional arrow
+--   [2] AREV      pol    := 𐑗               𐑾 → 𐑠  | reverse morphism — parity flip
+--   [3] IMSCRIB   gram   := 𐑠               𐑗 → 𐑾  | identity — self-imscription
+--   [4] AFWD      rel    := 𐑾               𐑠 → 𐑗  | forward morphism — bidirectional arrow
+--   [5] AREV      pol    := 𐑗               𐑾 → 𐑠  | reverse morphism — parity flip
+--   [6] IMSCRIB   gram   := 𐑠               𐑗 → 𐑾  | identity — self-imscription
+--   [7] AFWD      rel    := 𐑾               𐑠 → 𐑠  | forward morphism — bidirectional arrow
 
--- ── Main IGProtocol scaffold ────────────────────────────────────────────────
--- Fill sorry slots:
---   First sorry  = arrow label Imscription (dominant field annotated above)
---   Second sorry = source Imscription node
---   Third sorry  = target Imscription node
+-- ── Main IGProtocol term ────────────────────────────────────────────────────
 
-noncomputable def xi_eternal_return_protocol : IGProtocol sorry sorry :=
-  -- Seq chain (nest as needed for type correctness):
-  (.arrow sorry sorry sorry)  -- [0] IMSCRIB | gram := Gamma_seq | identity — self-imscription
-  (.arrow sorry sorry sorry)  -- [1] AFWD | rel := R_lr | forward morphism — bidirectional arrow
-  (.arrow sorry sorry sorry)  -- [2] AREV | pol := P_asym | reverse morphism — parity flip
-  (.arrow sorry sorry sorry)  -- [3] IMSCRIB | gram := Gamma_seq | identity — self-imscription
-  (.arrow sorry sorry sorry)  -- [4] AFWD | rel := R_lr | forward morphism — bidirectional arrow
-  (.arrow sorry sorry sorry)  -- [5] AREV | pol := P_asym | reverse morphism — parity flip
-  (.arrow sorry sorry sorry)  -- [6] IMSCRIB | gram := Gamma_seq | identity — self-imscription
-  (.arrow sorry sorry sorry)  -- [7] AFWD | rel := R_lr | forward morphism — bidirectional arrow
+noncomputable def xi_eternal_return_protocol : IGProtocol 𐑠 𐑾 :=
+  -- Seq chain:
+  (.arrow 𐑠 𐑠 𐑾)  -- [0] IMSCRIB | gram := 𐑠 | identity — self-imscription
+  (.arrow 𐑾 𐑠 𐑗)  -- [1] AFWD | rel := 𐑾 | forward morphism — bidirectional arrow
+  (.arrow 𐑗 𐑾 𐑠)  -- [2] AREV | pol := 𐑗 | reverse morphism — parity flip
+  (.arrow 𐑠 𐑗 𐑾)  -- [3] IMSCRIB | gram := 𐑠 | identity — self-imscription
+  (.arrow 𐑾 𐑠 𐑗)  -- [4] AFWD | rel := 𐑾 | forward morphism — bidirectional arrow
+  (.arrow 𐑗 𐑾 𐑠)  -- [5] AREV | pol := 𐑗 | reverse morphism — parity flip
+  (.arrow 𐑠 𐑗 𐑾)  -- [6] IMSCRIB | gram := 𐑠 | identity — self-imscription
+  (.arrow 𐑾 𐑠 𐑠)  -- [7] AFWD | rel := 𐑾 | forward morphism — bidirectional arrow
 
--- ── Verification obligations ───────────────────────────────────────────────
--- 1. Tier: TierFunctor.obj <src> = .O₀
---    Close with: by decide  (if src is a concrete Imscription literal)
+-- ── Verification theorems ───────────────────────────────────────────────────
 
--- ── Tier verification ───────────────────────────────────────────────────────
-theorem xi_eternal_return_tier_check (s : Imscription)
-    (hs : xi_eternal_return_protocol = xi_eternal_return_protocol) :
-    True := trivial  -- placeholder: replace with actual tier proof
+theorem xi_eternal_return_tier : TierFunctor.obj 𐑠 = .O₀ := by decide
 
 end Imscribing

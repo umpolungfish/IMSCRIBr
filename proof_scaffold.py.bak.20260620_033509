@@ -22,18 +22,18 @@ from classifier import compute_fingerprint
 # ── Token → dominant IG field ─────────────────────────────────────────────────
 
 _TOKEN_IG = {
-    Token.VINIT:   ("dim",  "𐑼",   "initial object — ground of distinction"),
-    Token.TANCH:   ("top",  "𐑡", "terminal object — connectivity boundary"),
-    Token.AFWD:    ("rel",  "𐑾",      "forward morphism — bidirectional arrow"),
-    Token.AREV:    ("pol",  "𐑗",    "reverse morphism — parity flip"),
-    Token.CLINK:   ("fid",  "𐑱",     "composition — regime coherence"),
-    Token.IMSCRIB: ("gram", "𐑠", "identity — self-imscription"),
-    Token.FSPLIT:  ("gran", "𐑚",    "split δ — range decomposition"),
-    Token.FFUSE:   ("stoi", "𐑙",   "fuse μ — assembly mode"),
-    Token.EVALT:   ("crit", "⊙",     "evaluate-true — criticality gate open"),
-    Token.EVALF:   ("chir", "𐑖",        "evaluate-false — chirality check"),
-    Token.ENGAGR:  ("stoi", "𐑳",       "engage paradox — B-state, both arms"),
-    Token.IFIX:    ("prot", "𐑭",   "irreversible fixation — winding number"),
+    Token.VINIT:   ("dim",  "D_wedge",   "initial object — ground of distinction"),
+    Token.TANCH:   ("top",  "T_network", "terminal object — connectivity boundary"),
+    Token.AFWD:    ("rel",  "R_lr",      "forward morphism — bidirectional arrow"),
+    Token.AREV:    ("pol",  "P_asym",    "reverse morphism — parity flip"),
+    Token.CLINK:   ("fid",  "F_ell",     "composition — regime coherence"),
+    Token.IMSCRIB: ("gram", "Gamma_seq", "identity — self-imscription"),
+    Token.FSPLIT:  ("gran", "G_beth",    "split δ — range decomposition"),
+    Token.FFUSE:   ("stoi", "one_one",   "fuse μ — assembly mode"),
+    Token.EVALT:   ("crit", "Phi_c",     "evaluate-true — criticality gate open"),
+    Token.EVALF:   ("chir", "H2",        "evaluate-false — chirality check"),
+    Token.ENGAGR:  ("stoi", "n_m",       "engage paradox — B-state, both arms"),
+    Token.IFIX:    ("prot", "Omega_Z",   "irreversible fixation — winding number"),
 }
 
 
@@ -352,9 +352,9 @@ def emit_scaffold(
 
     wrappers = []
     if has_dialetheia or has_frobenius:
-        wrappers.append("  .withGram 𐑠 <|")
+        wrappers.append("  .withGram Gamma_seq <|")
     if has_backprop:
-        wrappers.append("  .withMem 𐑫 <|")
+        wrappers.append("  .withMem H_inf <|")
     if tier == "O_inf" and is_self_ref:
         wrappers.append(f"  -- Self-ref: paralogical_copy h builds Δ : {start_type} → {start_type} ⊗ {start_type}")
         wrappers.append("  -- paralogical_dagger produces μ = Δ†")

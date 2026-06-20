@@ -14,40 +14,31 @@ open Primitives Frobenius IGProtocol
 open Dimensionality Topology Relational Polarity Grammar
      Fidelity KineticChar Granularity Criticality Protection Stoichiometry Chirality
 
--- ── Token → IG field mapping (fill sorry slots with these) ──────────────
---   [0] AFWD      rel    := R_lr            forward morphism — bidirectional arrow
---   [1] AREV      pol    := P_asym          reverse morphism — parity flip
---   [2] AFWD      rel    := R_lr            forward morphism — bidirectional arrow
---   [3] AREV      pol    := P_asym          reverse morphism — parity flip
---   [4] AFWD      rel    := R_lr            forward morphism — bidirectional arrow
---   [5] AREV      pol    := P_asym          reverse morphism — parity flip
---   [6] AFWD      rel    := R_lr            forward morphism — bidirectional arrow
---   [7] AREV      pol    := P_asym          reverse morphism — parity flip
+-- ── Token → IG field mapping ──────────────────────────────────────────────
+--   [0] AFWD      rel    := 𐑾               𐑾 → 𐑗  | forward morphism — bidirectional arrow
+--   [1] AREV      pol    := 𐑗               𐑾 → 𐑾  | reverse morphism — parity flip
+--   [2] AFWD      rel    := 𐑾               𐑗 → 𐑗  | forward morphism — bidirectional arrow
+--   [3] AREV      pol    := 𐑗               𐑾 → 𐑾  | reverse morphism — parity flip
+--   [4] AFWD      rel    := 𐑾               𐑗 → 𐑗  | forward morphism — bidirectional arrow
+--   [5] AREV      pol    := 𐑗               𐑾 → 𐑾  | reverse morphism — parity flip
+--   [6] AFWD      rel    := 𐑾               𐑗 → 𐑗  | forward morphism — bidirectional arrow
+--   [7] AREV      pol    := 𐑗               𐑾 → 𐑾  | reverse morphism — parity flip
 
--- ── Main IGProtocol scaffold ────────────────────────────────────────────────
--- Fill sorry slots:
---   First sorry  = arrow label Imscription (dominant field annotated above)
---   Second sorry = source Imscription node
---   Third sorry  = target Imscription node
+-- ── Main IGProtocol term ────────────────────────────────────────────────────
 
-noncomputable def ix_chiral_pairs_protocol : IGProtocol sorry sorry :=
-  -- Seq chain (nest as needed for type correctness):
-  (.arrow sorry sorry sorry)  -- [0] AFWD | rel := R_lr | forward morphism — bidirectional arrow
-  (.arrow sorry sorry sorry)  -- [1] AREV | pol := P_asym | reverse morphism — parity flip
-  (.arrow sorry sorry sorry)  -- [2] AFWD | rel := R_lr | forward morphism — bidirectional arrow
-  (.arrow sorry sorry sorry)  -- [3] AREV | pol := P_asym | reverse morphism — parity flip
-  (.arrow sorry sorry sorry)  -- [4] AFWD | rel := R_lr | forward morphism — bidirectional arrow
-  (.arrow sorry sorry sorry)  -- [5] AREV | pol := P_asym | reverse morphism — parity flip
-  (.arrow sorry sorry sorry)  -- [6] AFWD | rel := R_lr | forward morphism — bidirectional arrow
-  (.arrow sorry sorry sorry)  -- [7] AREV | pol := P_asym | reverse morphism — parity flip
+noncomputable def ix_chiral_pairs_protocol : IGProtocol 𐑾 𐑗 :=
+  -- Seq chain:
+  (.arrow 𐑾 𐑾 𐑗)  -- [0] AFWD | rel := 𐑾 | forward morphism — bidirectional arrow
+  (.arrow 𐑗 𐑾 𐑾)  -- [1] AREV | pol := 𐑗 | reverse morphism — parity flip
+  (.arrow 𐑾 𐑗 𐑗)  -- [2] AFWD | rel := 𐑾 | forward morphism — bidirectional arrow
+  (.arrow 𐑗 𐑾 𐑾)  -- [3] AREV | pol := 𐑗 | reverse morphism — parity flip
+  (.arrow 𐑾 𐑗 𐑗)  -- [4] AFWD | rel := 𐑾 | forward morphism — bidirectional arrow
+  (.arrow 𐑗 𐑾 𐑾)  -- [5] AREV | pol := 𐑗 | reverse morphism — parity flip
+  (.arrow 𐑾 𐑗 𐑗)  -- [6] AFWD | rel := 𐑾 | forward morphism — bidirectional arrow
+  (.arrow 𐑗 𐑾 𐑾)  -- [7] AREV | pol := 𐑗 | reverse morphism — parity flip
 
--- ── Verification obligations ───────────────────────────────────────────────
--- 1. Tier: TierFunctor.obj <src> = .O₁
---    Close with: by decide  (if src is a concrete Imscription literal)
+-- ── Verification theorems ───────────────────────────────────────────────────
 
--- ── Tier verification ───────────────────────────────────────────────────────
-theorem ix_chiral_pairs_tier_check (s : Imscription)
-    (hs : ix_chiral_pairs_protocol = ix_chiral_pairs_protocol) :
-    True := trivial  -- placeholder: replace with actual tier proof
+theorem ix_chiral_pairs_tier : TierFunctor.obj 𐑾 = .O₁ := by decide
 
 end Imscribing
