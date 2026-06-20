@@ -699,7 +699,7 @@ for name, fp in CANONICAL_FINGERPRINTS.items():
 
 ## Proof Scaffold
 
-`proof_scaffold.py` converts any arrangement tuple into a typed **IGProtocol Lean term** — a complete, machine-checkable structural proof skeleton with zero `sorry` slots in the main term.
+`proof_scaffold.py` converts any arrangement tuple into a typed **IGProtocol Lean term** — a complete, machine-checkable witness skeleton with zero `sorry` slots in the main term.
 
 ### What it emits
 

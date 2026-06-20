@@ -118,10 +118,6 @@ def _build_flow(
 def _node_arrow(idx: int, tok: Token, src_type: str, dst_type: str,
                 domain_label: str = "") -> str:
     field, val, desc = _TOKEN_IG[tok]
-    # Truncate long domain labels to prevent comment-line corruption
-    MAX_LABEL = 80
-    if domain_label and len(domain_label) > MAX_LABEL:
-        domain_label = domain_label[:MAX_LABEL - 3] + "..."
     suffix = f" ({domain_label})" if domain_label else ""
     return (
         f"(.arrow {val} {src_type} {dst_type})"
@@ -136,13 +132,9 @@ class ScaffoldState:
     graph: WiredGraph
     flow: Dict[int, Tuple[str, str]]
     opcode_map: Dict[str, str] = field(default_factory=dict)
-    position_labels: Dict[int, str] = field(default_factory=dict)
     visited: set = field(default_factory=set)
 
-    def domain_label(self, tok: Token, idx: int = -1) -> str:
-        # Prefer position-specific label; fall back to opcode_map for backward compat
-        if idx >= 0 and idx in self.position_labels:
-            return self.position_labels[idx]
+    def domain_label(self, tok: Token) -> str:
         return self.opcode_map.get(tok.name, "")
 
 
@@ -154,13 +146,13 @@ def _emit_chain(state: ScaffoldState, nodes: List[int]) -> List[str]:
         idx = nodes[0]
         tok = state.graph.tokens[idx]
         src, tgt = state.flow.get(idx, (_val(tok), _val(tok)))
-        return [_node_arrow(idx, tok, src, tgt, state.domain_label(tok, idx))]
+        return [_node_arrow(idx, tok, src, tgt, state.domain_label(tok))]
 
     lines = []
     for i, idx in enumerate(nodes):
         tok = state.graph.tokens[idx]
         src, tgt = state.flow.get(idx, (_val(tok), _val(tok)))
-        arrow = _node_arrow(idx, tok, src, tgt, state.domain_label(tok, idx))
+        arrow = _node_arrow(idx, tok, src, tgt, state.domain_label(tok))
         if i < len(nodes) - 1:
             lines.append(".seq")
             lines.append("  " + arrow)
@@ -205,9 +197,7 @@ def _emit_fork(state: ScaffoldState, fs: int, ff: int) -> List[str]:
     ff_type = _val(tok_ff)
 
     lines = []
-    dl_fs = state.domain_label(tok_fs, fs)
-    dl_fs_suffix = f" ({dl_fs})" if dl_fs else ""
-    lines.append(f"-- FSPLIT [{fs}] ({field_fs} := {val_fs}){dl_fs_suffix} / FFUSE [{ff}] ({field_ff} := {val_ff})")
+    lines.append(f"-- FSPLIT [{fs}] ({field_fs} := {val_fs}) / FFUSE [{ff}] ({field_ff} := {val_ff})")
     lines.append(".seq")
     lines.append("  (.prod")
 
@@ -231,7 +221,7 @@ def _emit_fork(state: ScaffoldState, fs: int, ff: int) -> List[str]:
         lines.append(f"    (.refl {ff_type}))  -- F-branch: empty arc (direct to FFUSE.F)")
 
     lines.append(f"  -- reconnect at FFUSE [{ff}]: μ closes the Frobenius pair")
-    dl_ff = state.domain_label(tok_ff, ff)
+    dl_ff = state.domain_label(tok_ff)
     dl_suffix = f" ({dl_ff})" if dl_ff else ""
     lines.append(f"  (.arrow {val_ff} {ff_src} {ff_tgt})  -- [{ff}] FFUSE | {field_ff} := {val_ff}{dl_suffix}")
 
@@ -245,7 +235,6 @@ def emit_scaffold(
     name: Optional[str] = None,
     namespace: str = "Imscribing",
     opcode_map: Optional[Dict[str, str]] = None,
-    position_labels: Optional[Dict[int, str]] = None,
 ) -> str:
     tokens = tuple(Token(t) for t in arr)
     graph = imscr_wiring(tokens)
@@ -286,9 +275,7 @@ def emit_scaffold(
     start_type = types[0]
     end_type = types[-1] if not is_self_ref else types[0]
 
-    state = ScaffoldState(graph=graph, flow=flow,
-                           opcode_map=opcode_map or {},
-                           position_labels=position_labels or {})
+    state = ScaffoldState(graph=graph, flow=flow, opcode_map=opcode_map or {})
 
     out: List[str] = []
 
@@ -387,7 +374,7 @@ def emit_scaffold(
             pos += 1  # emitted inside fork block
         else:
             src, tgt = flow.get(idx, (_val(tokens[idx]), _val(tokens[idx])))
-            term_lines.append(_node_arrow(idx, tokens[idx], src, tgt, state.domain_label(tokens[idx], idx)))
+            term_lines.append(_node_arrow(idx, tokens[idx], src, tgt, state.domain_label(tokens[idx])))
             pos += 1
 
     if len(term_lines) == 0:

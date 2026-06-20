@@ -1,4 +1,4 @@
-# The Perfect Cuboid Conjecture: A Structural Proof of Non-Existence
+# The Perfect Cuboid Conjecture: A Witness of Non-Existence
 
 ## I. Preliminaries and the Open Problem
 
