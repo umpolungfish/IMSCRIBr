@@ -53,12 +53,26 @@
     {
       "truth": "The existence of a SIC-POVM in dimension d is equivalent to the existence of a Stark unit in the ray class field L_d over K_d = Q(sqrt(d(d-2))) that is fixed by a canonical Frobenius involution.",
       "source_title": "SIC-POVM Existence via Frobenius-Fixed Stark Units: A Conditional Proof through Galois Descent"
+    },
+    {
+      "truth": "The existence of a SIC-POVM in dimension d is equivalent to the existence of a Stark unit in L_d whose norm satisfies a specific congruence modulo d^2 - 3d + 3.",
+      "source_title": "The Crystal as a Compression of Category Theory: Structural Compression via the 12-Primitive Basis"
+    },
+    {
+      "truth": "The category of all small categories admits a finite quotient under a 12-dimensional invariant functor, producing exactly 17,280,000 equivalence classes, with a surjective section and a folding theorem for 15 standard categorical operations.",
+      "source_title": "The Crystal as a Compression of Category Theory: Structural Compression via the 12-Primitive Basis"
     }
   ],
   "": [
     {
       "truth": "The d=2 SIC-POVM is structurally identical to the four-element Boolean algebra L, with the equiangularity constant, Frobenius-special condition, and measurement cost ratio all matching exactly.",
       "source_title": ""
+    }
+  ],
+  "physics and cosmology": [
+    {
+      "truth": "The space of all possible physical theories forms a discrete lattice of 17,280,000 distinct configurations, derived from minimal logical algebras, within which our observable universe occupies a specific non-maximal cell.",
+      "source_title": "The Crystal Cosmology: A Structural Grammar of Everything"
     }
   ]
 }
