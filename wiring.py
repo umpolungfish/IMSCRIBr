@@ -274,6 +274,12 @@ def imscr_wiring(tokens: Tuple[Token, ...]) -> WiredGraph:
         blk   = [tokens[i] for i in block]
         t_a   = next((j for j, t in enumerate(blk) if t == Token.EVALT), None)
         f_a   = next((j for j, t in enumerate(blk) if t == Token.EVALF), None)
+        # Branch polarity rule: AREV (parity flip) anchors F-branch when EVALF absent;
+        # AFWD (forward morphism) anchors T-branch when EVALT absent.
+        if f_a is None:
+            f_a = next((j for j, t in enumerate(blk) if t == Token.AREV), None)
+        if t_a is None:
+            t_a = next((j for j, t in enumerate(blk) if t == Token.AFWD), None)
 
         if t_a is not None and f_a is not None:
             if t_a < f_a:

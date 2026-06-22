@@ -1,10 +1,17 @@
-Newton lift v5: all definitions inline, grammar+semantic PASS
+Branch polarity rule: AREV anchors F-branch, AFWD anchors T-branch
 
-- style_hints: added COMPLETENESS (no appendices), VOCABULARY (no primitive/
-  structural-type/Belnap-four) constraints
-- Finding 1: explicit inline definitions of all 12 f_i functors (f1=adjunction
-  index through f12=diagram index, all value ranges and cases spelled out)
-- Finding 2: explicit mixed-radix formula with all 12 weights written out;
-  "Identity, not isomorphism" directive
-- Output: ig-docs/analyses/THE_CRYSTAL_IS_A_COMPRESSION_OF_CATEGORY_THEORY.md
-  Grammar PASS, Semantic PASS (attempt 2)
+In imscr_wiring(), branch assignment inside FSPLIT/FFUSE pairs previously
+used only EVALT/EVALF as anchors. When neither was present, all interior
+nodes fell to the T-branch, misplacing AREV (parity flip / reverse morphism)
+on the affirmative arm.
+
+Fix: secondary anchor lookup after the primary EVALT/EVALF check.
+  - If EVALF absent: AREV (pol/𐑗, parity flip) anchors the F-branch.
+  - If EVALT absent: AFWD (rel/𐑾, forward morphism) anchors the T-branch.
+
+Secondary anchors activate only when the corresponding primary anchor
+(EVALT/EVALF) is absent; existing behavior is fully preserved for all
+arrangements that already contain EVALT or EVALF.
+
+Verified on ER=EPR sequence: AFWD+EVALT → T-branch, AREV+EVALT → F-branch.
+All 4 canonical classes with matched FSPLIT/FFUSE pairs still validate.
