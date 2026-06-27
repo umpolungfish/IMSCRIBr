@@ -737,7 +737,7 @@ theorem my_ob3ect_tier      : TierFunctor.obj Gamma_seq = .O_inf := by decide
 theorem my_ob3ect_frobenius : igFrobeniusAlg.frob (my_ob3ect_protocol (by decide)) := by
   apply igFrobAlg_self_fusion; sorry  -- one honest sorry: requires library .prod arm proof
 theorem my_ob3ect_self_ref  : (igProtoDelta Gamma_seq (by decide)).isDagger = true ∧ ... := by
-  constructor · exact igProtoCopy_isDagger · exact igProtoMu_depth
+  constructorexact igProtoCopy_isDaggerexact igProtoMu_depth
 theorem my_ob3ect_loop_closure : ∃ loop, loop = ... ∧ loop.period = 8 ∧ loop.depth = 1 :=
   ⟨_, rfl, by decide, by decide⟩
 

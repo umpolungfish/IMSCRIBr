@@ -187,8 +187,8 @@ def ig_distance_matrix(
 PRIMITIVE_NAMES = ['D', 'T', 'R', 'P', 'F', 'K', 'G', 'C', 'Φ', 'H', 'S', 'Ω']
 
 def ig_tuple_str(ig: Tuple[str, ...]) -> str:
-    """Format an IG tuple for display: ⟨D · T · R · P · F · K · G · C · Φ · H · S · Ω⟩"""
-    return '⟨' + ' · '.join(ig) + '⟩'
+    """Format an IG tuple for display: ⟨DTRPFKGCΦHSΩ⟩"""
+    return '⟨' + ''.join(ig) + '⟩'
 
 
 def describe_ig(ig: Tuple[str, ...]) -> str:
