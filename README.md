@@ -787,6 +787,40 @@ print(s.run(['IMSCRIB','AREV','FSPLIT','AFWD','FFUSE','CLINK','IFIX','IMSCRIB'],
 
 `wiring.py` decompresses the 8-token linear tuple into the full port-level `WiredGraph` — including back-propagation edges (IMSCRIB→IFIX LinFix), cross-branch wires, and the CLINK→IMSCRIB weighted loop edge. `proof_scaffold.py` runs on top of this graph; the scaffold structure is the graph's topology expressed as a typed Lean term.
 
+### Symbolic Wiring Diagram Generator
+
+`symbolic_diagram.py` renders any `WiredGraph` (canonical or novel) as an SVG wiring diagram with **full edge granularity** across 7 semantic dimensions:
+
+| # | Edge Dimension | Visual Encoding |
+|---|---------------|-----------------|
+| 1 | Register-state delta | Label at edge midpoint ("T→B", "∅→T", etc.) |
+| 2 | Categorical flavor | Edge color by morphism type (forward/reverse/composition/boundary) |
+| 3 | Nesting depth | Wire opacity decreases with branch depth |
+| 4 | IFIX barrier | Vertical dashed red line with diamond markers |
+| 5 | Guard semantics | Amber approach dot / green pass dot at EVALT/EVALF ports |
+| 6 | Pair identity | Each FSPLIT/FFUSE pair gets unique hue family |
+| 7 | CLINK composition | Converging double-stroke lines with tapered arrowhead |
+
+**Visual vocabulary:**
+
+| Element | Encoding | Meaning |
+|---------|----------|---------|
+| Node shape | ◯ ◇ ⬡ □ | Logical / Frobenius / Dialetheia / Linear family |
+| Node color | Blue / Gold / Red / Green | Same four-family encoding |
+| Interior tint | Dark (∅) / Teal (T) / Coral (F) / Gold (B) | Belnap FOUR register state |
+| Wire style | Solid / Dashed / Curved / Doubled | Direct / cross-branch / loop-back / compositional |
+
+**Usage (from IMSCRIBr/):**
+```bash
+python3 symbolic_diagram.py                  # all 16 diagrams → diagrams/
+python3 symbolic_diagram.py --class I        # single canonical class
+python3 symbolic_diagram.py --all --format png  # PNG via cairosvg
+```
+
+**Output:** 16 SVG diagrams (12 canonical + 4 novel cross-branch) in `diagrams/`. The canonical classes are rendered as left-to-right wiring diagrams with Belnap FOUR register states, IFIX barriers, categorical edge coloring, and register-delta labels. The novel graphs (XX–XXIII) demonstrate non-planar cross-branch topologies discoverable by the mapper.
+
+**Reference:** `docs/SYMBOLIC_SYSTEM.md` — complete visual vocabulary, reading guide, and diagram-by-diagram summary.
+
 ---
 
 ## Performance
@@ -855,7 +889,10 @@ Class IV (Dual Bootstrap) is the only O_∞ canonical — it combines self-refer
 | `tokens.py` | 94 | Token enum, 4 families, `signature()`, `arrangement_str()` |
 | `classifier.py` | 240 | `StructuralFingerprint`, coarse/fine keys, 12 canonical arrangements |
 | `engine.py` | 379 | `SignatureClass`, `iter_signature_arrangements()`, `SpaceMap`, `search_arrangements()`, `map_space()` |
-| `wiring.py` | ~220 | `WiredGraph`, `Wire`, `imscr_wiring()`, `match_pairs()` — full port-level topology decompression |
+| `wiring.py` | ~710 | `WiredGraph`, `Wire`, `imscr_wiring()`, `match_pairs()`, `NOVEL_GRAPHS` — full port-level topology + 4 novel cross-branch graphs |
+| `symbolic_diagram.py` | ~900 | SVG wiring diagram generator with full edge granularity (v3) — 7 edge-semantic dimensions |
+| `diagrams/` | 16 SVGs | Generated wiring diagrams for all 12 canonical + 4 novel classes |
+| `docs/SYMBOLIC_SYSTEM.md` | ~400 | Visual vocabulary reference, reading guide, diagram-by-diagram summary |
 | `proof_scaffold.py` | ~250 | `emit_scaffold()` — typed IGProtocol Lean term from any arrangement; theorem stubs, EVALT/EVALF arm defs, domain annotations |
 | `run_map.py` | 149 | CLI: `--full`, `--sample N`, `--search`, `--length N` |
 | `pyproject.toml` | — | Hatchling build, `imasm-map` console entry point |
@@ -864,7 +901,7 @@ Class IV (Dual Bootstrap) is the only O_∞ canonical — it combines self-refer
 | `initial commit.txt` | 75 | Commit manifest with 12-class summary and verification log |
 | `.gitignore` | — | Excludes `__pycache__/`, `*.json`, `imasm_summary.txt` |
 
-**Total:** ~1,350 lines of Python, zero external dependencies.
+**Total:** ~2,600 lines of Python, zero external dependencies (SVG is pure text generation).
 
 ---
 
