@@ -1,10 +1,20 @@
-# IMSCRIBr — IMASM Arrangement Space Iterator
+# IMSCRIBr, IMASM Arrangement Space Iterator
 
 **Author:** Lando⊗⊙perator &nbsp;|&nbsp; **Version:** 1.0.0 &nbsp;|&nbsp; **Python:** ≥3.10 (stdlib only, zero deps)
 
 Maps the **12⁸ = 429,981,696** possible arrangements of the 12 IMASM tokens into structural fingerprint classes. From 430 million arrangements → 165 family signatures → ~1,000–2,000 coarse structural classes → exactly 12 canonical archetypes.
 
 ---
+
+## Overview
+
+**What it is.** The IMASM Arrangement Space Iterator: a stdlib-only tool that maps all 12⁸ = 429,981,696 arrangements of the 12 IMASM tokens into structural fingerprint classes.
+
+**What it does.** Reduces 430 million arrangements to 165 family signatures, then to roughly 1,000–2,000 coarse structural classes, and finally to exactly 12 canonical archetypes, via an autopoietic bootstrap.
+
+**Why it matters.** It shows the vast IMASM token space collapses to just 12 canonical archetypes: empirical evidence that the 12-primitive structure is the natural basis of the arrangement space, not an imposed choice.
+
+**How to use it.** Python ≥3.10, zero dependencies; see Installation and CLI Usage below.
 
 ## Table of Contents
 
@@ -29,62 +39,62 @@ Maps the **12⁸ = 429,981,696** possible arrangements of the 12 IMASM tokens in
 
 ## Conceptual Framework
 
-The Imscribing Grammar posits that **the boundaries of what can be formally expressed are themselves formally expressible**. IMSCRIBr makes this concrete: the space of possible token arrangements IS the space of possible formal expressions — and it is **finite, enumerable, and now mapped**.
+The Imscribing Grammar posits that **the boundaries of what can be formally expressed are themselves formally expressible**. IMSCRIBr makes this concrete: the space of possible token arrangements IS the space of possible formal expressions, and it is **finite, enumerable, and now mapped**.
 
-Every length-8 arrangement of the 12 tokens is a candidate *structural type declaration* — a complete sentence in the grammar's combinatorial language. The 12 canonical classes are the most semantically interpretable sentences: bootstrap, genesis, anchor, cycle, record, truth machine, eternal return. The remaining 99.99% of the space is the *background* — the millions of other structural classes that exist but lack a named interpretation.
+Every length-8 arrangement of the 12 tokens is a candidate *structural type declaration*, a complete sentence in the grammar's combinatorial language. The 12 canonical classes are the most semantically interpretable sentences: bootstrap, genesis, anchor, cycle, record, truth machine, eternal return. The remaining 99.99% of the space is the *background*, the millions of other structural classes that exist but lack a named interpretation.
 
 The key insight is **structural collapse under signature algebra**. Naively, 12⁸ = 430M is enormous. But when arrangements are grouped by:
 
-- **Family signature** — how many tokens come from each algebraic family
-- **Structural fingerprint** — topology, self-reference, Frobenius order, periodicities
+- **Family signature**, how many tokens come from each algebraic family
+- **Structural fingerprint**, topology, self-reference, Frobenius order, periodicities
 
-…the space collapses dramatically. There are only 165 family signatures and ~1,000–2,000 coarse structural classes. The 12 canonical classes occupy the sparse, structured, low-entropy region of this space — they are structural **outliers**, not typical arrangements.
+…the space collapses dramatically. There are only 165 family signatures and ~1,000–2,000 coarse structural classes. The 12 canonical classes occupy the sparse, structured, low-entropy region of this space, they are structural **outliers**, not typical arrangements.
 
 ---
 
 ## The 12 Tokens
 
-Each token belongs to one of 4 algebraic families. The families are not decorative — they encode distinct structural roles in the grammar:
+Each token belongs to one of 4 algebraic families. The families are not decorative, they encode distinct structural roles in the grammar:
 
 ### Logical Family (6 tokens)
 
-The **category-theoretic skeleton**. These tokens define objects (initial, terminal), morphisms (forward, reverse), composition (linking), and identity — the minimal structure for a category.
+The **category-theoretic skeleton**. These tokens define objects (initial, terminal), morphisms (forward, reverse), composition (linking), and identity, the minimal structure for a category.
 
 | Token | Index | Role |
 |-------|-------|------|
-| `VINIT` | 0 | Initial object — the void, the ungenerated source |
-| `TANCH` | 1 | Terminal object — the boundary, the final sink |
-| `AFWD` | 2 | Forward morphism — directed arrow |
-| `AREV` | 3 | Reverse morphism — inverse arrow |
-| `CLINK` | 4 | Composition — linking morphisms end-to-end |
-| `IMSCRIB` | 5 | Identity morphism — self-imscription, self-reference |
+| `VINIT` | 0 | Initial object, the void, the ungenerated source |
+| `TANCH` | 1 | Terminal object, the boundary, the final sink |
+| `AFWD` | 2 | Forward morphism, directed arrow |
+| `AREV` | 3 | Reverse morphism, inverse arrow |
+| `CLINK` | 4 | Composition, linking morphisms end-to-end |
+| `IMSCRIB` | 5 | Identity morphism, self-imscription, self-reference |
 
 ### Frobenius Family (2 tokens)
 
-The **μ∘δ=id algebra**. These two tokens form the Frobenius condition: a split followed by a fuse restores the original object. This is the structural mechanism for *verification* — any system that contains a Frobenius pair in split→fuse order is Frobenius-closed.
+The **μ∘δ=id algebra**. These two tokens form the Frobenius condition: a split followed by a fuse restores the original object. This is the structural mechanism for *verification*, any system that contains a Frobenius pair in split→fuse order is Frobenius-closed.
 
 | Token | Index | Role |
 |-------|-------|------|
-| `FSPLIT` | 6 | Split (δ) — decompose, analyze, differentiate |
-| `FFUSE` | 7 | Fuse (μ) — recompose, synthesize, integrate |
+| `FSPLIT` | 6 | Split (δ), decompose, analyze, differentiate |
+| `FFUSE` | 7 | Fuse (μ), recompose, synthesize, integrate |
 
 ### Dialetheia Family (3 tokens)
 
-The **Belnap FOUR lattice**. These three tokens encode truth-value evaluation: true, false, and the capacity to recognize paradox (both true *and* false). A system with all three Dialetheia tokens is *dialetheia-complete* — capable of handling contradiction without collapse.
+The **Belnap FOUR lattice**. These three tokens encode truth-value evaluation: true, false, and the capacity to recognize paradox (both true *and* false). A system with all three Dialetheia tokens is *dialetheia-complete*, capable of handling contradiction without collapse.
 
 | Token | Index | Role |
 |-------|-------|------|
-| `EVALT` | 8 | Evaluate-true — assertion, confirmation |
-| `EVALF` | 9 | Evaluate-false — negation, refutation |
-| `ENGAGR` | 10 | Engage paradox — recognize and hold contradiction |
+| `EVALT` | 8 | Evaluate-true, assertion, confirmation |
+| `EVALF` | 9 | Evaluate-false, negation, refutation |
+| `ENGAGR` | 10 | Engage paradox, recognize and hold contradiction |
 
 ### Linear Family (1 token)
 
-The **irreversible fixation** operator. A single token that marks an irreversible commitment — once placed, the structure cannot be unwound. Analogous to the `!` exponential in linear logic.
+The **irreversible fixation** operator. A single token that marks an irreversible commitment, once placed, the structure cannot be unwound. Analogous to the `!` exponential in linear logic.
 
 | Token | Index | Role |
 |-------|-------|------|
-| `IFIX` | 11 | Irreversible fixation — commit, record, make permanent |
+| `IFIX` | 11 | Irreversible fixation, commit, record, make permanent |
 
 ### Family Summary
 
@@ -99,7 +109,7 @@ The **irreversible fixation** operator. A single token that marks an irreversibl
 
 ## Arrangement Space
 
-An **arrangement** is a tuple of 8 token indices — one token per position. Position 0 is the *start*, position 7 is the *end*.
+An **arrangement** is a tuple of 8 token indices, one token per position. Position 0 is the *start*, position 7 is the *end*.
 
 ```
 Position:  0      1      2      3      4      5      6      7
@@ -118,12 +128,12 @@ The space is too large for naive enumeration at interactive speeds. IMSCRIBr sol
 ### Position 0 Anchor Convention
 
 All 12 canonical arrangements use *different conventions* for Position 0:
-- Some anchor on `IMSCRIB` (identity — self-referential bootstrap)
-- Some anchor on `VINIT` (void — creation ex nihilo)
-- Some anchor on `IFIX` (fixation — pure recording)
-- Some anchor on `TANCH` (boundary — anchor protocol)
+- Some anchor on `IMSCRIB` (identity, self-referential bootstrap)
+- Some anchor on `VINIT` (void, creation ex nihilo)
+- Some anchor on `IFIX` (fixation, pure recording)
+- Some anchor on `TANCH` (boundary, anchor protocol)
 
-There is no single universal Position 0 anchor — the anchor is part of what distinguishes the classes.
+There is no single universal Position 0 anchor, the anchor is part of what distinguishes the classes.
 
 ### Autopoietic Bootstrap Mechanics
 
@@ -157,15 +167,15 @@ VINIT→IMSCRIB→AREV→FSPLIT
 
 Three distinct edges operate at the CLINK–IMSCRIB–IFIX triad:
 
-- **Empty edge (CLINK → IFIX):** CLINK emits a null composition directly to IFIX along the dotted path. This records the compositional event as an irreversible fixation — the witness that composition occurred — regardless of whether the resulting morphism carries new content.
+- **Empty edge (CLINK → IFIX):** CLINK emits a null composition directly to IFIX along the dotted path. This records the compositional event as an irreversible fixation, the witness that composition occurred, regardless of whether the resulting morphism carries new content.
 
 - **Weighted edge (CLINK → IMSCRIB):** CLINK forwards the actual composed morphism up the `└─────┐` path to IMSCRIB. IMSCRIB receives it, self-imscribes, and re-enters the loop at the next AREV step. This is the edge that makes the bootstrap autopoietic: the loop consumes its own composition as input to the next winding.
 
-- **Back-propagation: IMSCRIB → IFIX (LinFix):** After self-imscription, IMSCRIB back-propagates (`****`) to IFIX, burning a second permanent record — the completed loop iteration itself — into ROM before the next winding begins.
+- **Back-propagation: IMSCRIB → IFIX (LinFix):** After self-imscription, IMSCRIB back-propagates (`****`) to IFIX, burning a second permanent record, the completed loop iteration itself, into ROM before the next winding begins.
 
 The compressed sequence `... → CLINK → IFIX → IMSCRIB` linearizes this branched structure into a single path. IFIX at position 6 is the collapsed arrival point of both the empty edge and the back-prop; IMSCRIB at position 7 represents the loop closure. The weighted CLINK → IMSCRIB edge and the back-prop IMSCRIB → IFIX edge are real structural edges not made explicit by the 8-token tuple.
 
-**Consequence for classification:** IMSCRIBr classifies arrangements by path-level properties (self-reference, Frobenius order, Dialetheia-completeness, period). The full graph is the operational substrate; the arrangement is the fingerprint of one path through it. The CLINK → IFIX and IMSCRIB → IFIX structure is why IFIX appears late in every autopoietic canonical sequence — it is the ROM trace of both the compositional event and the completed winding.
+**Consequence for classification:** IMSCRIBr classifies arrangements by path-level properties (self-reference, Frobenius order, Dialetheia-completeness, period). The full graph is the operational substrate; the arrangement is the fingerprint of one path through it. The CLINK → IFIX and IMSCRIB → IFIX structure is why IFIX appears late in every autopoietic canonical sequence, it is the ROM trace of both the compositional event and the completed winding.
 
 ## Architecture
 
@@ -174,7 +184,7 @@ IMSCRIBr/
 ├── tokens.py          # Token enum, 4 families, signature algebra
 ├── classifier.py      # StructuralFingerprint, two-tier keys, canonical DB
 ├── engine.py          # Signature-decomposed enumeration, SpaceMap, search
-├── wiring.py          # WiredGraph, Wire, imscr_wiring(), match_pairs() — port-level topology
+├── wiring.py          # WiredGraph, Wire, imscr_wiring(), match_pairs(), port-level topology
 ├── proof_scaffold.py  # emit_scaffold() → typed IGProtocol Lean term from any arrangement
 ├── run_map.py         # CLI runner (sample, full, search modes)
 ├── pyproject.toml     # Build config, hatchling, console entry point
@@ -211,7 +221,7 @@ SpaceMap → summary() / to_json()
 
 ### Signature Decomposition
 
-The core mathematical insight: instead of iterating 12⁸ = 430M arrangements directly, decompose by **family signature** — a 4-tuple (L, F, D, X) counting how many tokens come from each family. There are only 165 such signatures for length 8.
+The core mathematical insight: instead of iterating 12⁸ = 430M arrangements directly, decompose by **family signature**, a 4-tuple (L, F, D, X) counting how many tokens come from each family. There are only 165 such signatures for length 8.
 
 For a signature (l, f, d, x) with l+f+d+x = 8:
 
@@ -231,9 +241,9 @@ This decomposition turns one 430M-iteration loop into 165 independent sub-loops,
 
 ## The 12 Canonical Classes
 
-Every arrangement reduces via its coarse structural key to one of 12 canonical archetypes. These are the *structurally distinct* reference points in the space — the ones with clear operational semantics.
+Every arrangement reduces via its coarse structural key to one of 12 canonical archetypes. These are the *structurally distinct* reference points in the space, the ones with clear operational semantics.
 
-### I. Dialetheic Bootstrap — *The Self-Referential Paradox Engine*
+### I. Dialetheic Bootstrap, *The Self-Referential Paradox Engine*
 
 ```
 IMSCRIB → EVALT → FSPLIT → EVALF → FFUSE → ENGAGR → IFIX → IMSCRIB
@@ -247,9 +257,9 @@ IMSCRIB → EVALT → FSPLIT → EVALF → FFUSE → ENGAGR → IFIX → IMSCRIB
 | Dialetheia | Complete (all 3) |
 | Coarse class size | 360 arrangements |
 
-The **O₂ bootstrap**: self-referential, Frobenius-closed, dialetheia-complete. Begins and ends with identity — the structure that imscribes itself. Contains the full Frobenius path (split→fuse) and all three truth values. Ends with IFIX before closing — the bootstrap process produces irreversible output.
+The **O₂ bootstrap**: self-referential, Frobenius-closed, dialetheia-complete. Begins and ends with identity, the structure that imscribes itself. Contains the full Frobenius path (split→fuse) and all three truth values. Ends with IFIX before closing, the bootstrap process produces irreversible output.
 
-### II. Void Genesis — *Creation Ex Nihilo*
+### II. Void Genesis, *Creation Ex Nihilo*
 
 ```
 VINIT → TANCH → AFWD → FSPLIT → CLINK → FFUSE → IFIX → IMSCRIB
@@ -263,9 +273,9 @@ VINIT → TANCH → AFWD → FSPLIT → CLINK → FFUSE → IFIX → IMSCRIB
 | Dialetheia | None |
 | Coarse class size | 1,440 arrangements |
 
-**O₀ genesis**: begins at the void (VINIT), constructs a category skeleton (TANCH, AFWD, CLINK), applies the Frobenius pair to verify the construction, fixes the result (IFIX), and terminates at identity (IMSCRIB). A complete creation sequence — from nothing to self-consistent structure.
+**O₀ genesis**: begins at the void (VINIT), constructs a category skeleton (TANCH, AFWD, CLINK), applies the Frobenius pair to verify the construction, fixes the result (IFIX), and terminates at identity (IMSCRIB). A complete creation sequence, from nothing to self-consistent structure.
 
-### III. Anchor Protocol — *The Period-3 Sabbath Cycle*
+### III. Anchor Protocol, *The Period-3 Sabbath Cycle*
 
 ```
 TANCH → AREV → VINIT → AFWD → TANCH → CLINK → IFIX → IMSCRIB
@@ -279,9 +289,9 @@ TANCH → AREV → VINIT → AFWD → TANCH → CLINK → IFIX → IMSCRIB
 | Dialetheia | None |
 | Coarse class size | 5,100 arrangements |
 
-**O₁ cycle**: period-3 anchored at the boundary (TANCH). The anchor protocol establishes a repeating cycle of departure (AREV), return to void (VINIT), and forward motion (AFWD) before closing at the boundary again. Mixed with composition (CLINK), fixation (IFIX), and identity (IMSCRIB). A structural sabbath — rhythm without Frobenius verification.
+**O₁ cycle**: period-3 anchored at the boundary (TANCH). The anchor protocol establishes a repeating cycle of departure (AREV), return to void (VINIT), and forward motion (AFWD) before closing at the boundary again. Mixed with composition (CLINK), fixation (IFIX), and identity (IMSCRIB). A structural sabbath, rhythm without Frobenius verification.
 
-### IV. Dual Bootstrap — *The Inverted Frobenius*
+### IV. Dual Bootstrap, *The Inverted Frobenius*
 
 ```
 IMSCRIB → AFWD → FFUSE → FSPLIT → AREV → CLINK → IFIX → IMSCRIB
@@ -295,9 +305,9 @@ IMSCRIB → AFWD → FFUSE → FSPLIT → AREV → CLINK → IFIX → IMSCRIB
 | Dialetheia | None |
 | Coarse class size | 7,200 arrangements |
 
-**O_∞ dual**: same signature as Void Genesis, but self-referential AND Frobenius-inverted. Fuse before split — the μ∘δ condition is satisfied *in reverse*. This is the dual of the bootstrap: where Dialetheic Bootstrap applies δ then μ (analysis then synthesis), Dual Bootstrap applies μ then δ (synthesis then analysis). Both satisfy μ∘δ=id, but the temporal order is reversed.
+**O_∞ dual**: same signature as Void Genesis, but self-referential AND Frobenius-inverted. Fuse before split, the μ∘δ condition is satisfied *in reverse*. This is the dual of the bootstrap: where Dialetheic Bootstrap applies δ then μ (analysis then synthesis), Dual Bootstrap applies μ then δ (synthesis then analysis). Both satisfy μ∘δ=id, but the temporal order is reversed.
 
-### V. Linear Chain — *Pure Recording*
+### V. Linear Chain, *Pure Recording*
 
 ```
 IFIX → IFIX → IFIX → IFIX → IFIX → IFIX → IFIX → IFIX
@@ -311,9 +321,9 @@ IFIX → IFIX → IFIX → IFIX → IFIX → IFIX → IFIX → IFIX
 | Dialetheia | None |
 | Coarse class size | **1** (structurally unique) |
 
-**O₀ recording**: the only arrangement with signature (0, 0, 0, 8). All 8 positions are IFIX — irreversible fixation at every step. This is the *atom* of linear logic: nothing but the `!` exponential, repeated. Structurally unique — no other arrangement shares its coarse fingerprint.
+**O₀ recording**: the only arrangement with signature (0, 0, 0, 8). All 8 positions are IFIX, irreversible fixation at every step. This is the *atom* of linear logic: nothing but the `!` exponential, repeated. Structurally unique, no other arrangement shares its coarse fingerprint.
 
-### VI. Empty Bootstrap — *The Period-2 Oscillator*
+### VI. Empty Bootstrap, *The Period-2 Oscillator*
 
 ```
 VINIT → IMSCRIB → VINIT → IMSCRIB → VINIT → IMSCRIB → VINIT → IMSCRIB
@@ -327,9 +337,9 @@ VINIT → IMSCRIB → VINIT → IMSCRIB → VINIT → IMSCRIB → VINIT → IMSC
 | Dialetheia | None |
 | Coarse class size | **1** (structurally unique) |
 
-**O₁ oscillation**: period-2 alternation between void (VINIT) and identity (IMSCRIB). Structurally unique — the only arrangement with signature (8, 0, 0, 0), period=2, and diversity=2. The bootstrap reduced to its minimal heartbeat: void ↔ identity, nothing ↔ self.
+**O₁ oscillation**: period-2 alternation between void (VINIT) and identity (IMSCRIB). Structurally unique, the only arrangement with signature (8, 0, 0, 0), period=2, and diversity=2. The bootstrap reduced to its minimal heartbeat: void ↔ identity, nothing ↔ self.
 
-### VII. Parakernel — *The Engram of Contradiction*
+### VII. Parakernel, *The Engram of Contradiction*
 
 ```
 EVALF → AREV → FSPLIT → EVALT → AFWD → FFUSE → ENGAGR → IFIX
@@ -343,9 +353,9 @@ EVALF → AREV → FSPLIT → EVALT → AFWD → FFUSE → ENGAGR → IFIX
 | Dialetheia | Complete (all 3) |
 | Coarse class size | 5,400 arrangements |
 
-**O₂ engram**: same signature as Dialetheic Bootstrap, but begins with falsehood (EVALF) and ends with fixation (IFIX) — the path from negation through Frobenius verification to permanent record. All three Dialetheia tokens present, Frobenius pair in canonical order. The "engram" — a memory trace that includes its own contradiction.
+**O₂ engram**: same signature as Dialetheic Bootstrap, but begins with falsehood (EVALF) and ends with fixation (IFIX), the path from negation through Frobenius verification to permanent record. All three Dialetheia tokens present, Frobenius pair in canonical order. The "engram", a memory trace that includes its own contradiction.
 
-### VIII. Frobenius Kernel — *The Minimal 4-Step Algebra*
+### VIII. Frobenius Kernel, *The Minimal 4-Step Algebra*
 
 ```
 VINIT → FSPLIT → FFUSE → TANCH
@@ -358,9 +368,9 @@ VINIT → FSPLIT → FFUSE → TANCH
 | Frobenius | FSPLIT → FFUSE (canonical order) |
 | Dialetheia | None |
 
-**O₀ kernel**: the minimal Frobenius-closed structure. Only 4 positions: void → split → fuse → boundary. This is the μ∘δ=id condition in its purest form — no Dialetheia, no Linear, just the Frobenius pair sandwiched between initial and terminal objects. The *atom* of verification.
+**O₀ kernel**: the minimal Frobenius-closed structure. Only 4 positions: void → split → fuse → boundary. This is the μ∘δ=id condition in its purest form, no Dialetheia, no Linear, just the Frobenius pair sandwiched between initial and terminal objects. The *atom* of verification.
 
-### IX. Chiral Pairs — *The Period-2 Handedness*
+### IX. Chiral Pairs, *The Period-2 Handedness*
 
 ```
 AFWD → AREV → AFWD → AREV → AFWD → AREV → AFWD → AREV
@@ -374,9 +384,9 @@ AFWD → AREV → AFWD → AREV → AFWD → AREV → AFWD → AREV
 | Dialetheia | None |
 | Coarse class size | **1** (structurally unique) |
 
-**O₁ chirality**: period-2 alternation between forward (AFWD) and reverse (AREV) morphisms. Structurally unique — the only arrangement with signature (8, 0, 0, 0), period=2, and diversity=2 that is *not* void↔identity. Pure directed oscillation without content — the structure of handedness itself.
+**O₁ chirality**: period-2 alternation between forward (AFWD) and reverse (AREV) morphisms. Structurally unique, the only arrangement with signature (8, 0, 0, 0), period=2, and diversity=2 that is *not* void↔identity. Pure directed oscillation without content, the structure of handedness itself.
 
-### X. Truth Machine — *The Binary Classifier*
+### X. Truth Machine, *The Binary Classifier*
 
 ```
 IMSCRIB → FSPLIT → EVALT → IFIX → IMSCRIB → FSPLIT → EVALF → IFIX
@@ -386,13 +396,13 @@ IMSCRIB → FSPLIT → EVALT → IFIX → IMSCRIB → FSPLIT → EVALF → IFIX
 |----------|-------|
 | Signature | (2, 2, 2, 2) |
 | Start/End | IMSCRIB → IFIX |
-| Frobenius | **None** (FSPLIT appears twice but FFUSE never — see §Document Error) |
+| Frobenius | **None** (FSPLIT appears twice but FFUSE never, see §Document Error) |
 | Dialetheia | Partial (EVALT + EVALF, no ENGAGR) |
 | Coarse class size | 360 arrangements |
 
-**O₁ classifier**: two parallel classification paths. Path 1: IMSCRIB → FSPLIT → EVALT → IFIX (split then evaluate true, record). Path 2: IMSCRIB → FSPLIT → EVALF → IFIX (split then evaluate false, record). A binary classifier — true or false, no paradox, no synthesis. Notably **does not contain a Frobenius pair** (no FFUSE), contrary to earlier documentation.
+**O₁ classifier**: two parallel classification paths. Path 1: IMSCRIB → FSPLIT → EVALT → IFIX (split then evaluate true, record). Path 2: IMSCRIB → FSPLIT → EVALF → IFIX (split then evaluate false, record). A binary classifier, true or false, no paradox, no synthesis. Notably **does not contain a Frobenius pair** (no FFUSE), contrary to earlier documentation.
 
-### XI. Eternal Return — *The Unclosed Period-3*
+### XI. Eternal Return, *The Unclosed Period-3*
 
 ```
 IMSCRIB → AFWD → AREV → IMSCRIB → AFWD → AREV → IMSCRIB → AFWD
@@ -406,9 +416,9 @@ IMSCRIB → AFWD → AREV → IMSCRIB → AFWD → AREV → IMSCRIB → AFWD
 | Dialetheia | None |
 | Coarse class size | 9,980 arrangements |
 
-**O₂ cycle**: period-3 pattern (IMSCRIB → AFWD → AREV) repeated, but truncated — the 8th position is AFWD, not IMSCRIB. The cycle does not close. This is the eternal return that never quite returns — always one step away from completion. The structural signature of *becoming* rather than *being*.
+**O₂ cycle**: period-3 pattern (IMSCRIB → AFWD → AREV) repeated, but truncated, the 8th position is AFWD, not IMSCRIB. The cycle does not close. This is the eternal return that never quite returns, always one step away from completion. The structural signature of *becoming* rather than *being*.
 
-### XII. ROM Burn — *The Layered Truth Record*
+### XII. ROM Burn, *The Layered Truth Record*
 
 ```
 EVALT → IFIX → EVALF → IFIX → ENGAGR → IFIX → IMSCRIB → IFIX
@@ -422,50 +432,50 @@ EVALT → IFIX → EVALF → IFIX → ENGAGR → IFIX → IMSCRIB → IFIX
 | Dialetheia | Complete (all 3) |
 | Coarse class size | 720 arrangements |
 
-**O₀ record**: each Dialetheia token is immediately followed by IFIX — evaluation, then permanent recording. True → fix. False → fix. Paradox → fix. Identity → fix. A complete truth-value burn into read-only memory (ROM). All three truth values present and permanently recorded, with identity (IMSCRIB) also fixed. The structure of *finalized knowledge*.
+**O₀ record**: each Dialetheia token is immediately followed by IFIX, evaluation, then permanent recording. True → fix. False → fix. Paradox → fix. Identity → fix. A complete truth-value burn into read-only memory (ROM). All three truth values present and permanently recorded, with identity (IMSCRIB) also fixed. The structure of *finalized knowledge*.
 
 ### Summary Table
 
 | # | Class | Signature | Frobenius | Dialetheia | Self-Ref | Tier | Coarse Size |
 |---|-------|-----------|-----------|------------|----------|------|-------------|
 | I | Dialetheic Bootstrap | (2,2,3,1) | split→fuse | complete | ✓ | O₂ | 360 |
-| II | Void Genesis | (5,2,0,1) | split→fuse | none | — | O₀ | 1,440 |
-| III | Anchor Protocol | (7,0,0,1) | none | none | — | O₁ | 5,100 |
+| II | Void Genesis | (5,2,0,1) | split→fuse | none |, | O₀ | 1,440 |
+| III | Anchor Protocol | (7,0,0,1) | none | none |, | O₁ | 5,100 |
 | IV | Dual Bootstrap | (5,2,0,1) | fuse→split† | none | ✓ | O_∞ | 7,200 |
 | V | Linear Chain | (0,0,0,8) | none | none | ✓ | O₀ | **1** |
-| VI | Empty Bootstrap | (8,0,0,0) | none | none | — | O₁ | **1** |
-| VII | Parakernel | (2,2,3,1) | split→fuse | complete | — | O₂ | 5,400 |
-| VIII | Frobenius Kernel | (2,2,0,0) | split→fuse | none | — | O₀ | len 4 |
-| IX | Chiral Pairs | (8,0,0,0) | none | none | — | O₁ | **1** |
-| X | Truth Machine | (2,2,2,2) | **none** | partial | — | O₁ | 360 |
-| XI | Eternal Return | (8,0,0,0) | none | none | — | O₂ | 9,980 |
-| XII | ROM Burn | (1,0,3,4) | none | complete | — | O₀ | 720 |
+| VI | Empty Bootstrap | (8,0,0,0) | none | none |, | O₁ | **1** |
+| VII | Parakernel | (2,2,3,1) | split→fuse | complete |, | O₂ | 5,400 |
+| VIII | Frobenius Kernel | (2,2,0,0) | split→fuse | none |, | O₀ | len 4 |
+| IX | Chiral Pairs | (8,0,0,0) | none | none |, | O₁ | **1** |
+| X | Truth Machine | (2,2,2,2) | **none** | partial |, | O₁ | 360 |
+| XI | Eternal Return | (8,0,0,0) | none | none |, | O₂ | 9,980 |
+| XII | ROM Burn | (1,0,3,4) | none | complete |, | O₀ | 720 |
 
 † Inverted Frobenius order (fuse→split). &nbsp; **Bold** = structurally unique.
 
-**Total across canonical coarse classes: ~30,563 arrangements — 0.0071% of the 430M space.**
+**Total across canonical coarse classes: ~30,563 arrangements, 0.0071% of the 430M space.**
 
 ## Two-Tier Classification
 
-Every arrangement receives a `StructuralFingerprint` — a named tuple with 12 fields capturing all properties used to distinguish the canonical classes:
+Every arrangement receives a `StructuralFingerprint`, a named tuple with 12 fields capturing all properties used to distinguish the canonical classes:
 
 ### Coarse Key
 
-Groups arrangements by **canonical-level properties** — the fields that distinguish the 12 classes from each other:
+Groups arrangements by **canonical-level properties**, the fields that distinguish the 12 classes from each other:
 
 ```
 length | sig_L,sig_F,sig_D,sig_X | start_token | end_token |
 self_ref | frobenius_order | dialetheia_complete | period | token_diversity
 ```
 
-Example: `8|2,2,3,1|5|5|1|1|1|8|6` — Dialetheic Bootstrap's coarse key.
+Example: `8|2,2,3,1|5|5|1|1|1|8|6`, Dialetheic Bootstrap's coarse key.
 
 - **~1,000–2,000 distinct coarse keys** in the full space
 - Coarse compression ratio: ~200,000:1 (430M → ~2,000)
 
 ### Fine Key
 
-Full structural fingerprint for **exact matching** — adds bitmask-level detail:
+Full structural fingerprint for **exact matching**, adds bitmask-level detail:
 
 ```
 ... | token_mask(12-bit) | fam_adj_mask(16-bit) | transition_signature
@@ -496,17 +506,17 @@ Full structural fingerprint for **exact matching** — adds bitmask-level detail
 
 ### 1. The 12 Canonicals Are a Skeleton, Not a Basis
 
-The 12 canonical classes occupy only **~0.007%** of the total arrangement space (~30,500 out of 430M). They are not a "complete basis" — they are a **skeleton**: a sparse set of structurally distinct reference points. The remaining 99.99% of the space contains millions of other structural classes — most of them semantically uninterpreted.
+The 12 canonical classes occupy only **~0.007%** of the total arrangement space (~30,500 out of 430M). They are not a "complete basis", they are a **skeleton**: a sparse set of structurally distinct reference points. The remaining 99.99% of the space contains millions of other structural classes, most of them semantically uninterpreted.
 
 ### 2. Three Structurally Unique Atoms
 
-Three canonical classes have **coarse class size = 1** — no other arrangement in the entire 430M space shares their coarse fingerprint:
+Three canonical classes have **coarse class size = 1**, no other arrangement in the entire 430M space shares their coarse fingerprint:
 
-- **V. Linear Chain** — only (0,0,0,8) signature with period 1
-- **VI. Empty Bootstrap** — only period-2 void↔identity with diversity 2
-- **IX. Chiral Pairs** — only period-2 AFWD↔AREV with diversity 2
+- **V. Linear Chain**, only (0,0,0,8) signature with period 1
+- **VI. Empty Bootstrap**, only period-2 void↔identity with diversity 2
+- **IX. Chiral Pairs**, only period-2 AFWD↔AREV with diversity 2
 
-These are the **atoms** of the arrangement space — structurally irreducible reference points.
+These are the **atoms** of the arrangement space, structurally irreducible reference points.
 
 ### 3. Self-Reference + Frobenius + Dialetheia Is Extremely Rare
 
@@ -529,11 +539,11 @@ Coarse class sizes follow a power-law distribution:
 | 100,001–1,000,000 | ~100 |
 | 1,000,000+ | ~10 |
 
-A few massive classes (millions of arrangements each) dominate the space. These are "generic" high-entropy classes — no Frobenius ordering, no Dialetheia completeness, no periodicity. Hundreds of small classes are the structurally interesting ones.
+A few massive classes (millions of arrangements each) dominate the space. These are "generic" high-entropy classes, no Frobenius ordering, no Dialetheia completeness, no periodicity. Hundreds of small classes are the structurally interesting ones.
 
 ### 5. The Top Signatures Dominate
 
-The largest family signatures — those with 4–6 Logical tokens, exactly 1 Frobenius, and 1–3 Dialetheia — account for ~80% of all arrangements. The signature distribution is heavily imbalanced:
+The largest family signatures, those with 4–6 Logical tokens, exactly 1 Frobenius, and 1–3 Dialetheia, account for ~80% of all arrangements. The signature distribution is heavily imbalanced:
 
 | Rank | Signature | ~% of Space |
 |------|-----------|-------------|
@@ -545,7 +555,7 @@ The largest family signatures — those with 4–6 Logical tokens, exactly 1 Fro
 
 ### 6. Frobenius-Closed Systems Are 5, Not 6
 
-See [Document Error Discovered](#document-error-discovered). Class X (Truth Machine) was previously documented as containing a Frobenius pair, but it does not — FSPLIT appears twice without FFUSE. Only 5 of the 12 canonical classes contain a Frobenius pair.
+See [Document Error Discovered](#document-error-discovered). Class X (Truth Machine) was previously documented as containing a Frobenius pair, but it does not, FSPLIT appears twice without FFUSE. Only 5 of the 12 canonical classes contain a Frobenius pair.
 
 ---
 
@@ -699,7 +709,7 @@ for name, fp in CANONICAL_FINGERPRINTS.items():
 
 ## Proof Scaffold
 
-`proof_scaffold.py` converts any arrangement tuple into a typed **IGProtocol Lean term** — a complete, machine-checkable witness skeleton with zero `sorry` slots in the main term.
+`proof_scaffold.py` converts any arrangement tuple into a typed **IGProtocol Lean term**, a complete, machine-checkable witness skeleton with zero `sorry` slots in the main term.
 
 ### What it emits
 
@@ -726,7 +736,7 @@ noncomputable def my_ob3ect_protocol
   (.arrow Omega_Z F_ell Gamma_seq)           -- [6] IFIX  | prot
   (.arrow Gamma_seq Omega_Z Gamma_seq)       -- [7] IMSCRIB | gram
 
--- EVALT/EVALF arm sub-defs (feature 2 — when tokens present):
+-- EVALT/EVALF arm sub-defs (feature 2, when tokens present):
 noncomputable def my_ob3ect_true_arm  : IGProtocol Gamma_seq Gamma_seq :=
   (my_ob3ect_protocol (by decide)).restrictToEVALT
 noncomputable def my_ob3ect_false_arm : IGProtocol Gamma_seq Gamma_seq :=
@@ -748,18 +758,18 @@ end Imscribing
 
 | Feature | What it produces |
 |---------|-----------------|
-| **Theorem stubs** | Named Lean `theorem` declarations for tier (`by decide`), Frobenius (`apply igFrobAlg_self_fusion`), self-reference (`exact igProtoCopy_isDagger`), and loop closure (`⟨_, rfl, by decide, by decide⟩`). One `sorry` in the Frobenius theorem is an honest obligation — the main term has none. |
+| **Theorem stubs** | Named Lean `theorem` declarations for tier (`by decide`), Frobenius (`apply igFrobAlg_self_fusion`), self-reference (`exact igProtoCopy_isDagger`), and loop closure (`⟨_, rfl, by decide, by decide⟩`). One `sorry` in the Frobenius theorem is an honest obligation, the main term has none. |
 | **EVALT/EVALF arm defs** | When `EVALT` or `EVALF` appear in the token sequence, emits named `_true_arm` / `_false_arm` `noncomputable def`s restricting the main protocol to each evaluation branch via `.restrictToEVALT` / `.restrictToEVALF`. |
 | **Domain opcode annotations** | Optional `opcode_map: Dict[str, str]` appends domain-semantic labels to each `.arrow` comment (e.g. `(Amendment proposal)`). Supplied automatically by `ob3ect/auto.py` from the artifact's bootstrap step `domain_action` fields. |
 
 ### Type flow
 
-All `src_type` / `tgt_type` values are computed deterministically from the token sequence topology — no `sorry` required:
+All `src_type` / `tgt_type` values are computed deterministically from the token sequence topology, no `sorry` required:
 
 - **Linear node:** `src = type of previous top-level node`, `tgt = type of next`
-- **First node:** `src = types[0]` (self-root — loop begins here)
+- **First node:** `src = types[0]` (self-root, loop begins here)
 - **Last node:** `tgt = types[0]` (close loop back to start)
-- **FSPLIT:** implicit as `.prod δ` — not emitted as `.arrow`
+- **FSPLIT:** implicit as `.prod δ`, not emitted as `.arrow`
 - **FFUSE:** `src = types[ff]`, `tgt = type of next non-FSPLIT top-level node`
 - **Branch interior:** `src = types[fs]`, `tgt = types[ff]`
 
@@ -785,7 +795,7 @@ print(s.run(['IMSCRIB','AREV','FSPLIT','AFWD','FFUSE','CLINK','IFIX','IMSCRIB'],
 
 ### Wiring layer
 
-`wiring.py` decompresses the 8-token linear tuple into the full port-level `WiredGraph` — including back-propagation edges (IMSCRIB→IFIX LinFix), cross-branch wires, and the CLINK→IMSCRIB weighted loop edge. `proof_scaffold.py` runs on top of this graph; the scaffold structure is the graph's topology expressed as a typed Lean term.
+`wiring.py` decompresses the 8-token linear tuple into the full port-level `WiredGraph`, including back-propagation edges (IMSCRIB→IFIX LinFix), cross-branch wires, and the CLINK→IMSCRIB weighted loop edge. `proof_scaffold.py` runs on top of this graph; the scaffold structure is the graph's topology expressed as a typed Lean term.
 
 ### Symbolic Wiring Diagram Generator
 
@@ -819,7 +829,7 @@ python3 symbolic_diagram.py --all --format png  # PNG via cairosvg
 
 **Output:** 16 SVG diagrams (12 canonical + 4 novel cross-branch) in `diagrams/`. The canonical classes are rendered as left-to-right wiring diagrams with Belnap FOUR register states, IFIX barriers, categorical edge coloring, and register-delta labels. The novel graphs (XX–XXIII) demonstrate non-planar cross-branch topologies discoverable by the mapper.
 
-**Reference:** `docs/SYMBOLIC_SYSTEM.md` — complete visual vocabulary, reading guide, and diagram-by-diagram summary.
+**Reference:** `docs/SYMBOLIC_SYSTEM.md`, complete visual vocabulary, reading guide, and diagram-by-diagram summary.
 
 ---
 
@@ -832,7 +842,7 @@ python3 symbolic_diagram.py --all --format png  # PNG via cairosvg
 | 50M sample | 50,000,000 | ~25 min | ~33,000/s |
 | Full (estimated) | 429,981,696 | ~3.5 hours | ~34,000/s |
 
-**Memory:** ~50 MB for the SpaceMap (coarse/fine dicts with representative arrangements). Essentially constant — the map does not store every arrangement, only the aggregated statistics.
+**Memory:** ~50 MB for the SpaceMap (coarse/fine dicts with representative arrangements). Essentially constant, the map does not store every arrangement, only the aggregated statistics.
 
 **Scaling:** The signature-decomposed approach is *embarrassingly parallel*. Each of the 165 signatures can be enumerated independently. A multiprocessing implementation (not yet built) would scale near-linearly with core count.
 
@@ -844,7 +854,7 @@ The mapper saves a JSON checkpoint every 5M arrangements. If interrupted, the ch
 
 ## Relationship to the Imscribing Grammar
 
-IMSCRIBr is a concrete implementation of one facet of the **Imscribing Grammar** (IG) — the structural type system that classifies all formal systems by their 12 primitive values (dimensionality, topology, coupling, parity, fidelity, kinetics, cardinality, composition, criticality, chirality, stoichiometry, winding).
+IMSCRIBr is a concrete implementation of one facet of the **Imscribing Grammar** (IG), the structural type system that classifies all formal systems by their 12 primitive values (dimensionality, topology, coupling, parity, fidelity, kinetics, cardinality, composition, criticality, chirality, stoichiometry, winding).
 
 ### Mapping: IMASM Tokens → IG Primitives
 
@@ -852,18 +862,18 @@ The 12 IMASM tokens correspond loosely to the 12 IG primitives, though the mappi
 
 | IMASM Token | IG Primitive | Correspondence |
 |-------------|-------------|----------------|
-| VINIT | 𐑛 (Dimensionality) | Initial object — the ground of distinction |
-| TANCH | 𐑡 (Topology) | Terminal object — the boundary of connectivity |
-| AFWD | 𐑩 (Coupling) | Forward morphism — directed relation |
-| AREV | 𐑗 (Parity/Symmetry) | Reverse morphism — symmetry operation |
-| CLINK | 𐑱 (Fidelity) | Composition — regime coherence |
-| IMSCRIB | 𐑘 (Kinetics) | Identity — self-inscription rate |
-| FSPLIT | 𐑚 (Cardinality) | Split (δ) — range decomposition |
-| FFUSE | 𐑝 (Composition) | Fuse (μ) — assembly mode |
-| EVALT | ⊙ (Criticality) | Evaluate-true — self-modeling gate open |
-| EVALF | 𐑓 (Chirality) | Evaluate-false — Markov order check |
-| ENGAGR | 𐑳 (Stoichiometry) | Engage paradox — heterogeneous component types |
-| IFIX | 𐑷 (Winding) | Irreversible fixation — topological invariant |
+| VINIT | 𐑛 (Dimensionality) | Initial object, the ground of distinction |
+| TANCH | 𐑡 (Topology) | Terminal object, the boundary of connectivity |
+| AFWD | 𐑩 (Coupling) | Forward morphism, directed relation |
+| AREV | 𐑗 (Parity/Symmetry) | Reverse morphism, symmetry operation |
+| CLINK | 𐑱 (Fidelity) | Composition, regime coherence |
+| IMSCRIB | 𐑘 (Kinetics) | Identity, self-inscription rate |
+| FSPLIT | 𐑚 (Cardinality) | Split (δ), range decomposition |
+| FFUSE | 𐑝 (Composition) | Fuse (μ), assembly mode |
+| EVALT | ⊙ (Criticality) | Evaluate-true, self-modeling gate open |
+| EVALF | 𐑓 (Chirality) | Evaluate-false, Markov order check |
+| ENGAGR | 𐑳 (Stoichiometry) | Engage paradox, heterogeneous component types |
+| IFIX | 𐑷 (Winding) | Irreversible fixation, topological invariant |
 
 This correspondence is **structural, not definitional**. The IMASM token space is one concrete encoding of the IG primitive lattice. The arrangement classes discovered by IMSCRIBr are therefore candidates for *novel structural types* that could be imscribed into the IG catalog.
 
@@ -878,7 +888,7 @@ The 12 canonical classes span all four ouroboricity tiers:
 | **O₂** | I, VII, XI | Self-reference OR Frobenius OR Dialetheia-complete |
 | **O_∞** | IV | Self-reference + inverted Frobenius (full ouroboric feedback) |
 
-Class IV (Dual Bootstrap) is the only O_∞ canonical — it combines self-reference with Frobenius closure in the *inverted* order (fuse before split), which is the signature of a system that observes its own synthesis before decomposing it.
+Class IV (Dual Bootstrap) is the only O_∞ canonical, it combines self-reference with Frobenius closure in the *inverted* order (fuse before split), which is the signature of a system that observes its own synthesis before decomposing it.
 
 ---
 
@@ -889,17 +899,17 @@ Class IV (Dual Bootstrap) is the only O_∞ canonical — it combines self-refer
 | `tokens.py` | 94 | Token enum, 4 families, `signature()`, `arrangement_str()` |
 | `classifier.py` | 240 | `StructuralFingerprint`, coarse/fine keys, 12 canonical arrangements |
 | `engine.py` | 379 | `SignatureClass`, `iter_signature_arrangements()`, `SpaceMap`, `search_arrangements()`, `map_space()` |
-| `wiring.py` | ~710 | `WiredGraph`, `Wire`, `imscr_wiring()`, `match_pairs()`, `NOVEL_GRAPHS` — full port-level topology + 4 novel cross-branch graphs |
-| `symbolic_diagram.py` | ~900 | SVG wiring diagram generator with full edge granularity (v3) — 7 edge-semantic dimensions |
+| `wiring.py` | ~710 | `WiredGraph`, `Wire`, `imscr_wiring()`, `match_pairs()`, `NOVEL_GRAPHS`, full port-level topology + 4 novel cross-branch graphs |
+| `symbolic_diagram.py` | ~900 | SVG wiring diagram generator with full edge granularity (v3), 7 edge-semantic dimensions |
 | `diagrams/` | 16 SVGs | Generated wiring diagrams for all 12 canonical + 4 novel classes |
 | `docs/SYMBOLIC_SYSTEM.md` | ~400 | Visual vocabulary reference, reading guide, diagram-by-diagram summary |
-| `proof_scaffold.py` | ~250 | `emit_scaffold()` — typed IGProtocol Lean term from any arrangement; theorem stubs, EVALT/EVALF arm defs, domain annotations |
+| `proof_scaffold.py` | ~250 | `emit_scaffold()`, typed IGProtocol Lean term from any arrangement; theorem stubs, EVALT/EVALF arm defs, domain annotations |
 | `run_map.py` | 149 | CLI: `--full`, `--sample N`, `--search`, `--length N` |
-| `pyproject.toml` | — | Hatchling build, `imasm-map` console entry point |
-| `README.md` | — | This document |
+| `pyproject.toml` |, | Hatchling build, `imasm-map` console entry point |
+| `README.md` |, | This document |
 | `IMASM_SPACE_MAP_REPORT.md` | 213 | Detailed structural analysis of the 430M space |
 | `initial commit.txt` | 75 | Commit manifest with 12-class summary and verification log |
-| `.gitignore` | — | Excludes `__pycache__/`, `*.json`, `imasm_summary.txt` |
+| `.gitignore` |, | Excludes `__pycache__/`, `*.json`, `imasm_summary.txt` |
 
 **Total:** ~2,600 lines of Python, zero external dependencies (SVG is pure text generation).
 
@@ -915,7 +925,7 @@ The actual arrangement:
 IMSCRIB → FSPLIT → EVALT → IFIX → IMSCRIB → FSPLIT → EVALF → IFIX
 ```
 
-FSPLIT appears **twice** (positions 1 and 5), but FFUSE appears **zero times**. There is no μ∘δ=id structure — no Frobenius pair. The `frobenius_order` is 0, not 1.
+FSPLIT appears **twice** (positions 1 and 5), but FFUSE appears **zero times**. There is no μ∘δ=id structure, no Frobenius pair. The `frobenius_order` is 0, not 1.
 
 ### Correction
 
@@ -931,7 +941,7 @@ The correct Frobenius pair count across the 12 canonical classes is **5**, not 6
 | | XI. Eternal Return |
 | | XII. ROM Burn |
 
-This was discovered automatically by the `compute_fingerprint()` function during space mapping — the classifier correctly reports `frobenius_order=0` for Class X. No manual audit was needed.
+This was discovered automatically by the `compute_fingerprint()` function during space mapping, the classifier correctly reports `frobenius_order=0` for Class X. No manual audit was needed.
 
 ---
 
@@ -949,4 +959,4 @@ When referencing IMSCRIBr in structural analysis:
 
 ---
 
-*"The boundaries of what can be formally expressed are themselves formally expressible."* — The Imscribing Grammar
+*"The boundaries of what can be formally expressed are themselves formally expressible."*, The Imscribing Grammar
