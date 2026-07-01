@@ -581,7 +581,7 @@ def _wire_edge_category(src_tok: Token, dst_tok: Token, w: Wire) -> str:
 # ── THE V3 RENDERER ─────────────────────────────────────────────────────────
 
 def render_wiring_svg_v3(graph: WiredGraph, name: str = "", ourobor: str = "",
-                          description: str = "", ig_type: str = "") -> SVGBuilder:
+                          description: str = "", ig_type: str = "", pen_mode: bool = False) -> SVGBuilder:
     """
     Render a complete wiring diagram as SVG with full edge granularity:
 
@@ -593,6 +593,9 @@ def render_wiring_svg_v3(graph: WiredGraph, name: str = "", ourobor: str = "",
     6. Pair-identity coloring (each FSPLIT/FFUSE pair gets unique hue family)
     7. CLINK compositional double-stroke
     """
+
+    if pen_mode:
+        return render_wiring_pen_svg(graph, name, ourobor, description)
 
     layout = compute_layout(graph)
     tokens = layout.tokens
@@ -1023,6 +1026,246 @@ CANONICALS: Dict[str, dict] = {
         "desc": "Truth-value burn. EVALT→IFIX, EVALF→IFIX, ENGAGR→IFIX, IMSCRIB→IFIX."
     },
 }
+
+# ═══════════════════════════════════════════════════════════════════════════
+# PEN MODE — black-and-white pen-on-paper renderer (per READING_GUIDE.md)
+# Distinct renderer, not a recolor: unfilled family shapes, 12 token line
+# patterns, inner register hatch fills, midpoint glyphs, guard ports, IFIX
+# barrier, pair brackets, and a vertical left-side legend. Reproducible by hand.
+# ═══════════════════════════════════════════════════════════════════════════
+
+PEN_INK  = "#000000"
+PEN_GRID = "#e8e8e8"
+PEN_W    = 1220
+PEN_NODE_R = 20
+FAM_SHAPE = {0: "circle", 1: "diamond", 2: "hexagon", 3: "square"}
+
+# per source-token edge style: (dash, base_width, arrow, mid_glyph)
+_PEN_EDGE = {
+    Token.VINIT.value:   (None,             1.5, "open",    None),
+    Token.TANCH.value:   ("5,2,1,2,1,2",    1.5, "open",    None),
+    Token.AFWD.value:    (None,             2.5, "filled",  None),
+    Token.AREV.value:    ("6,4",            1.5, "filled",  None),
+    Token.CLINK.value:   ("double",         1.0, "filled",  None),
+    Token.IMSCRIB.value: (None,             1.5, "reverse", "←"),
+    Token.FSPLIT.value:  (None,             1.5, "filled",  "◇"),
+    Token.FFUSE.value:   (None,             1.5, "filled",  "●"),
+    Token.EVALT.value:   (None,             1.5, "filled",  "+"),
+    Token.EVALF.value:   (None,             1.5, "filled",  "×"),
+    Token.ENGAGR.value:  ("zigzag",         1.5, "filled",  None),
+    Token.IFIX.value:    ("2,2",            1.5, "filled",  None),
+}
+_PEN_DEPTH_W = {0: 2.0, 1: 1.5, 2: 1.0, 3: 0.5}
+
+
+def _pen_shape(svg: 'SVGBuilder', shape: str, cx: float, cy: float, r: float,
+               fill: str = "none", sw: float = 1.3):
+    a = {"fill": fill, "stroke": PEN_INK, "stroke-width": str(sw)}
+    if shape == "circle":
+        svg.add("circle", {**a, "cx": f"{cx:.1f}", "cy": f"{cy:.1f}", "r": f"{r:.1f}"})
+    elif shape == "diamond":
+        svg.add("polygon", {**a, "points": _diamond_points(cx, cy, r)})
+    elif shape == "hexagon":
+        svg.add("polygon", {**a, "points": _hexagon_points(cx, cy, r)})
+    else:  # square
+        svg.add("rect", {**a, "x": f"{cx-r:.1f}", "y": f"{cy-r:.1f}",
+                         "width": f"{2*r:.1f}", "height": f"{2*r:.1f}"})
+
+
+def _pen_zigzag(x1, y1, x2, y2, amp=4, step=8):
+    L = math.hypot(x2 - x1, y2 - y1) or 1
+    ux, uy = (x2 - x1) / L, (y2 - y1) / L
+    px, py = -uy, ux
+    pts, d, sign = [], 0.0, 1
+    while d < L:
+        cx, cy = x1 + ux * d, y1 + uy * d
+        pts.append(f"{cx + px*amp*sign:.1f},{cy + py*amp*sign:.1f}")
+        sign *= -1; d += step
+    pts.append(f"{x2:.1f},{y2:.1f}")
+    return " ".join(pts)
+
+
+def render_wiring_pen_svg(graph: WiredGraph, name: str = "", ourobor: str = "",
+                          description: str = "") -> SVGBuilder:
+    """Black-and-white pen diagram. Same layout engine as the color renderer;
+    every colour dimension is re-expressed as a pen-drawable form."""
+    layout = compute_layout(graph)
+    tokens, n, states, pos = layout.tokens, layout.n, layout.states, layout.pos
+
+    svg = SVGBuilder(w=PEN_W)
+    svg.parts[1] = f'<rect width="{PEN_W}" height="{SVG_H}" fill="#ffffff"/>'
+
+    # ── register-state hatch patterns ──
+    svg.add_def('<pattern id="hatch-T" width="4" height="4" patternUnits="userSpaceOnUse">'
+                f'<path d="M2,0 L2,4" stroke="{PEN_INK}" stroke-width="0.8"/></pattern>')
+    svg.add_def('<pattern id="hatch-F" width="4" height="4" patternUnits="userSpaceOnUse">'
+                f'<path d="M0,2 L4,2" stroke="{PEN_INK}" stroke-width="0.8"/></pattern>')
+    svg.add_def('<pattern id="hatch-B" width="4" height="4" patternUnits="userSpaceOnUse">'
+                f'<path d="M2,0 L2,4 M0,2 L4,2" stroke="{PEN_INK}" stroke-width="0.8"/></pattern>')
+    _HATCH = {1: "url(#hatch-T)", 2: "url(#hatch-F)", 3: "url(#hatch-B)"}
+
+    # ── faint grid ──
+    for gx in range(0, PEN_W, GRID_SPACING):
+        svg.line(gx, 0, gx, SVG_H, stroke=PEN_GRID, width=0.4, opacity=0.3)
+    for gy in range(0, SVG_H, GRID_SPACING):
+        svg.line(0, gy, PEN_W, gy, stroke=PEN_GRID, width=0.4, opacity=0.3)
+
+    # ── title ──
+    title = name.replace("_", " ") if name else ""
+    svg.text(PEN_W/2, 26, title, 13, PEN_INK, "middle", True)
+    if description:
+        svg.text(PEN_W/2, 41, description[:155], 7, PEN_INK, "middle")
+
+    # ── lane labels ──
+    has_T = any(layout.lanes.get(i) == "T" for i in range(n))
+    has_F = any(layout.lanes.get(i) == "F" for i in range(n))
+    if has_T: svg.text(66, Y_T, "T-lane", 7, PEN_INK, "start")
+    if has_F: svg.text(66, Y_F, "F-lane", 7, PEN_INK, "start")
+    svg.text(66, Y_MAIN, "main", 7, PEN_INK, "start")
+
+    # ── IFIX barrier (double vertical + × markers) ──
+    if layout.ifix_pos is not None:
+        bx = layout.ifix_pos
+        for off in (-2.5, 2.5):
+            svg.line(bx + off, Y_T - 45, bx + off, Y_F + 45, stroke=PEN_INK,
+                     width=1.0, dash="4,3", opacity=1.0)
+        for yy in (Y_T - 45, Y_F + 45):
+            svg.text(bx, yy, "×", 8, PEN_INK, "middle")
+        svg.text(bx, Y_T - 52, "IFIX", 6, PEN_INK, "middle")
+
+    # ── pair brackets (dashed arc + circled numeral) ──
+    for fs, ff in match_pairs(tuple(t.value for t in tokens)):
+        if fs in pos and ff in pos:
+            (xs, ys), (xd, yd) = pos[fs], pos[ff]
+            yb = min(ys, yd) - 38
+            svg.line(xs, ys - PEN_NODE_R, xs, yb, stroke=PEN_INK, width=0.6, dash="3,3", opacity=0.8)
+            svg.line(xs, yb, xd, yb, stroke=PEN_INK, width=0.6, dash="3,3", opacity=0.8)
+            svg.line(xd, yb, xd, yd - PEN_NODE_R, stroke=PEN_INK, width=0.6, dash="3,3", opacity=0.8)
+            pi = (layout.pair_of.get(fs, 0)) + 1
+            mxb = (xs + xd) / 2
+            svg.add("circle", {"cx": f"{mxb:.1f}", "cy": f"{yb:.1f}", "r": "6",
+                               "fill": "#ffffff", "stroke": PEN_INK, "stroke-width": "0.8"})
+            svg.text(mxb, yb + 3, str(pi), 7, PEN_INK, "middle")
+
+    # ── wires ──
+    for w in layout.wires:
+        if w.src_node not in pos or w.dst_node not in pos:
+            continue
+        xs, ys = pos[w.src_node]; xd, yd = pos[w.dst_node]
+        tokv = tokens[w.src_node].value
+        dash, base_w, arrow, glyph = _PEN_EDGE.get(tokv, (None, 1.5, "filled", None))
+        depth = layout.nesting.get(w.src_node, 0)
+        width = _PEN_DEPTH_W.get(min(depth, 3), 1.0)
+        if tokv == Token.AFWD.value:
+            width = max(width, 2.5)
+        # shorten to node borders
+        L = math.hypot(xd - xs, yd - ys) or 1
+        ux, uy = (xd - xs) / L, (yd - ys) / L
+        sx, sy = xs + ux * PEN_NODE_R, ys + uy * PEN_NODE_R
+        ex, ey = xd - ux * PEN_NODE_R, yd - uy * PEN_NODE_R
+        if dash == "double":
+            px, py = -uy, ux
+            for o in (-1.6, 1.6):
+                svg.line(sx + px*o, sy + py*o, ex + px*o, ey + py*o, stroke=PEN_INK, width=width, opacity=1.0)
+        elif dash == "zigzag":
+            svg.add("polyline", {"points": _pen_zigzag(sx, sy, ex, ey), "fill": "none",
+                                 "stroke": PEN_INK, "stroke-width": str(width)})
+        else:
+            svg.line(sx, sy, ex, ey, stroke=PEN_INK, width=width, dash=dash, opacity=1.0)
+        # arrowhead
+        if arrow == "filled":
+            svg.add("polygon", {"points": _arrow_head_points(ex, ey, sx, sy, 8), "fill": PEN_INK})
+        elif arrow == "open":
+            svg.add("polyline", {"points": _arrow_head_points(ex, ey, sx, sy, 8),
+                                 "fill": "none", "stroke": PEN_INK, "stroke-width": "1.0"})
+        elif arrow == "reverse":
+            svg.add("polygon", {"points": _arrow_head_points(sx, sy, ex, ey, 8), "fill": PEN_INK})
+        # midpoint glyph
+        if glyph:
+            svg.add("circle", {"cx": f"{(sx+ex)/2:.1f}", "cy": f"{(sy+ey)/2:.1f}", "r": "5",
+                               "fill": "#ffffff", "stroke": PEN_INK, "stroke-width": "0.6"})
+            svg.text((sx+ex)/2, (sy+ey)/2 + 3, glyph, 7, PEN_INK, "middle")
+        # register delta label
+        lbl = reg_delta_label(states[w.src_node], states[w.dst_node])
+        if lbl and lbl != "=":
+            svg.text((sx+ex)/2, (sy+ey)/2 - 8, lbl, 6, PEN_INK, "middle")
+
+    # ── nodes ──
+    for i in range(n):
+        if i not in pos:
+            continue
+        cx, cy = pos[i]
+        fam = TOKEN_FAMILY[tokens[i].value]
+        _pen_shape(svg, FAM_SHAPE.get(fam, "circle"), cx, cy, PEN_NODE_R)
+        # inner register hatch
+        reg = states[i]
+        if reg in _HATCH:
+            svg.add("circle", {"cx": f"{cx:.1f}", "cy": f"{cy:.1f}", "r": "8",
+                               "fill": _HATCH[reg], "stroke": PEN_INK, "stroke-width": "0.6"})
+        # guard ports: open (input, left), filled (output, right)
+        svg.add("circle", {"cx": f"{cx-PEN_NODE_R-4:.1f}", "cy": f"{cy:.1f}", "r": "2.5",
+                           "fill": "#ffffff", "stroke": PEN_INK, "stroke-width": "0.8"})
+        svg.add("circle", {"cx": f"{cx+PEN_NODE_R+4:.1f}", "cy": f"{cy:.1f}", "r": "2.5", "fill": PEN_INK})
+        # labels: 2-letter above, full name below
+        svg.text(cx, cy - PEN_NODE_R - 6, TOKEN_SHORT[tokens[i].value], 9, PEN_INK, "middle", True)
+        svg.text(cx, cy + PEN_NODE_R + 12, TOKEN_NAMES[tokens[i].value], 5, PEN_INK, "middle")
+
+    # ── vertical left legend ──
+    _pen_legend(svg)
+
+    # ── footer ──
+    if ourobor:
+        svg.text(PEN_W/2, SVG_H - 12, f"Ouroboricity: {ourobor}", 7, PEN_INK, "middle")
+
+    svg.close()
+    return svg
+
+
+def _pen_legend(svg: 'SVGBuilder'):
+    """Vertical left-side legend strip (EDGES / GUARD / NODES / PAIRS / REG Δ)."""
+    x0 = 14
+    def hdr(y, t): svg.text(x0, y, t, 6, PEN_INK, "start", True)
+    def samp(y, dash, glyph, lbl, width=1.2, arrow="filled"):
+        svg.line(x0, y, x0 + 22, y, stroke=PEN_INK, width=width, dash=(dash if dash not in ("double", "zigzag") else None))
+        svg.text(x0 + 30, y + 2, lbl, 5, PEN_INK, "start")
+    # EDGES
+    hdr(72, "EDGES")
+    ys = 82
+    for tv in range(12):
+        dash, wdt, arrow, glyph = _PEN_EDGE[tv]
+        if dash == "double":
+            svg.line(x0, ys-1, x0+22, ys-1, stroke=PEN_INK, width=1.0)
+            svg.line(x0, ys+1, x0+22, ys+1, stroke=PEN_INK, width=1.0)
+        elif dash == "zigzag":
+            svg.add("polyline", {"points": _pen_zigzag(x0, ys, x0+22, ys, amp=2, step=4),
+                                 "fill": "none", "stroke": PEN_INK, "stroke-width": "1.0"})
+        else:
+            svg.line(x0, ys, x0+22, ys, stroke=PEN_INK, width=min(wdt, 2.0), dash=dash)
+        svg.text(x0 + 28, ys + 2, TOKEN_SHORT[tv], 5, PEN_INK, "start")
+        ys += 9.5
+    # GUARD
+    hdr(195, "GUARD")
+    svg.add("circle", {"cx": f"{x0+3}", "cy": "206", "r": "2.5", "fill": "#ffffff", "stroke": PEN_INK, "stroke-width": "0.8"})
+    svg.text(x0 + 10, 208, "in", 5, PEN_INK, "start")
+    svg.add("circle", {"cx": f"{x0+3}", "cy": "216", "r": "2.5", "fill": PEN_INK})
+    svg.text(x0 + 10, 218, "out", 5, PEN_INK, "start")
+    # NODES
+    hdr(231, "NODES")
+    for k, (shape, lbl) in enumerate([("circle", "LOGI"), ("diamond", "FROB"),
+                                       ("hexagon", "DIAL"), ("square", "LINE")]):
+        yy = 246 + k * 12
+        _pen_shape(svg, shape, x0 + 4, yy, 4, sw=1.0)
+        svg.text(x0 + 14, yy + 2, lbl, 5, PEN_INK, "start")
+    # PAIRS
+    hdr(294, "PAIRS")
+    svg.add("circle", {"cx": f"{x0+4}", "cy": "306", "r": "5", "fill": "#ffffff", "stroke": PEN_INK, "stroke-width": "0.8"})
+    svg.text(x0 + 4, 309, "1", 6, PEN_INK, "middle")
+    svg.text(x0 + 14, 308, "pair", 5, PEN_INK, "start")
+    # REG Δ
+    hdr(324, "REG Δ")
+    for k, lbl in enumerate(["↑ T", "↓ F", "↑↓ B"]):
+        svg.text(x0, 336 + k * 9, lbl, 5, PEN_INK, "start")
+
 
 def generate_all_diagrams_v3():
     """Generate all SVG wiring diagrams with full edge granularity."""

@@ -1,0 +1,34 @@
+symbolic_diagram.py: reconstruct the black-and-white pen-mode renderer
+
+The pen-mode wiring renderer documented in ob3ect/READING_GUIDE.md had been lost:
+render_wiring_svg_v3 accepted pen_mode but ignored it, and the real renderer was
+never committed (no commit, stash, reflog, or dangling blob has it). An earlier
+attempt to fake it by grayscale-inverting the color renderer was wrong (that keeps
+filled nodes, no line patterns, no hatch, no vertical legend) and has been reverted.
+
+Reconstructed the true pen renderer from READING_GUIDE.md + the surviving sample
+SVGs, driven by the same compute_layout engine as the color path:
+
+  render_wiring_pen_svg(graph, name, ourobor, description):
+    - white canvas (1220x630), black ink, faint gray grid
+    - register-state hatch <pattern> defs: hatch-T (vertical), hatch-F (horizontal),
+      hatch-B (cross); drawn as the node's inner register fill
+    - unfilled family node shapes: circle=LOGICAL, diamond=FROBENIUS,
+      hexagon=DIALETHEIA, square=LINEAR; 2-letter label above, full name below
+    - 12 token-specific edge line patterns (solid / dash-dot-dot / bold / dashed /
+      double / zigzag / crosshatch), midpoint glyphs (IMSCRIB back-arrow, FSPLIT
+      diamond, FFUSE dot, EVALT +, EVALF x), open/filled/reverse arrowheads,
+      nesting-depth thickness
+    - guard ports: open circle (input, left), filled circle (output, right)
+    - register-delta labels on edges; IFIX double-barrier with x markers;
+      FSPLIT<->FFUSE pair brackets with circled numerals
+    - vertical left legend: EDGES / GUARD / NODES / PAIRS / REG delta
+    - footer ouroboricity
+
+  render_wiring_svg_v3 gains pen_mode back in its signature and delegates to the
+  pen renderer when pen_mode=True.
+
+Verified: ob3ect auto.py _write_diagrams now emits demo_diagram.svg (color, 18
+saturated colors) and demo_diagram_pen.svg (0 saturated = pure B&W, with hatch
+defs and legend); rendered to PNG the pen diagram matches the documented pen
+schema and the original sample style.
