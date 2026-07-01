@@ -308,6 +308,14 @@ def emit_scaffold(
     import re
     safe_name = re.sub(r'[^a-z0-9_]', '_', safe_name)
     safe_name = re.sub(r'_+', '_', safe_name).strip('_')
+    # Cap the identifier stem: free-text class names can be whole sentences, which
+    # make unusable Lean idents (300-char names repeated dozens of times). Truncate
+    # to a short word-boundary stem; when truncated, append a short hash so distinct
+    # long names cannot collide. The full class name is kept in the header comment.
+    if len(safe_name) > 40:
+        import hashlib
+        stem = safe_name[:40].rsplit('_', 1)[0] or safe_name[:40]
+        safe_name = f"{stem}_{hashlib.sha1(safe_name.encode()).hexdigest()[:6]}"
 
     # Infer expected tier
     if fp.self_ref and fp.frobenius_order in (1, 2):

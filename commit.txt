@@ -1,34 +1,18 @@
-symbolic_diagram.py: reconstruct the black-and-white pen-mode renderer
+proof_scaffold.py: cap the Lean identifier stem so free-text class names are usable
 
-The pen-mode wiring renderer documented in ob3ect/READING_GUIDE.md had been lost:
-render_wiring_svg_v3 accepted pen_mode but ignored it, and the real renderer was
-never committed (no commit, stash, reflog, or dangling blob has it). An earlier
-attempt to fake it by grayscale-inverting the color renderer was wrong (that keeps
-filled nodes, no line patterns, no hatch, no vertical legend) and has been reverted.
+emit_scaffold() derived every Lean identifier (s0..s12, l0..l12, protocol,
+true_arm, false_arm, tier, frobenius) from the full class name with no length
+cap. For a free-text ob3ect class (often a whole sentence) this produced 300-char
+identifiers repeated dozens of times, i.e. unusable Lean.
 
-Reconstructed the true pen renderer from READING_GUIDE.md + the surviving sample
-SVGs, driven by the same compute_layout engine as the color path:
+Fix: after slugging, if the stem exceeds 40 chars, truncate to a word-boundary
+stem and append a 6-char sha1 suffix so distinct long names cannot collide. The
+full class name is unchanged in the header ("-- Class: ..."). Short/canonical
+names are untouched.
 
-  render_wiring_pen_svg(graph, name, ourobor, description):
-    - white canvas (1220x630), black ink, faint gray grid
-    - register-state hatch <pattern> defs: hatch-T (vertical), hatch-F (horizontal),
-      hatch-B (cross); drawn as the node's inner register fill
-    - unfilled family node shapes: circle=LOGICAL, diamond=FROBENIUS,
-      hexagon=DIALETHEIA, square=LINEAR; 2-letter label above, full name below
-    - 12 token-specific edge line patterns (solid / dash-dot-dot / bold / dashed /
-      double / zigzag / crosshatch), midpoint glyphs (IMSCRIB back-arrow, FSPLIT
-      diamond, FFUSE dot, EVALT +, EVALF x), open/filled/reverse arrowheads,
-      nesting-depth thickness
-    - guard ports: open circle (input, left), filled circle (output, right)
-    - register-delta labels on edges; IFIX double-barrier with x markers;
-      FSPLIT<->FFUSE pair brackets with circled numerals
-    - vertical left legend: EDGES / GUARD / NODES / PAIRS / REG delta
-    - footer ouroboricity
+Verified: the Navier-Stokes ob3ect scaffold now uses idents like
+the_non_vacuous_structural_type_of_408149_s0 with the full sentence still in the
+header comment.
 
-  render_wiring_svg_v3 gains pen_mode back in its signature and delegates to the
-  pen renderer when pen_mode=True.
-
-Verified: ob3ect auto.py _write_diagrams now emits demo_diagram.svg (color, 18
-saturated colors) and demo_diagram_pen.svg (0 saturated = pure B&W, with hatch
-defs and legend); rendered to PNG the pen diagram matches the documented pen
-schema and the original sample style.
+(Also in this repo: reconstructed the B&W pen-mode wiring renderer in
+symbolic_diagram.py — see prior commit 256aa43.)
