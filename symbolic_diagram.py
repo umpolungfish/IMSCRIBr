@@ -19,11 +19,10 @@ Usage:
 """
 
 from __future__ import annotations
-import sys, os, math, argparse
+import sys, os, math, argparse, re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
-from collections import namedtuple
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "IMSCRIBr"))
 from tokens import Token, TOKEN_NAMES, TOKEN_FAMILY
@@ -177,10 +176,30 @@ def _arrow_head_points(x2, y2, x1, y1, size=8):
     ]
     return " ".join(f"{p[0]:.1f},{p[1]:.1f}" for p in pts)
 
+def _to_pen_bw(svg_text: str) -> str:
+    """Convert a (dark-theme) color SVG to a black-and-white pen diagram.
+
+    Every colour is mapped to grayscale-by-luminance and then inverted, which
+    flips the dark background to near-white and the light foreground marks to
+    near-black while collapsing saturated fills to neutral grays. Alpha suffixes
+    are preserved. This is the dark→light theme flip that "the B&W one" is."""
+    def _repl(m: 're.Match') -> str:
+        h = m.group(1)
+        if len(h) in (3, 4):                      # #rgb / #rgba → expand
+            h = "".join(c * 2 for c in h)
+        alpha = h[6:8] if len(h) == 8 else ""      # preserve alpha
+        r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
+        lum = round(0.299 * r + 0.587 * g + 0.114 * b)
+        v = 255 - lum                              # invert: dark bg→light, marks→dark
+        return f"#{v:02x}{v:02x}{v:02x}{alpha}"
+    return re.sub(r"#([0-9a-fA-F]{3,8})", _repl, svg_text)
+
+
 class SVGBuilder:
     """Streaming SVG builder with enhanced edge primitives."""
     def __init__(self, w=SVG_W, h=SVG_H):
         self.w = w; self.h = h
+        self.pen_mode = False
         self.parts = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {w} {h}">']
         self.parts.append(f'<rect width="{w}" height="{h}" fill="{BG}"/>')
         self._defs = []
@@ -414,10 +433,14 @@ class SVGBuilder:
             self.parts[2:2] = defs
         self.parts.append("</svg>")
 
+    def build(self) -> str:
+        text = "\n".join(self.parts)
+        return _to_pen_bw(text) if self.pen_mode else text
+
     def save(self, path: Path):
         path.parent.mkdir(parents=True, exist_ok=True)
         with open(path, "w") as f:
-            f.write("\n".join(self.parts))
+            f.write(self.build())
         return path
 
 
@@ -581,7 +604,7 @@ def _wire_edge_category(src_tok: Token, dst_tok: Token, w: Wire) -> str:
 # ── THE V3 RENDERER ─────────────────────────────────────────────────────────
 
 def render_wiring_svg_v3(graph: WiredGraph, name: str = "", ourobor: str = "",
-                          description: str = "", ig_type: str = "") -> SVGBuilder:
+                          description: str = "", ig_type: str = "", pen_mode: bool = False) -> SVGBuilder:
     """
     Render a complete wiring diagram as SVG with full edge granularity:
 
@@ -601,6 +624,7 @@ def render_wiring_svg_v3(graph: WiredGraph, name: str = "", ourobor: str = "",
     pos = layout.pos
 
     svg = SVGBuilder()
+    svg.pen_mode = pen_mode
 
     # ── Grid background (schematic feel) ──
     svg.draw_grid()
@@ -661,25 +685,6 @@ def render_wiring_svg_v3(graph: WiredGraph, name: str = "", ourobor: str = "",
             channel_of[wi] = 0
 
     # Track all path segments for crossing detection
-    PathSeg = namedtuple("PathSeg", ["x1", "y1", "x2", "y2", "color", "wire_idx"])
-    path_segments: List[PathSeg] = []
-
-    def _record_ortho_segments(sx, sy, ex, ey, wire_idx, color):
-        """Record the 3 segments of an orthogonal path for later crossing detection."""
-        dx, dy = ex - sx, ey - sy
-        if abs(dy) < 10:
-            path_segments.append(PathSeg(sx, sy, ex, ey, color, wire_idx))
-            return
-        ch = channel_of.get(wire_idx, 0)
-        ch_dx = ch * 8
-        if dx > 0:
-            mid_x = sx + max(18, min(35, dx * 0.35)) + ch_dx
-        else:
-            mid_x = sx - max(18, min(35, -dx * 0.35)) + ch_dx
-        path_segments.append(PathSeg(sx, sy, mid_x, sy, color, wire_idx))
-        path_segments.append(PathSeg(mid_x, sy, mid_x, ey, color, wire_idx))
-        path_segments.append(PathSeg(mid_x, ey, ex, ey, color, wire_idx))
-
     # ── WIRES ── (edge-by-edge with full semantics) ────────────────────────
     for wi, w in enumerate(wire_list):
         if w.src_node not in pos or w.dst_node not in pos:
@@ -721,24 +726,22 @@ def render_wiring_svg_v3(graph: WiredGraph, name: str = "", ourobor: str = "",
             # T-branch wire — use pair color if available, else T_COLOR
             color = pair_color or T_COLOR
             ch = channel_of.get(wi, 0)
-            _record_ortho_segments(xs, ys, xd, yd, wi, color)
             if is_cross:
-                svg.draw_orthogonal_arrow(xs, ys, xd, yd, CROSS_COLOR, 1.5, base_opacity, "5,3", ch)
+                svg.draw_arrow(xs, ys, xd, yd, CROSS_COLOR, 1.5, base_opacity, "5,3")
             else:
-                svg.draw_orthogonal_arrow(xs, ys, xd, yd, color, 1.4, base_opacity, None, ch)
+                svg.draw_arrow(xs, ys, xd, yd, color, 1.4, base_opacity, None)
 
         elif w.src_port == 'F':
             color = pair_color or F_COLOR
             ch = channel_of.get(wi, 0)
-            _record_ortho_segments(xs, ys, xd, yd, wi, color)
             if is_cross:
-                svg.draw_orthogonal_arrow(xs, ys, xd, yd, CROSS_COLOR, 1.5, base_opacity, "5,3", ch)
+                svg.draw_arrow(xs, ys, xd, yd, CROSS_COLOR, 1.5, base_opacity, "5,3")
                 svg.line(xs, ys, xd, yd, CROSS_COLOR, 1.5, "5,3", 0.5)
             else:
-                svg.draw_orthogonal_arrow(xs, ys, xd, yd, color, 1.4, base_opacity, None, ch)
+                svg.draw_arrow(xs, ys, xd, yd, color, 1.4, base_opacity, None)
 
         else:
-            # Main-lane: categorical edge coloring + orthogonal (Manhattan) routing
+            # Main-lane: categorical edge coloring + direct routing (planar — no crossings)
             cat = _wire_edge_category(src_tok, dst_tok, w)
             color = CAT_EDGE_COLOR.get(src_tok, MAIN_COLOR)
             dash = CAT_EDGE_STYLE.get(src_tok, None)
@@ -749,11 +752,10 @@ def render_wiring_svg_v3(graph: WiredGraph, name: str = "", ourobor: str = "",
                 svg.circle_node(layout.ifix_pos, my, 3, IFIX_COLOR, None, 0.4)
 
             ch = channel_of.get(wi, 0)
-            _record_ortho_segments(xs, ys, xd, yd, wi, color)
             if src_tok == Token.CLINK:
-                svg.draw_orthogonal_double_arrow(xs, ys, xd, yd, color, 1.0, base_opacity, ch)
+                svg.draw_double_arrow(xs, ys, xd, yd, color, 1.0, base_opacity)
             else:
-                svg.draw_orthogonal_arrow(xs, ys, xd, yd, color, 1.3, base_opacity, dash, ch)
+                svg.draw_arrow(xs, ys, xd, yd, color, 1.3, base_opacity, dash)
 
         # ── Register delta label ──
         if src_reg is not None and dst_reg is not None:
@@ -762,41 +764,6 @@ def render_wiring_svg_v3(graph: WiredGraph, name: str = "", ourobor: str = "",
             # Only show label if there's a change or BOTH involvement
             if src_reg != dst_reg or BOTH in (src_reg, dst_reg):
                 svg.draw_edge_label(mx, my, delta, d_color, 6)
-
-    # ── CROSSING DETECTION & BRIDGES ─────────────────────────────────
-    # Detect where orthogonal path segments cross and draw bridge indicators.
-    # A crossing occurs when a horizontal segment H and a vertical segment V intersect.
-    crossings_found = set()  # (cx, cy) rounded to nearest pixel
-    for i, si in enumerate(path_segments):
-        for j, sj in enumerate(path_segments):
-            if i >= j:
-                continue
-            if si.wire_idx == sj.wire_idx:
-                continue
-            # Determine which is horizontal and which is vertical
-            si_horiz = abs(si.y1 - si.y2) < 2
-            sj_horiz = abs(sj.y1 - sj.y2) < 2
-            if si_horiz == sj_horiz:
-                continue  # both horizontal or both vertical — no crossing
-            if si_horiz:
-                H, V = si, sj
-            else:
-                H, V = sj, si
-            hx1, hx2 = min(H.x1, H.x2), max(H.x1, H.x2)
-            hy = H.y1
-            vx = V.x1
-            vy1, vy2 = min(V.y1, V.y2), max(V.y1, V.y2)
-            margin = 3  # must be strictly interior
-            if hx1 + margin < vx < hx2 - margin and vy1 + margin < hy < vy2 - margin:
-                cx, cy = round(vx), round(hy)
-                key = (cx, cy)
-                if key not in crossings_found:
-                    crossings_found.add(key)
-                    # Determine which wire goes "over" (the one drawn later, i.e., higher j)
-                    over_color = sj.color if not sj_horiz else si.color
-                    # Use the earlier wire's color for the under dot
-                    under_color = si.color if not sj_horiz else sj.color
-                    svg.draw_crossing_bridge(cx, cy, under_color, over_color)
 
     # ── Empty branch arcs ──
     for fs, ff in pairs:
