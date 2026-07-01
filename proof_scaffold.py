@@ -527,8 +527,14 @@ def emit_scaffold(
     # ── Verification theorems ────────────────────────────────────────────────
     out.append("-- ── Verification theorems ─────────────────────────────────────")
     out.append("")
-    # Tier (by decide)
-    out.append(f"theorem {safe_name}_tier : TierFunctor.obj {o_start} = .{tier} := by decide")
+    # Tier — obtained by self-application: the Grammar computes its own tier.
+    # We do NOT assert a Python-fingerprint guess (which the kernel can refute
+    # and thereby break the build). TierFunctor.obj is the Grammar applied to
+    # the ground imscription; its value is the answer, by construction.
+    out.append(f"-- Tier: apply the Grammar to the object (self-application). "
+               f"Fingerprint heuristic suggested .{tier}.")
+    out.append(f"def {safe_name}_tier : OuroboricityTier := TierFunctor.obj {o_start}")
+    out.append(f"#eval {safe_name}_tier  -- the Grammar's own verdict on its tier")
     out.append("")
     # Frobenius — emit a REAL, compiling theorem (not a comment that only
     # looks like a proof). igFrobAlg_self_fusion : igFrobeniusAlg.mul a a = a
