@@ -432,75 +432,44 @@ def emit_scaffold(
     if use_withgram:
         out.append("  .withGram Grammar.measure <|")
 
-    # Build term body
+    # Build term body. IGProtocol.seq is BINARY, so the whole body is emitted
+    # as ONE right-nested binary .seq. (Flat 3+-arg .seq produced "Function
+    # expected" and forced repeated hand-fixes of generated scaffolds.)
     n = len(tokens)
+    def _arr(lbl, src, tgt):
+        return f"(.arrow {lbl} {src} {tgt})"
+    def _rnest(terms):
+        if len(terms) == 1:
+            return terms[0]
+        return f"(.seq {terms[0]} {_rnest(terms[1:])})"
     if n == 1:
-        out.append(f"  (.arrow {_labels[0][0]} {o_start} {o_end})")
+        out.append(f"  {_arr(_labels[0][0], o_start, o_end)}")
     elif pairs:
-        # Dual-Link pattern: chain up to first FSPLIT, .prod through FFUSE, chain after
+        # Dual-Link self-pairing, as one right-nested binary .seq:
+        #   prefix arrows → .prod(fs→ff, fs→ff) → FFUSE closure → post-chain.
+        # The .prod arms both land on the FFUSE stage, which fuses to itself
+        # because tensorProduct x x = x (idempotent for every imscription).
         fs_idx = min(p[0] for p in pairs)
         ff_idx = min(p[1] for p in pairs)
         fs_stage = _stages[fs_idx][0]
         ff_stage = _stages[ff_idx][0]
+        fs_lbl = _labels[fs_idx][0]
         ff_label = _labels[ff_idx][0]
-        
-        # Chain from start to fs (arg1 of outer .seq)
-        out.append(f"  .seq")
-        for i in range(1, fs_idx + 1):
-            indent = "    "  # 4-space, same as arg2 indent
-            s_src = _stages[i-1][0]
-            s_tgt = _stages[i][0]
-            lbl = _labels[i-1][0]
-            out.append(f"{indent}(.arrow {lbl} {s_src} {s_tgt})")
-        
-        # FSPLIT/FFUSE block + post-chain (single continuation)
-        # Inner .seq wraps (.prod arg1) (.continuation arg2) — then ) closes inner .seq
-        out.append("    (.seq")
-        out.append("      (.prod")
-        out.append(f"        (.arrow {_labels[fs_idx][0]} {fs_stage} {ff_stage})  -- T-arm (δ)")
-        out.append(f"        (.arrow {_labels[fs_idx][0]} {fs_stage} {ff_stage})) -- F-arm (μ, Dual-Link mirror)")
-        # Post-FFUSE: continuation seq (arg2 of inner .seq)
-        if ff_idx + 1 < n:
-            # Collect arrows after FFUSE
-            _post_arrows = []
-            for _i in range(ff_idx + 1, n):
-                _ss = _stages[_i-1][0]
-                _st = _stages[_i][0]
-                _lb = _labels[_i-1][0]
-                _post_arrows.append(f"(.arrow {_lb} {_ss} {_st})")
-            def _seq_chain(arrs, depth=0):
-                """Recursive right-nested .seq chain, each subterm paren-wrapped."""
-                if len(arrs) == 1:
-                    return "  " * depth + arrs[0]
-                head = arrs[0]
-                tail = arrs[1:]
-                rest = _seq_chain(tail, depth + 1)
-                return ("  " * depth + "(.seq\n" +
-                        "  " * (depth + 1) + head + "\n" +
-                        rest + "\n" +
-                        "  " * depth + ")")
-            _chain_str = _seq_chain(_post_arrows, 0)
-            # Continuation .seq: FFUSE closure (arg1) + post-chain (arg2)
-            out.append("      (.seq")
-            out.append(f"        (.arrow {ff_label} {ff_stage} {ff_stage})  -- FFUSE closure")
-            for _ln in _chain_str.split("\n"):
-                out.append("        " + _ln)
-            out.append("      )   -- close continuation .seq")
-            # Close inner .seq (the one opened at line "    (.seq")
-            out.append("    )   -- close inner .seq")
-        else:
-            # No post-chain — FFUSE closure IS arg2 of inner .seq
-            # Need: (.arrow ff ff ff)) — ) closes arrow, ) closes inner .seq
-            out.append(f"      (.arrow {ff_label} {ff_stage} {ff_stage}))  -- FFUSE closure, closes inner .seq")
-
+        prod = f"(.prod {_arr(fs_lbl, fs_stage, ff_stage)} {_arr(fs_lbl, fs_stage, ff_stage)})"
+        ffuse = _arr(ff_label, ff_stage, ff_stage)
+        post = [_arr(_labels[i-1][0], _stages[i-1][0], _stages[i][0])
+                for i in range(ff_idx + 1, n)]
+        fsplit_block = _rnest([prod, ffuse] + post)
+        prefix = [_arr(_labels[i-1][0], _stages[i-1][0], _stages[i][0])
+                  for i in range(1, fs_idx + 1)]
+        out.append(f"  -- Dual-Link self-pairing: .prod arms fuse via "
+                   f"tensorProduct {ff_stage} {ff_stage} = {ff_stage} (idempotent)")
+        out.append("  " + _rnest(prefix + [fsplit_block]))
     else:
-        # Simple linear chain
-        out.append("  .seq")
-        for i in range(1, n):
-            s_src = _stages[i-1][0]
-            s_tgt = _stages[i][0]
-            lbl = _labels[i-1][0]
-            out.append(f"    (.arrow {lbl} {s_src} {s_tgt})")
+        # Simple linear chain, right-nested binary .seq.
+        arrs = [_arr(_labels[i-1][0], _stages[i-1][0], _stages[i][0])
+                for i in range(1, n)]
+        out.append("  " + _rnest(arrs))
 
     out.append("")
     
