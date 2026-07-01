@@ -1,18 +1,16 @@
-proof_scaffold.py: cap the Lean identifier stem so free-text class names are usable
+symbolic_diagram.py (pen mode): draw the ouroboric closure arc to the return anchor
 
-emit_scaffold() derived every Lean identifier (s0..s12, l0..l12, protocol,
-true_arm, false_arm, tier, frobenius) from the full class name with no length
-cap. For a free-text ob3ect class (often a whole sentence) this produced 300-char
-identifiers repeated dozens of times, i.e. unusable Lean.
+Pen diagrams now always show the closure connection from the final token back to
+the token the cycle re-enters at. The return anchor is not assumed to be the start
+node: it is the first IMSCRIB (self-imscription / identity) if one exists and is not
+the final node, otherwise the first node. So a VINIT-start canon correctly arcs back
+to IMSCRIB rather than to VINIT.
 
-Fix: after slugging, if the stem exceeds 40 chars, truncate to a word-boundary
-stem and append a 6-char sha1 suffix so distinct long names cannot collide. The
-full class name is unchanged in the header ("-- Class: ..."). Short/canonical
-names are untouched.
+  _pen_return_target(tokens, last, pos): resolves the anchor (first IMSCRIB else start).
+  _pen_backarc(svg, src, tgt, label):    solid arc from the final node, arcing above
+                                         the diagram, arrowhead pointing down into the
+                                         anchor node; labeled with the ouroboricity.
 
-Verified: the Navier-Stokes ob3ect scaffold now uses idents like
-the_non_vacuous_structural_type_of_408149_s0 with the full sentence still in the
-header comment.
-
-(Also in this repo: reconstructed the B&W pen-mode wiring renderer in
-symbolic_diagram.py — see prior commit 256aa43.)
+Verified: for VINIT AFWD IMSCRIB FSPLIT EVALT EVALF FFUSE TANCH IFIX the arc runs
+IFIX -> IMSCRIB (node 2), not IFIX -> VINIT; for the IMSCRIB-bookended canon it runs
+last IMSCRIB -> first IMSCRIB (node 0).

@@ -1085,6 +1085,30 @@ def _pen_zigzag(x1, y1, x2, y2, amp=4, step=8):
     return " ".join(pts)
 
 
+def _pen_return_target(tokens, last: int, pos) -> int:
+    """The node the closure arc returns to. A sequence bootstraps from its start
+    token but re-enters at the identity anchor: the first IMSCRIB (self-imscription)
+    if one exists and isn't the final node; otherwise the first node. This is why a
+    VINIT-start canon returns to IMSCRIB rather than to VINIT."""
+    for i in range(len(tokens)):
+        if i in pos and i != last and tokens[i].value == Token.IMSCRIB.value:
+            return i
+    return min(pos)
+
+
+def _pen_backarc(svg: 'SVGBuilder', src, tgt, label: str, r: float = PEN_NODE_R):
+    """Solid ouroboric back-arc from the final node, arcing above the diagram,
+    with an arrowhead pointing down into the return-anchor node."""
+    xs, ys = src; xt, yt = tgt
+    top = max(58, min(ys, yt) - 78)
+    y1, y2 = ys - r, yt - r
+    svg.add("path", {"d": f"M {xs:.1f},{y1:.1f} C {xs:.1f},{top:.1f} {xt:.1f},{top:.1f} {xt:.1f},{y2:.1f}",
+                     "fill": "none", "stroke": PEN_INK, "stroke-width": "1.0"})
+    svg.add("polygon", {"points": _arrow_head_points(xt, y2, xt, top, 8), "fill": PEN_INK})
+    if label:
+        svg.text((xs + xt) / 2, top - 4, label, 7, PEN_INK, "middle")
+
+
 def render_wiring_pen_svg(graph: WiredGraph, name: str = "", ourobor: str = "",
                           description: str = "") -> SVGBuilder:
     """Black-and-white pen diagram. Same layout engine as the color renderer;
@@ -1209,6 +1233,13 @@ def render_wiring_pen_svg(graph: WiredGraph, name: str = "", ourobor: str = "",
         # labels: 2-letter above, full name below
         svg.text(cx, cy - PEN_NODE_R - 6, TOKEN_SHORT[tokens[i].value], 9, PEN_INK, "middle", True)
         svg.text(cx, cy + PEN_NODE_R + 12, TOKEN_NAMES[tokens[i].value], 5, PEN_INK, "middle")
+
+    # ── ouroboric closure arc: final node → return anchor (first IMSCRIB, else start) ──
+    if len(pos) >= 2:
+        last = max(pos)
+        tgt = _pen_return_target(tokens, last, pos)
+        if tgt != last:
+            _pen_backarc(svg, pos[last], pos[tgt], ourobor)
 
     # ── vertical left legend ──
     _pen_legend(svg)
