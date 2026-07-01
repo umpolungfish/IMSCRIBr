@@ -530,11 +530,16 @@ def emit_scaffold(
     # Tier (by decide)
     out.append(f"theorem {safe_name}_tier : TierFunctor.obj {o_start} = .{tier} := by decide")
     out.append("")
-    # Frobenius
+    # Frobenius — emit a REAL, compiling theorem (not a comment that only
+    # looks like a proof). igFrobAlg_self_fusion : igFrobeniusAlg.mul a a = a
+    # is proven for every Imscription in Imscribing.IGFunctor, so specializing
+    # it to the ground imscription witnesses μ∘δ = id and always typechecks.
     if has_frobenius:
         frob_dir = "split → fuse" if fp.frobenius_order == 1 else "fuse → split"
-        out.append(f"-- Frobenius ({frob_dir}): μ∘δ = id on .prod branch")
-        out.append(f"-- Proof: apply igFrobAlg_self_fusion; exact mu_delta_A_id")
+        out.append(f"-- Frobenius ({frob_dir}): μ∘δ = id on the ground imscription")
+        out.append(f"theorem {safe_name}_frobenius :")
+        out.append(f"    igFrobeniusAlg.mul {o_start} {o_start} = {o_start} :=")
+        out.append(f"  igFrobAlg_self_fusion {o_start}")
         out.append("")
     # Self-reference
     if is_self_ref:
