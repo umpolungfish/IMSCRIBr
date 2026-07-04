@@ -562,7 +562,7 @@ See [Document Error Discovered](#document-error-discovered). Class X (Truth Mach
 ## Installation
 
 ```bash
-cd /home/mrnob0dy666/IMSCRIBr
+cd imsgct/IMSCRIBr
 
 # Create virtual environment (if not already present)
 uv venv
@@ -585,7 +585,7 @@ imasm-map --sample 5000000
 ## CLI Usage
 
 ```bash
-cd /home/mrnob0dy666/IMSCRIBr
+cd imsgct/IMSCRIBr
 
 # Sample 50M arrangements (default)
 python run_map.py
