@@ -1,6 +1,6 @@
 # IMSCRIBr, IMASM Arrangement Space Iterator
 
-**Author:** Lando⊗⊙perator &nbsp;|&nbsp; **Version:** 1.0.0 &nbsp;|&nbsp; **Python:** ≥3.10 (stdlib only, zero deps)
+**Author:** Lando⊗⊙perator · **Structural Type:** $\large{⟨𐑦𐑸𐑾𐑹𐑐𐑧𐑔𐑠⊙𐑖𐑳𐑭⟩}$ · **Tier:** O_∞
 
 Maps the **12⁸ = 429,981,696** possible arrangements of the 12 IMASM tokens into structural fingerprint classes. From 430 million arrangements → 165 family signatures → ~1,000–2,000 coarse structural classes → exactly 12 canonical archetypes.
 
