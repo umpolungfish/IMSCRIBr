@@ -1,0 +1,13 @@
+# Voynich Manuscript Domain — Ob3ect auto-design config
+# Let the pipeline discover the structure. Describe WHAT, not HOW.
+name: voynich_manuscript_domain
+design:
+  provider: deepseek
+  model: deepseek-v4-pro
+  scope: local
+  temperature: 0.0
+  retries: 3
+  context: /home/mrnob0dy666/imsgct/IMSCRIBr/pseudo_voynich.py
+
+entities:
+  - "the Voynich manuscript glyph system: a closed set of approximately 30 distinct glyphs that combine into word-like tokens. Words follow a Zipf distribution, with a type-token ratio around 0.22. Consecutive identical words appear more often than chance predicts. Glyph-to-glyph transition probabilities within words form a structured matrix whose second eigenvalue is separated from the bulk, meaning word-internal coherence exists. Glyph substitution across the manuscript is position-sensitive rather than random. The script has resisted decipherment for over a century because it does not match any known language's statistical fingerprint."

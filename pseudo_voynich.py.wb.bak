@@ -281,7 +281,6 @@ class CorpusStats(NamedTuple):
     word_vocab:   dict   # section → Counter[tuple]
     global_vocab: Counter
     total_tokens: int    # NEW — total glyph tokens parsed
-    word_bigrams: dict   # section → dict[tuple, Counter[tuple]]
 
 
 def _normalize(raw: dict) -> dict:
@@ -297,14 +296,6 @@ def _build_bigrams(words: list[list[int]]) -> dict[int, dict[int, float]]:
     return {t: _normalize(dict(c)) for t, c in raw.items()}
 
 
-
-def _build_word_bigrams(words: list[list[int]]) -> dict[tuple, Counter]:
-    """Build word-to-word transition counts from a list of word token-lists."""
-    raw: dict[tuple, Counter] = defaultdict(Counter)
-    for prev, nxt in zip(words[:-1], words[1:]):
-        raw[tuple(prev)][tuple(nxt)] += 1
-    return raw
-
 def _build_positional(words: list[list[int]]) -> dict[str, Counter]:
     pos: dict[str, Counter] = {
         'initial': Counter(), 'medial': Counter(), 'final': Counter()}
@@ -319,7 +310,7 @@ def _build_positional(words: list[list[int]]) -> dict[str, Counter]:
 
 
 def extract_stats(section_words: dict[str, list[list[int]]]) -> CorpusStats:
-    length_dist, unigram, bigrams, pos_freq, word_vocab, word_bigrams = {}, {}, {}, {}, {}, {}
+    length_dist, unigram, bigrams, pos_freq, word_vocab = {}, {}, {}, {}, {}
     global_vocab: Counter = Counter()
     total_tokens = 0
     for sec, words in section_words.items():
@@ -329,11 +320,10 @@ def extract_stats(section_words: dict[str, list[list[int]]]) -> CorpusStats:
         pos_freq[sec]    = _build_positional(words)
         wv = Counter(tuple(w) for w in words)
         word_vocab[sec]  = wv
-        word_bigrams[sec] = _build_word_bigrams(words)
         global_vocab.update(wv)
         total_tokens += sum(len(w) for w in words)
     return CorpusStats(length_dist, unigram, bigrams, pos_freq, word_vocab,
-                       global_vocab, total_tokens, word_bigrams)
+                       global_vocab, total_tokens)
 
 # ============================================================================
 # METRICS
@@ -435,192 +425,6 @@ def spectral_gap(matrix: dict[int, dict[int, float]]) -> float:
         pi2 = new2
     return max(0.0, 1.0 - decay)
 
-# ============================================================================
-# SECTION-SPECIFIC RECENCY CALIBRATION  (FSPLIT/FFUSE fix 1)
-# ============================================================================
-
-# Section size classification for AREV fallback
-SECTION_SIZE_CLASS: dict[str, str] = {}
-
-def calibrate_recency_params(
-    section_words: dict[str, list[list[int]]],
-) -> dict[str, dict]:
-    """Compute section-specific recency parameters from corpus repetition rates.
-
-    Real Voynich sections have different word-repetition profiles:
-      botanical:      ~0.52  (high — plant name reiteration)
-      astronomical:   ~0.21  (low — varied star/measurement terms)
-      cosmological:   ~0.30  (moderate-low — foldout, sparse)
-      pharmaceutical: ~0.40  (moderate — drug names repeat)
-      balneological:  ~0.45  (moderate-high — balneological terms)
-      recipe:         ~0.38  (moderate — procedural repetition)
-
-    These differences cannot be captured by a single global recency parameter.
-    """
-    params: dict[str, dict] = {}
-    global SECTION_SIZE_CLASS
-    for sec in SECTIONS:
-        words = section_words.get(sec, [])
-        n_words = len(words)
-        if n_words < 500:
-            SECTION_SIZE_CLASS[sec] = 'sparse'
-            params[sec] = {'p_recency': 0.35, 'decay': 0.78, 'recency_max': 12}
-            continue
-        # Measure actual repetition rate from corpus
-        rep = repetition_rate(words)
-        # Map to recency parameters (non-linear — high-rep sections
-        # need proportionally more recency to overcome bigram diversity):
-        # rep 0.21 → p_recency ~0.22, decay ~0.75, rec_max ~11
-        # rep 0.36 → p_recency ~0.32, decay ~0.79, rec_max ~13
-        # rep 0.52 → p_recency ~0.45, decay ~0.84, rec_max ~18
-        surplus = max(0.0, rep - 0.30)
-        p_recency = 0.10 + 0.55 * rep + 0.30 * surplus
-        decay = 0.70 + 0.20 * rep + 0.25 * surplus
-        recency_max = 6 + int(12 * rep) + int(8 * surplus)
-        params[sec] = {
-            'p_recency': round(min(p_recency, 0.60), 3),
-            'decay': round(min(decay, 0.92), 3),
-            'recency_max': max(8, min(recency_max, 25)),
-        }
-        if n_words < 5000:
-            SECTION_SIZE_CLASS[sec] = 'medium'
-        else:
-            SECTION_SIZE_CLASS[sec] = 'large'
-    # Shared trunk: moderate baseline recency
-    params['_shared'] = {'p_recency': 0.42, 'decay': 0.84, 'recency_max': 16}
-    return params
-
-
-# ============================================================================
-# SHARED-TRUNK STATISTICS  (FSPLIT/FFUSE fix 2 — AREV fix 3)
-# ============================================================================
-
-def build_pooled_stats(
-    section_words: dict[str, list[list[int]]],
-) -> dict:
-    """Pool ALL sections to create shared-trunk statistics.
-
-    This is the FSPLIT source — the common statistical ground from which
-    all sections diverge. Sparse sections (AREV) fall back to this.
-    """
-    all_words: list[list[int]] = []
-    for words in section_words.values():
-        all_words.extend(words)
-    if not all_words:
-        return {}
-    return {
-        'bigrams': _build_bigrams(all_words),
-        'unigram': Counter(t for w in all_words for t in w),
-        'pos_freq': _build_positional(all_words),
-        'word_vocab': Counter(tuple(w) for w in all_words),
-        'word_bigrams': _build_word_bigrams(all_words),
-        'length_dist': Counter(len(w) for w in all_words),
-    }
-
-
-def _interpolate_bigram_row(
-    sec_row: dict[int, float],
-    pooled_row: dict[int, float],
-    blend: float,
-) -> dict[int, float]:
-    """Blend section-specific and pooled bigram rows.
-    blend=1.0 → pure section; blend=0.0 → pure pooled.
-    """
-    all_keys = set(sec_row) | set(pooled_row)
-    result: dict[int, float] = {}
-    for k in all_keys:
-        result[k] = blend * sec_row.get(k, 0.0) + (1 - blend) * pooled_row.get(k, 0.0)
-    # Renormalize
-    total = sum(result.values())
-    if total > 0:
-        result = {k: v / total for k, v in result.items()}
-    return result
-
-
-def build_blended_stats(
-    section: str,
-    v_stats: CorpusStats,
-    pooled_stats: dict,
-    blend_ratio: float,
-) -> dict:
-    """Create blended BIGRAM statistics only. Unigrams/vocab remain section-specific.
-
-    Only the bigram transition matrix is blended with the shared trunk —
-    this provides smooth glyph-to-glyph transitions for sparse sections
-    without diluting the section's unigram vocabulary fingerprint.
-
-    For blend_ratio = 1.0, returns section-specific stats unchanged.
-    """
-    if blend_ratio >= 1.0:
-        return {
-            'bigrams': v_stats.bigrams.get(section, {}),
-            'unigram': v_stats.unigram.get(section, Counter()),
-            'pos_freq': v_stats.pos_freq.get(section, {}),
-            'word_vocab': v_stats.word_vocab.get(section, Counter()),
-            'word_bigrams': v_stats.word_bigrams.get(section, {}),
-            'length_dist': v_stats.length_dist.get(section, Counter()),
-        }
-
-    b = blend_ratio
-    sec_bigrams = v_stats.bigrams.get(section, {})
-    pooled_bigrams = pooled_stats.get('bigrams', {})
-    blended_bigrams: dict[int, dict[int, float]] = {}
-    all_keys = set(sec_bigrams) | set(pooled_bigrams)
-    for k in all_keys:
-        blended_bigrams[k] = _interpolate_bigram_row(
-            sec_bigrams.get(k, {}), pooled_bigrams.get(k, {}), b)
-
-    # Blend word_bigrams (word-to-word transitions) at same ratio
-    sec_wb = v_stats.word_bigrams.get(section, {})
-    pooled_wb = pooled_stats.get('word_bigrams', {})
-    blended_wb: dict = {}
-    all_wb = set(sec_wb) | set(pooled_wb)
-    for k in all_wb:
-        blended_wb[k] = Counter()
-        sw = sec_wb.get(k, Counter()) if isinstance(sec_wb.get(k), Counter) else Counter()
-        pw = pooled_wb.get(k, Counter()) if isinstance(pooled_wb.get(k), Counter) else Counter()
-        all_w = set(sw) | set(pw)
-        for w in all_w:
-            blended_wb[k][w] = b * sw.get(w, 0) + (1 - b) * pw.get(w, 0)
-
-    # Blend length_dist for smooth word lengths
-    sec_ld = v_stats.length_dist.get(section, Counter())
-    pooled_ld = pooled_stats.get('length_dist', Counter())
-    blended_ld: Counter = Counter()
-    all_ld = set(sec_ld) | set(pooled_ld)
-    for k in all_ld:
-        blended_ld[k] = b * sec_ld.get(k, 0) + (1 - b) * pooled_ld.get(k, 0)
-
-    # Unigram, pos_freq, word_vocab: ALWAYS section-specific (preserves section identity)
-    return {
-        'bigrams': blended_bigrams,
-        'unigram': v_stats.unigram.get(section, Counter()),
-        'pos_freq': v_stats.pos_freq.get(section, {}),
-        'word_vocab': v_stats.word_vocab.get(section, Counter()),
-        'word_bigrams': blended_wb,
-        'length_dist': blended_ld,
-    }
-
-def get_blend_ratio(section: str, section_words: dict[str, list[list[int]]]) -> float:
-    """Compute blend ratio for BIGRAM MATRIX ONLY.
-
-    Large sections (>10K corpus words): blend=1.00 (pure section)
-    Medium sections (5K-10K): blend=0.95
-    Sparse sections (<5K): blend=0.60 (AREV fallback — pooled bigram transitions)
-
-    NOTE: Unigram and word vocabulary distributions are ALWAYS section-specific.
-    Only the bigram transition matrix is blended, to provide smooth transitions
-    for sparse sections without diluting section vocabulary fingerprints.
-    """
-    n = len(section_words.get(section, []))
-    if n >= 10000:
-        return 1.00
-    elif n >= 5000:
-        return 0.95
-    elif n >= 2000:
-        return 0.75
-    else:
-        return 0.60
 
 # ============================================================================
 # IMSCRIBr FINGERPRINTING
@@ -802,156 +606,63 @@ def _build_vocab(
     return word_types, [w / total for w in weights]
 
 
-def build_substitution_matrix(
-    words: list[list[int]],
-    min_freq: int = 3,
-) -> dict[tuple[int, int], list[tuple[int, float]]]:
-    """Build position-aware glyph substitution matrix from corpus word pairs.
-
-    Finds word pairs that differ by exactly one glyph (same length)
-    and records which glyphs substitute for which at which position.
-
-    Returns dict[(position, glyph_a), [(glyph_b, probability)]] 
-    keyed by (position, source_glyph) for position-dependent substitution.
-    This ensures substitutions only create attested word variants.
-    """
-    by_len: dict[int, list[list[int]]] = defaultdict(list)
-    for w in words:
-        by_len[len(w)].append(w)
-
-    subst_counts: dict[tuple[int, int], Counter] = defaultdict(Counter)
-
-    for length, wlist in by_len.items():
-        if length < 2 or len(wlist) < 5:
-            continue
-        for wi in range(len(wlist)):
-            w1 = wlist[wi]
-            for wj in range(wi + 1, len(wlist)):
-                w2 = wlist[wj]
-                diffs = [(p, w1[p], w2[p]) for p in range(length) if w1[p] != w2[p]]
-                if len(diffs) == 1:
-                    pos, g1, g2 = diffs[0]
-                    subst_counts[(pos, g1)][g2] += 1
-                    subst_counts[(pos, g2)][g1] += 1
-
-    # Normalize per (position, source_glyph)
-    result: dict[tuple[int, int], list[tuple[int, float]]] = {}
-    for (pos, g1), counter in subst_counts.items():
-        total = sum(counter.values())
-        if total >= min_freq:
-            items = [(g2, c / total) for g2, c in counter.items()]
-            result[(pos, g1)] = items
-
-    return result
-
-
-
 def generate_section(
     section: str,
     n_words: int,
-    v_stats: CorpusStats,
+    stats: CorpusStats,
     rng: random.Random,
-    subst_matrix: dict | None = None,
-    pos_freq_for_noise: dict | None = None,
-    recency_params: dict | None = None,
-    blended_stats: dict | None = None,
-    blend_ratio: float = 1.0,
+    vocab_size: int = 1500,
+    novelty_rate: float = 0.008,
 ) -> list[list[int]]:
-    """Generate synthetic Voynich text with section-specific recency + shared-trunk fallback.
+    """Generate synthetic Voynich text with section-specific statistics.
 
-    FSPLIT/FFUSE architecture:
-      - recency_params: per-section p_recency, decay, recency_max (calibrated from corpus)
-      - blended_stats: for sparse sections, interpolated section+pooled bigrams
-      - blend_ratio: 1.0=pure section, 0.35=heavy pooled fallback (AREV for sparse sections)
+    v14 — Samples from the FULL section vocabulary with exact empirical
+    frequency weights. No pool truncation, no glyph mutation, no artificial
+    noise paths. The synthetic text IS a fair statistical draw from the
+    Voynich distribution.
+
+    The recency buffer creates local word-repetition bursts matching the
+    Voynich's characteristic ~0.40 repetition rate, without collapsing
+    global vocabulary diversity.
+
+    At equal sample sizes, all metrics converge to the Voynich values.
     """
-    if blended_stats is not None and blend_ratio < 0.95:
-        bigrams = blended_stats.get('bigrams', {})
-        unigram = blended_stats.get('unigram', Counter())
-        pos_freq = blended_stats.get('pos_freq', {})
-        wb_raw = blended_stats.get('word_bigrams', {})
-    else:
-        bigrams = v_stats.bigrams.get(section, v_stats.bigrams.get('botanical', {}))
-        unigram = v_stats.unigram.get(section, v_stats.unigram.get('botanical', Counter()))
-        pos_freq = v_stats.pos_freq.get(section, v_stats.pos_freq.get('botanical', {}))
-        wb_raw = v_stats.word_bigrams.get(section, {})
+    # Get the FULL section vocabulary with empirical frequencies
+    sec_vocab = stats.word_vocab.get(section)
+    if not sec_vocab:
+        sec_vocab = stats.global_vocab
 
-    if recency_params:
-        rp = recency_params.get(section, recency_params.get('_shared', {}))
-        p_recency = rp.get('p_recency', 0.50)
-        decay = rp.get('decay', 0.85)
-        recency_max = rp.get('recency_max', 20)
-    else:
-        p_recency = 0.50
-        decay = 0.85
-        recency_max = 20
+    all_types = list(sec_vocab.keys())
+    all_counts = [sec_vocab[wt] for wt in all_types]
+    total = sum(all_counts)
+    all_weights = [c / total for c in all_counts]
 
-    p_bigram = (1.0 - p_recency) * 0.40
-    p_unigram = 1.0 - p_recency - p_bigram
-    p_subst = 0.04
+    # Sampling probabilities
+    p_vocab = 0.62    # from frequency-weighted full vocab
+    p_recency = 0.38  # matches Voynich ~0.40 contiguous-block repetition rate
 
-    if blended_stats is not None and blend_ratio < 0.95:
-        sec_vocab = blended_stats.get('word_vocab', Counter())
-    else:
-        sec_vocab = v_stats.word_vocab.get(section, {})
-    words_list = list(sec_vocab.items()) if isinstance(sec_vocab, Counter) else []
-    if not words_list and isinstance(sec_vocab, dict):
-        words_list = list(sec_vocab.items())
-    if not words_list:
-        return []
-
-    wts = [wt for wt, _ in words_list]
-    wcounts = [c for _, c in words_list]
-    w_total = sum(wcounts)
-    w_probs = [c / w_total for c in wcounts] if w_total else []
-
-    wb = {k: v for k, v in wb_raw.items() if v} if wb_raw else {}
-
+    # Recency buffer for Voynich-style local word repetition
     recency_buffer: list[list[int]] = []
-    words: list[list[int]] = []
-    prev_wt: tuple | None = None
+    recency_max = 10  # tight window for local bursts
 
+    words: list[list[int]] = []
     for i in range(n_words):
         r = rng.random()
-        if recency_buffer and r < p_recency:
-            n = len(recency_buffer)
-            weights = [decay ** (n - 1 - j) for j in range(n)]
-            total_w = sum(weights)
-            probs = [w / total_w for w in weights]
-            idx = rng.choices(range(n), weights=probs, k=1)[0]
+        if recency_buffer and r >= p_vocab:
+            # Local recency — uniform pick from recent words
+            idx = rng.randint(0, len(recency_buffer) - 1)
             w = list(recency_buffer[idx])
-        elif prev_wt is not None and prev_wt in wb and r < p_recency + p_bigram:
-            transitions = wb[prev_wt]
-            keys = list(transitions.keys())
-            counts = [transitions[k] for k in keys]
-            total = sum(counts)
-            probs = [c / total for c in counts]
-            idx = rng.choices(range(len(keys)), weights=probs, k=1)[0]
-            w = list(keys[idx])
         else:
-            if w_probs:
-                idx = rng.choices(range(len(wts)), weights=w_probs, k=1)[0]
-                w = list(wts[idx])
-            else:
-                w = [rng.randint(0, 11)]
-
-        if subst_matrix and rng.random() < p_subst and len(w) >= 2:
-            sub_options = [(p, w[p]) for p in range(len(w)) if (p, w[p]) in subst_matrix]
-            if sub_options:
-                pos, g = rng.choice(sub_options)
-                candidates = subst_matrix[(pos, g)]
-                if candidates:
-                    g2s, g_probs = zip(*candidates)
-                    new_glyph = rng.choices(list(g2s), weights=list(g_probs), k=1)[0]
-                    w[pos] = new_glyph
+            # Frequency-weighted sample from full section vocab
+            idx = rng.choices(range(len(all_types)), weights=all_weights, k=1)[0]
+            w = list(all_types[idx])
 
         words.append(w)
-        prev_wt = tuple(w)
         recency_buffer.append(w)
         if len(recency_buffer) > recency_max:
             recency_buffer.pop(0)
 
     return words
-
 def render_shavian(words: list[list[int]], words_per_line: int = 8) -> str:
     """Render token lists as Shavian text (12 glyphs only — the proof mode)."""
     lines: list[str] = []
@@ -1292,15 +1003,6 @@ def print_verification(
     v_all_full = [w for ws in v_words.values() for w in ws]
     common = [s for s in SECTIONS if v_words.get(s) and s_words.get(s)]
 
-    # FULL CORPUS BASELINE (always printed for reference)
-    v_bg_full = _build_bigrams(v_all_full)
-    v_uni_full = Counter(t for w in v_all_full for t in w)
-    print(f'  Full corpus baseline ({len(v_all_full):,} words):')
-    print(f'    Bigram entropy:  {bigram_entropy(v_bg_full, v_uni_full):.4f}')
-    print(f'    Spectral gap:    {spectral_gap(v_bg_full):.6f}')
-    print(f'    Repetition rate: {repetition_rate(v_all_full):.4f}')
-    print()
-
     if n_synthetic < len(v_all_full):
         v_zipf_vals, v_ent_vals, v_ttr_vals, v_rep_vals, v_gap_vals = [], [], [], [], []
         v_kl_vals: dict[tuple, list[float]] = {}
@@ -1491,9 +1193,18 @@ Semantic modes:
             target_secs = [args.section]
             sec_counts = {args.section: total_words}
 
-        # v15: word_bigram transition model uses the full Voynich vocabulary.
-        # No pre-generated vocabulary pool needed — the bigram transitions
-        # naturally capture local topic coherence.
+        # Core vocabulary sizes — the pool of word types for each section.
+        # With the two-tier generator (65% core vocab + 25% recency + 10% fresh),
+        # the core vocab should contain enough types to hit TTR ~0.125.
+        # For n_synth words at 65% from core, we need core_size * TTR_effective types
+        # where TTR_effective accounts for Zipf concentration.
+        # Empirically: core_size ≈ n_synth * 0.12 / 0.65 ≈ n_synth * 0.185
+        sec_vocab_sizes = {}
+        for sec in active_secs:
+            n_synth = sec_counts.get(sec, 1000)
+            # Core vocab: ~18.5% of word count, min 80, max 800
+            core_size = max(80, min(800, int(n_synth * 0.185)))
+            sec_vocab_sizes[sec] = core_size
 
         # Render function
         if args.mode == 'shavian':
@@ -1506,37 +1217,20 @@ Semantic modes:
         print(f"\n=== GENERATING SYNTHETIC TEXT ({args.mode}) ===")
         s_words: dict[str, list[list[int]]] = {}
 
-        # ── FSPLIT/FFUSE FUSED GENERATION (v3) ──
-        recency_params = calibrate_recency_params(v_words)
-        pooled_stats = build_pooled_stats(v_words)
         for sec in target_secs:
             if sec not in v_stats.bigrams or not v_stats.bigrams[sec]:
                 print(f"\n  [{sec}] — insufficient data, skipping")
                 continue
             n = sec_counts[sec]
-            blend = get_blend_ratio(sec, v_words)
-            bstats = build_blended_stats(sec, v_stats, pooled_stats, blend)
-            sec_words_list = v_stats.word_vocab.get(sec, {})
-            sec_words_as_lists = [list(w) for w in sec_words_list.keys()]
-            subst_matrix = build_substitution_matrix(sec_words_as_lists, min_freq=3) if len(sec_words_as_lists) >= 10 else None
-            pos_freq = dict(v_stats.pos_freq.get(sec, {}))
-            pos_freq_norm = {}
-            for pk, counter in pos_freq.items():
-                total = sum(counter.values())
-                if total > 0:
-                    pos_freq_norm[pk] = [(g, c / total) for g, c in counter.items()]
-            sz = SECTION_SIZE_CLASS.get(sec, 'large')
-            print(f"\n[{sec} — {n} words, class={sz}, blend={blend:.2f}, "
-                  f"recency={recency_params.get(sec,{}).get('p_recency',0.5):.3f}]")
-            ws = generate_section(sec, n, v_stats, rng, subst_matrix, pos_freq_norm,
-                                  recency_params=recency_params,
-                                  blended_stats=bstats,
-                                  blend_ratio=blend)
+            vs = sec_vocab_sizes.get(sec, 1500)
+            print(f"\n[{sec} — {n} words, vocab={vs} types]")
+            ws = generate_section(sec, n, v_stats, rng, vocab_size=vs)
             s_words[sec] = ws
             rendered = render_fn(ws, wpl)
-            text_parts.append(f"\n[{sec} — {n} words, class={sz}, mode={args.mode}]\n{rendered}")
+            text_parts.append(f"\n[{sec} — {n} words, mode={args.mode}]\n{rendered}")
             preview = rendered[:500]
             print(preview + ("  …" if len(rendered) > 500 else ""))
+
         if s_words:
             s_stats = extract_stats(s_words)
             print_verification(v_words, s_words, v_stats, s_stats)
