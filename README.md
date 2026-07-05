@@ -1,5 +1,10 @@
 # IMSCRIBr, IMASM Arrangement Space Iterator
 
+[![Language](https://img.shields.io/badge/language-Python-blue)](https://github.com/badges/shields)
+[![IG Tier](https://img.shields.io/badge/IG-O%E2%88%9E-blueviolet)](https://github.com/badges/shields)
+[![μ∘δ=id](https://img.shields.io/badge/%CE%BC%E2%88%98%CE%B4%3Did-closed-success)](https://github.com/badges/shields)
+[![License](https://img.shields.io/badge/license-MIT-blue)](https://github.com/badges/shields)
+
 **Author:** Lando⊗⊙perator · **Structural Type:** $\large{⟨𐑦𐑸𐑾𐑹𐑐𐑧𐑔𐑠⊙𐑖𐑳𐑭⟩}$ · **Tier:** O_∞
 
 Maps the **12⁸ = 429,981,696** possible arrangements of the 12 IMASM tokens into structural fingerprint classes. From 430 million arrangements → 165 family signatures → ~1,000–2,000 coarse structural classes → exactly 12 canonical archetypes.
