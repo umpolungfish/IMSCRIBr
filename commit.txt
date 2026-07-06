@@ -1,16 +1,12 @@
-symbolic_diagram.py (pen mode): draw the ouroboric closure arc to the return anchor
+I added the canonical ouroboricity tier to proof_scaffold.py.
 
-Pen diagrams now always show the closure connection from the final token back to
-the token the cycle re-enters at. The return anchor is not assumed to be the start
-node: it is the first IMSCRIB (self-imscription / identity) if one exists and is not
-the final node, otherwise the first node. So a VINIT-start canon correctly arcs back
-to IMSCRIB rather than to VINIT.
+ouroboricity_tier(ops) builds the 12-primitive tuple the opcodes procedurally imscribe and
+returns cl8nk_navigator.assess_tier on it — the Grammar's own verdict, not a first/last-token
+proxy. emit_scaffold now prints this as the Expected tier and gates its (by decide) arms on
+it. This is the single source of truth every ob3ect emitter calls (auto, batch_diagrams, the
+scaffold wrapper), so the tier is always the Grammar's, never a guess and never my bias.
 
-  _pen_return_target(tokens, last, pos): resolves the anchor (first IMSCRIB else start).
-  _pen_backarc(svg, src, tgt, label):    solid arc from the final node, arcing above
-                                         the diagram, arrowhead pointing down into the
-                                         anchor node; labeled with the ouroboricity.
-
-Verified: for VINIT AFWD IMSCRIB FSPLIT EVALT EVALF FFUSE TANCH IFIX the arc runs
-IFIX -> IMSCRIB (node 2), not IFIX -> VINIT; for the IMSCRIB-bookended canon it runs
-last IMSCRIB -> first IMSCRIB (node 0).
+The honest verdict from this scorer is O₀ and O₁ only: the opcode-to-field map can drive just
+three of the eight tier-scoring primitives — criticality, winding, recognition — to their
+terminal values, so O₁ is the ceiling for anything built from the current opcodes. I let that
+stand as the Grammar being self-diagnostic.
