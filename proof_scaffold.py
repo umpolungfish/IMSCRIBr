@@ -73,6 +73,62 @@ _IG_FIELD_TO_TYPENAME = {
     "chir": "Chirality", "stoi": "Stoichiometry", "prot": "Protection",
 }
 
+
+# ── Canonical ouroboricity tier ───────────────────────────────────────────────
+# The tier is NOT a structural proxy (first==last token, "has a Frobenius pair").
+# It is the Grammar's own verdict: cl8nk_navigator.assess_tier scored on the
+# 12-primitive tuple the opcodes procedurally imscribe. This is the single source
+# of truth for every emitter (scaffold, diagram, batch) — no heuristics, no
+# hand-supplied richer tuple. If the honest ceiling is O₁, that is the truth.
+import os as _os
+import sys as _sys
+
+_NAV_DIR = _os.path.join(_os.path.dirname(__file__), "..", "imscribing_grammar", "navigators")
+if not _os.path.isdir(_NAV_DIR):
+    _NAV_DIR = _os.path.expanduser("~/imsgct/imscribing_grammar/navigators")
+if _os.path.abspath(_NAV_DIR) not in _sys.path:
+    _sys.path.insert(0, _os.path.abspath(_NAV_DIR))
+from cl8nk_navigator import assess_tier as _assess_tier, PRIMITIVE_KEYS as _PRIMITIVE_KEYS
+
+# Canonical 12-primitive order, shared with cl8nk_navigator.PRIMITIVE_KEYS, plus the
+# base imscription every ob3ect starts from (word-names → Shavian via _IG_VAL_TO_LEAN_CONS).
+_TIER_FIELDS = ['dim', 'top', 'rel', 'pol', 'fid', 'kin', 'gran', 'gram', 'crit', 'chir', 'stoi', 'prot']
+_TIER_BASE_WORD = ['dead', 'judge', 'ado', 'church', 'age', 'yea', 'bib', 'vow', 'woe', 'fee', 'hung', 'awe']
+_WORD_TO_SHAV = {w: s for s, w in _IG_VAL_TO_LEAN_CONS.items()}
+_FIELD_TO_SYM = dict(zip(_TIER_FIELDS, _PRIMITIVE_KEYS))
+_TIER_BASE_SHAV = {f: _WORD_TO_SHAV[w] for f, w in zip(_TIER_FIELDS, _TIER_BASE_WORD)}
+
+
+def _as_token(op) -> Token:
+    """Accept a Token, an int Token value, or an opcode-name string."""
+    if isinstance(op, Token):
+        return op
+    if isinstance(op, int):
+        return Token(op)
+    return Token[op]
+
+
+def imscription_tuple(ops) -> Dict[str, str]:
+    """The 12-primitive tuple (symbol → Shavian) an opcode sequence procedurally
+    imscribes: base imscription, each opcode's dominant field driven to its Shavian
+    value, last write wins. Identical to the cumulative-stage accumulation in
+    emit_scaffold; the tier is scored on exactly this tuple."""
+    cur = dict(_TIER_BASE_SHAV)
+    for op in ops:
+        field, shav, _ = _TOKEN_IG[_as_token(op)]
+        cur[field] = shav
+    return {_FIELD_TO_SYM[f]: cur[f] for f in _TIER_FIELDS}
+
+
+def ouroboricity_tier(ops) -> str:
+    """The Grammar's ouroboricity verdict for an opcode sequence: assess_tier on the
+    procedurally-imscribed tuple. One of 'O₀' / 'O₁' / 'O₂' / 'O_∞'. Empty → 'O₀'."""
+    ops = list(ops)
+    if not ops:
+        return "O₀"
+    return _assess_tier(imscription_tuple(ops))
+
+
 def _lean_val(v: str) -> str:
     """Map IG glyph to full Lean constructor: e.g. 𐑠 → Grammar.measure"""
     for field, typename in _IG_FIELD_TO_TYPENAME.items():
@@ -317,15 +373,10 @@ def emit_scaffold(
         stem = safe_name[:40].rsplit('_', 1)[0] or safe_name[:40]
         safe_name = f"{stem}_{hashlib.sha1(safe_name.encode()).hexdigest()[:6]}"
 
-    # Infer expected tier
-    if fp.self_ref and fp.frobenius_order in (1, 2):
-        tier = "O_inf"
-    elif fp.self_ref or fp.frobenius_order in (1, 2) or fp.dialetheia_complete:
-        tier = "O₂"
-    elif fp.period < fp.length:
-        tier = "O₁"
-    else:
-        tier = "O₀"
+    # Tier: the Grammar's verdict — assess_tier on the tuple the opcodes imscribe.
+    # Not a structural proxy (first==last token / "has a Frobenius pair").
+    tier = ouroboricity_tier(tokens)
+    is_oinf = tier in ("O_inf", "O_∞")
 
     is_self_ref = fp.self_ref
     has_frobenius = fp.frobenius_order in (1, 2)
@@ -485,7 +536,7 @@ def emit_scaffold(
     has_evalt = Token.EVALT in tokens
     has_evalf = Token.EVALF in tokens
     if has_evalt or has_evalf:
-        h_arg = " (by decide)" if tier == "O_inf" else ""
+        h_arg = " (by decide)" if is_oinf else ""
         out.append("-- ── Evaluation arm sub-defs ───────────────────────────────────")
         out.append("")
         if has_evalt:
@@ -509,7 +560,7 @@ def emit_scaffold(
     # and thereby break the build). TierFunctor.obj is the Grammar applied to
     # the ground imscription; its value is the answer, by construction.
     out.append(f"-- Tier: apply the Grammar to the object (self-application). "
-               f"Fingerprint heuristic suggested .{tier}.")
+               f"assess_tier verdict on the imscribed tuple: .{tier}.")
     out.append(f"def {safe_name}_tier : OuroboricityTier := TierFunctor.obj {o_start}")
     out.append(f"#eval {safe_name}_tier  -- the Grammar's own verdict on its tier")
     out.append("")
@@ -526,7 +577,7 @@ def emit_scaffold(
         out.append("")
     # Self-reference
     if is_self_ref:
-        h_arg = " (by decide)" if tier == "O_inf" else ""
+        h_arg = " (by decide)" if is_oinf else ""
         out.append(f"-- Self-reference: Δ is a dagger and μ = Δ†")
         out.append(f"theorem {safe_name}_self_ref :")
         out.append(f"    (igProtoDelta {o_start} (by decide)).isDagger = true ∧")
@@ -540,7 +591,7 @@ def emit_scaffold(
         out.append(f"-- Loop closure: period={fp.period}, depth=1")
         out.append(f"theorem {safe_name}_loop_closure :")
         out.append(f"    ∃ (loop : IGProtocol {o_start} {o_end}),")
-        out.append(f"      loop = {safe_name}_protocol{' (by decide)' if tier == 'O_inf' else ''} ∧")
+        out.append(f"      loop = {safe_name}_protocol{' (by decide)' if is_oinf else ''} ∧")
         out.append(f"      loop.period = {fp.period} ∧ loop.depth = 1 := by")
         out.append(f"  exact ⟨_, rfl, by decide, by decide⟩")
         out.append("")
