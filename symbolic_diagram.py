@@ -409,13 +409,18 @@ class SVGBuilder:
         self.circle_node(cx, cy, 2.0, under_color, None, 0.5)
 
     def close(self):
+        if getattr(self, '_closed', False):
+            return
         if self._defs:
             defs = ["<defs>"] + self._defs + ["</defs>"]
             # Insert after the background rect
             self.parts[2:2] = defs
+            self._defs = []  # clear so double-close is a no-op
         self.parts.append("</svg>")
+        self._closed = True
 
     def save(self, path: Path):
+        self.close()  # ensure closed before writing
         path.parent.mkdir(parents=True, exist_ok=True)
         with open(path, "w") as f:
             f.write("\n".join(self.parts))
