@@ -65,6 +65,7 @@ Y_MAIN   = 330
 Y_T      = 190
 Y_F      = 470
 NODE_R   = 22
+PORT_GAP  = 7   # extra gap so arrows terminate before port dots, not under nodes
 
 # ── Categorical edge palette (per source token) ──────────────────────────────
 CAT_EDGE_COLOR = {
@@ -710,8 +711,15 @@ def render_wiring_svg_v3(graph: WiredGraph, name: str = "", ourobor: str = "",
     for wi, w in enumerate(wire_list):
         if w.src_node not in pos or w.dst_node not in pos:
             continue
-        xs, ys = pos[w.src_node]
-        xd, yd = pos[w.dst_node]
+        xs_raw, ys_raw = pos[w.src_node]
+        xd_raw, yd_raw = pos[w.dst_node]
+        # ── Trim endpoints so arrows terminate at port dots, not node centers ──
+        _dx, _dy = xd_raw - xs_raw, yd_raw - ys_raw
+        _L = math.hypot(_dx, _dy) or 1
+        _ux, _uy = _dx / _L, _dy / _L
+        _trim = NODE_R + PORT_GAP
+        xs, ys = xs_raw + _ux * _trim, ys_raw + _uy * _trim
+        xd, yd = xd_raw - _ux * _trim, yd_raw - _uy * _trim
         src_tok = tokens[w.src_node]
         dst_tok = tokens[w.dst_node]
         src_reg = states[w.src_node]
@@ -832,14 +840,20 @@ def render_wiring_svg_v3(graph: WiredGraph, name: str = "", ourobor: str = "",
                        for w in layout.wires)
         f_direct = any(w.src_node == fs and w.dst_node == ff and w.src_port == 'F'
                        for w in layout.wires)
-        if t_direct:
+        if t_direct or f_direct:
             pi = pair_idx_of.get(fs, -1)
-            ec = PAIR_PALETTE[pi][0] if 0 <= pi < len(PAIR_PALETTE) else "#226666"
-            svg.curve_empty_arc(x_fs, y_fs, x_ff, y_ff, Y_T, ec)
-        if f_direct:
-            pi = pair_idx_of.get(fs, -1)
-            ec = PAIR_PALETTE[pi][1] if 0 <= pi < len(PAIR_PALETTE) else "#663333"
-            svg.curve_empty_arc(x_fs, y_fs, x_ff, y_ff, Y_F, ec)
+            _edx, _edy = x_ff - x_fs, y_ff - y_fs
+            _eL = math.hypot(_edx, _edy) or 1
+            _eux, _euy = _edx / _eL, _edy / _eL
+            _et = NODE_R + PORT_GAP
+            _ex_s, _ey_s = x_fs + _eux * _et, y_fs + _euy * _et
+            _ex_e, _ey_e = x_ff - _eux * _et, y_ff - _euy * _et
+            if t_direct:
+                ec = PAIR_PALETTE[pi][0] if 0 <= pi < len(PAIR_PALETTE) else "#226666"
+                svg.curve_empty_arc(_ex_s, _ey_s, _ex_e, _ey_e, Y_T, ec)
+            if f_direct:
+                ec = PAIR_PALETTE[pi][1] if 0 <= pi < len(PAIR_PALETTE) else "#663333"
+                svg.curve_empty_arc(_ex_s, _ey_s, _ex_e, _ey_e, Y_F, ec)
 
     # ── NODES ────────────────────────────────────────────────────────
     for i in range(n):
@@ -900,7 +914,13 @@ def render_wiring_svg_v3(graph: WiredGraph, name: str = "", ourobor: str = "",
         i0, iN = min(pos), max(pos)
         if i0 in pos and iN in pos:
             x0, y0 = pos[i0]; xn, yn = pos[iN]
-            svg.curve_arrow(x0, y0, xn, yn, BACK_COLOR, 1.5, 0.5, 55)
+            _bdx, _bdy = xn - x0, yn - y0
+            _bL = math.hypot(_bdx, _bdy) or 1
+            _bux, _buy = _bdx / _bL, _bdy / _bL
+            _bt = NODE_R + PORT_GAP
+            svg.curve_arrow(x0 + _bux * _bt, y0 + _buy * _bt,
+                           xn - _bux * _bt, yn - _buy * _bt,
+                           BACK_COLOR, 1.5, 0.5, 55)
             svg.text((x0+xn)/2, min(y0, yn) - 70, ourobor, 8, "#9988cc", "middle", False, "serif")
 
     # ── Footer ──
@@ -1324,11 +1344,13 @@ def render_wiring_pen_svg(graph: WiredGraph, name: str = "", ourobor: str = "",
         width = _PEN_DEPTH_W.get(min(depth, 3), 1.0)
         if tokv == Token.AFWD.value:
             width = max(width, 2.5)
-        # shorten to node borders
+        # shorten to node borders — include port dot gap so arrows terminate
+        # before the in/out circles, not underneath them
         L = math.hypot(xd - xs, yd - ys) or 1
         ux, uy = (xd - xs) / L, (yd - ys) / L
-        sx, sy = xs + ux * PEN_NODE_R, ys + uy * PEN_NODE_R
-        ex, ey = xd - ux * PEN_NODE_R, yd - uy * PEN_NODE_R
+        _pen_trim = PEN_NODE_R + 7  # node radius + port dot offset + dot radius
+        sx, sy = xs + ux * _pen_trim, ys + uy * _pen_trim
+        ex, ey = xd - ux * _pen_trim, yd - uy * _pen_trim
         if dash == "double":
             px, py = -uy, ux
             for o in (-1.6, 1.6):
@@ -1381,7 +1403,13 @@ def render_wiring_pen_svg(graph: WiredGraph, name: str = "", ourobor: str = "",
         last = max(pos)
         tgt = _pen_return_target(tokens, last, pos)
         if tgt != last:
-            _pen_backarc(svg, pos[last], pos[tgt], ourobor)
+            _xs, _ys = pos[last]; _xt, _yt = pos[tgt]
+            _pdx, _pdy = _xt - _xs, _yt - _ys
+            _pL = math.hypot(_pdx, _pdy) or 1
+            _pux, _puy = _pdx / _pL, _pdy / _pL
+            _pt = PEN_NODE_R + 7
+            _pen_backarc(svg, (_xs + _pux * _pt, _ys + _puy * _pt),
+                        (_xt - _pux * _pt, _yt - _puy * _pt), ourobor)
 
     # ── vertical left legend ──
     _pen_legend(svg)
