@@ -1166,8 +1166,8 @@ CANONICALS: Dict[str, dict] = {
 # barrier, pair brackets, and a vertical left-side legend. Reproducible by hand.
 # ═══════════════════════════════════════════════════════════════════════════
 
-PEN_INK  = "#000000"
-PEN_GRID = "#e8e8e8"
+PEN_INK  = "#ffffff"
+PEN_GRID = "#333333"
 PEN_W    = 1220
 PEN_NODE_R = 20
 FAM_SHAPE = {0: "circle", 1: "diamond", 2: "hexagon", 3: "square"}
@@ -1249,7 +1249,7 @@ def render_wiring_pen_svg(graph: WiredGraph, name: str = "", ourobor: str = "",
     tokens, n, states, pos = layout.tokens, layout.n, layout.states, layout.pos
 
     svg = SVGBuilder(w=PEN_W)
-    svg.parts[1] = f'<rect width="{PEN_W}" height="{SVG_H}" fill="#ffffff"/>'
+    svg.parts[1] = f'<rect width="{PEN_W}" height="{SVG_H}" fill="#000000"/>'
 
     # ── register-state hatch patterns ──
     svg.add_def('<pattern id="hatch-T" width="4" height="4" patternUnits="userSpaceOnUse">'
@@ -1310,7 +1310,7 @@ def render_wiring_pen_svg(graph: WiredGraph, name: str = "", ourobor: str = "",
             pi = (layout.pair_of.get(fs, 0)) + 1
             mxb = (xs + xd) / 2
             svg.add("circle", {"cx": f"{mxb:.1f}", "cy": f"{yb:.1f}", "r": "6",
-                               "fill": "#ffffff", "stroke": PEN_INK, "stroke-width": "0.8"})
+                               "fill": "#000000", "stroke": PEN_INK, "stroke-width": "0.8"})
             svg.text(mxb, yb + 3, str(pi), 7, PEN_INK, "middle")
 
     # ── wires ──
@@ -1349,7 +1349,7 @@ def render_wiring_pen_svg(graph: WiredGraph, name: str = "", ourobor: str = "",
         # midpoint glyph
         if glyph:
             svg.add("circle", {"cx": f"{(sx+ex)/2:.1f}", "cy": f"{(sy+ey)/2:.1f}", "r": "5",
-                               "fill": "#ffffff", "stroke": PEN_INK, "stroke-width": "0.6"})
+                               "fill": "#000000", "stroke": PEN_INK, "stroke-width": "0.6"})
             svg.text((sx+ex)/2, (sy+ey)/2 + 3, glyph, 7, PEN_INK, "middle")
         # register delta label
         lbl = reg_delta_label(states[w.src_node], states[w.dst_node])
@@ -1370,7 +1370,7 @@ def render_wiring_pen_svg(graph: WiredGraph, name: str = "", ourobor: str = "",
                                "fill": _HATCH[reg], "stroke": PEN_INK, "stroke-width": "0.6"})
         # guard ports: open (input, left), filled (output, right)
         svg.add("circle", {"cx": f"{cx-PEN_NODE_R-4:.1f}", "cy": f"{cy:.1f}", "r": "2.5",
-                           "fill": "#ffffff", "stroke": PEN_INK, "stroke-width": "0.8"})
+                           "fill": "#000000", "stroke": PEN_INK, "stroke-width": "0.8"})
         svg.add("circle", {"cx": f"{cx+PEN_NODE_R+4:.1f}", "cy": f"{cy:.1f}", "r": "2.5", "fill": PEN_INK})
         # labels: 2-letter above, full name below
         svg.text(cx, cy - PEN_NODE_R - 6, TOKEN_SHORT[tokens[i].value], 9, PEN_INK, "middle", True)
@@ -1418,7 +1418,7 @@ def _pen_legend(svg: 'SVGBuilder'):
         ys += 9.5
     # GUARD
     hdr(195, "GUARD")
-    svg.add("circle", {"cx": f"{x0+3}", "cy": "206", "r": "2.5", "fill": "#ffffff", "stroke": PEN_INK, "stroke-width": "0.8"})
+    svg.add("circle", {"cx": f"{x0+3}", "cy": "206", "r": "2.5", "fill": "#000000", "stroke": PEN_INK, "stroke-width": "0.8"})
     svg.text(x0 + 10, 208, "in", 5, PEN_INK, "start")
     svg.add("circle", {"cx": f"{x0+3}", "cy": "216", "r": "2.5", "fill": PEN_INK})
     svg.text(x0 + 10, 218, "out", 5, PEN_INK, "start")
@@ -1431,7 +1431,7 @@ def _pen_legend(svg: 'SVGBuilder'):
         svg.text(x0 + 14, yy + 2, lbl, 5, PEN_INK, "start")
     # PAIRS
     hdr(294, "PAIRS")
-    svg.add("circle", {"cx": f"{x0+4}", "cy": "306", "r": "5", "fill": "#ffffff", "stroke": PEN_INK, "stroke-width": "0.8"})
+    svg.add("circle", {"cx": f"{x0+4}", "cy": "306", "r": "5", "fill": "#000000", "stroke": PEN_INK, "stroke-width": "0.8"})
     svg.text(x0 + 4, 309, "1", 6, PEN_INK, "middle")
     svg.text(x0 + 14, 308, "pair", 5, PEN_INK, "start")
     # REG Δ
