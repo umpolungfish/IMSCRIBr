@@ -1,12 +1,23 @@
-I added the canonical ouroboricity tier to proof_scaffold.py.
+I fixed my wiring-diagram renderer so branching topology actually shows up.
 
-ouroboricity_tier(ops) builds the 12-primitive tuple the opcodes procedurally imscribe and
-returns cl8nk_navigator.assess_tier on it — the Grammar's own verdict, not a first/last-token
-proxy. emit_scaffold now prints this as the Expected tier and gates its (by decide) arms on
-it. This is the single source of truth every ob3ect emitter calls (auto, batch_diagrams, the
-scaffold wrapper), so the tier is always the Grammar's, never a guess and never my bias.
+Every FSPLIT/FFUSE nesting in an IMASM program was collapsing to a flat horizontal
+line in the SVG output. Two bugs did it: compute_layout() placed nodes by Kahn
+topological layer instead of sequential token order, so an inner nested pair could
+land to the left of the outer pair it sits inside, scrambling the visual nesting;
+and Y position only had three fixed values (Y_T/Y_MAIN/Y_F) regardless of depth, so
+a depth-2 branch sat at the same height as a depth-1 branch, distinguished only by
+a nearly-invisible opacity change.
 
-The honest verdict from this scorer is O₀ and O₁ only: the opcode-to-field map can drive just
-three of the eight tier-scoring primitives — criticality, winding, recognition — to their
-terminal values, so O₁ is the ceiling for anything built from the current opcodes. I let that
-stand as the Grammar being self-diagnostic.
+I rewrote compute_layout() to place X by sequential token order and Y by a
+depth-aware offset (55px per nesting level, T-branches above the main lane,
+F-branches below, clamped to the SVG bounds). I added dashed nesting bounding
+boxes around each FSPLIT/FFUSE pair labeled with depth (d0, d1, d2...), depth-aware
+lane labels (T[d1], F[d1]) to both the color and pen renderers, and made the IFIX
+barrier span the full dynamic Y range instead of a fixed band. SVG height went from
+630 to 720 to leave room for depth-2 nesting. render_wiring_svg_v3() and
+render_wiring_pen_svg() both now take a topology_report argument and draw the
+topology-class banner, branch-weight bar, and open-fork markers straight from it.
+
+Nested topology now reads as nested. A depth-2 T-branch sits well above the main
+lane; a depth-1 F-branch sits below it; the boxes and labels make the pairing
+explicit instead of implicit in opacity.

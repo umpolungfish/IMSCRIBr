@@ -57,7 +57,7 @@ IFIX_COLOR  = "#cc3344"
 REG_COLOR = {0: "#222244", 1: "#153530", 2: "#301518", 3: "#332200"}
 REG_LABEL = {0: "", 1: "↑", 2: "↓", 3: "↑↓"}
 
-SVG_W, SVG_H = 1100, 630
+SVG_W, SVG_H = 1100, 720
 MARGIN_X = 70
 MARGIN_Y = 70
 LEGEND_Y = 52
@@ -512,19 +512,31 @@ def compute_layout(graph: WiredGraph) -> DiagramLayout:
         else:
             lanes[i] = "main"
 
-    # ── Position computation ──
-    max_layer_size = max(len(L) for L in layers) if layers else 1
+    # ── Position computation (sequential ordering preserves nesting structure) ──
     usable_w = SVG_W - 2 * MARGIN_X
+    n_tokens = len(tokens)
+    span = usable_w / max(n_tokens, 1)
     pos: Dict[int, Tuple[float, float]] = {}
 
-    for layer_idx, layer in enumerate(layers):
-        size = len(layer)
-        span = usable_w / len(layers)
-        x0 = MARGIN_X + layer_idx * span
-        for j, idx in enumerate(layer):
-            x = x0 + (j + 1) * span / (size + 1)
-            y = {"T": Y_T, "main": Y_MAIN, "F": Y_F}.get(lanes[idx], Y_MAIN)
-            pos[idx] = (x, y)
+    # Lane Y offsets: deeper nesting pushes branches further from main lane
+    # Base lane centers: T=above, F=below, main=center
+    # Each nesting level adds an offset so nested pairs are visually distinct
+    LANE_OFFSET = 55  # pixels per nesting level
+    max_nest = max(nesting.values()) if nesting else 0
+
+    for i in range(n_tokens):
+        x = MARGIN_X + i * span + span / 2  # center within each slot
+        lane = lanes.get(i, "main")
+        nest = nesting.get(i, 0)
+        if lane == "T":
+            y = Y_T - nest * LANE_OFFSET
+        elif lane == "F":
+            y = Y_F + nest * LANE_OFFSET
+        else:
+            y = Y_MAIN
+        # Clamp Y to stay within SVG bounds
+        y = max(70, min(SVG_H - 70, y))
+        pos[i] = (x, y)
 
     # ── Pair index for each node (0-based into pairs list) ──
     pair_of: Dict[int, int] = {}
@@ -581,7 +593,8 @@ def _wire_edge_category(src_tok: Token, dst_tok: Token, w: Wire) -> str:
 # ── THE V3 RENDERER ─────────────────────────────────────────────────────────
 
 def render_wiring_svg_v3(graph: WiredGraph, name: str = "", ourobor: str = "",
-                          description: str = "", ig_type: str = "", pen_mode: bool = False) -> SVGBuilder:
+                          description: str = "", ig_type: str = "",
+                          pen_mode: bool = False, topology_report: dict = None) -> SVGBuilder:
     """
     Render a complete wiring diagram as SVG with full edge granularity:
 
@@ -595,7 +608,7 @@ def render_wiring_svg_v3(graph: WiredGraph, name: str = "", ourobor: str = "",
     """
 
     if pen_mode:
-        return render_wiring_pen_svg(graph, name, ourobor, description)
+        return render_wiring_pen_svg(graph, name, ourobor, description, topology_report)
 
     layout = compute_layout(graph)
     tokens = layout.tokens
@@ -614,11 +627,19 @@ def render_wiring_svg_v3(graph: WiredGraph, name: str = "", ourobor: str = "",
     if description:
         svg.text(SVG_W/2, 41, description[:155], 7, "#777", "middle")
 
-    # ── Lane labels ──
+    # ── Lane labels (depth-aware) ──
     has_T = any(layout.lanes.get(i) == "T" for i in range(n))
     has_F = any(layout.lanes.get(i) == "F" for i in range(n))
-    if has_T: svg.lane_label(22, Y_T, "T-lane", "#20c0b0")
-    if has_F: svg.lane_label(22, Y_F, "F-lane", "#e04060")
+    max_nest_t = max((layout.nesting.get(i, 0) for i in range(n) if layout.lanes.get(i) == "T"), default=0)
+    max_nest_f = max((layout.nesting.get(i, 0) for i in range(n) if layout.lanes.get(i) == "F"), default=0)
+    if has_T:
+        svg.lane_label(22, Y_T, "T-lane", "#20c0b0")
+        for d in range(1, max_nest_t + 1):
+            svg.lane_label(22, Y_T - d * 55, f"T[d{d}]", "#20c0b0")
+    if has_F:
+        svg.lane_label(22, Y_F, "F-lane", "#e04060")
+        for d in range(1, max_nest_f + 1):
+            svg.lane_label(22, Y_F + d * 55, f"F[d{d}]", "#e04060")
     svg.lane_label(22, Y_MAIN, "main", "#555")
 
     # ── Pairs for cross-branch detection and pair coloring ──
@@ -632,7 +653,9 @@ def render_wiring_svg_v3(graph: WiredGraph, name: str = "", ourobor: str = "",
 
     # ── IFIX barrier ──
     if layout.ifix_pos is not None:
-        svg.draw_ifix_barrier(layout.ifix_pos, Y_T - 45, Y_F + 45)
+        svg.draw_ifix_barrier(layout.ifix_pos,
+            min(p[1] for p in pos.values()) - NODE_R - 10,
+            max(p[1] for p in pos.values()) + NODE_R + 10)
 
     # ── CHANNEL ASSIGNMENT (pre-pass to minimize vertical trunk overlap) ──
     # Group wires by (source_x, source_y, dest_y) and assign channel lanes.
@@ -947,6 +970,115 @@ def render_wiring_svg_v3(graph: WiredGraph, name: str = "", ourobor: str = "",
     svg.line(lx, LEG_Y2 + 11, lx + 14, LEG_Y2 + 11, BACK_COLOR, 1.5, None, 0.5)
     svg.text(lx + 18, LEG_Y2 + 14, "loop", 5.5, BACK_COLOR, "start")
 
+
+    # ── NESTING BOUNDING BOXES ──────────────────────────────────────
+    # Draw translucent rounded rectangles around each FSPLIT/FFUSE pair
+    # to visually delineate nesting structure. Deeper nesting = more transparent
+    # and thinner stroke.
+    _pair_colors = [
+        "#4e79a7", "#70ad47", "#ed7d31", "#e15759",
+        "#9b59b6", "#20c0b0", "#ffd700", "#ff6688",
+        "#6baed6", "#74c476", "#fd8d3c", "#e6550d",
+    ]
+    for pi, (fs, ff) in enumerate(pairs):
+        if fs not in pos or ff not in pos:
+            continue
+        x1, y1 = pos[fs]
+        x2, y2 = pos[ff]
+        nest_d = layout.nesting.get(fs, 0)
+        bbox_x = min(x1, x2) - NODE_R - 6
+        bbox_y = min(y1, y2) - NODE_R - 6
+        bbox_w = abs(x2 - x1) + 2 * (NODE_R + 6)
+        bbox_h = abs(y2 - y1) + 2 * (NODE_R + 6)
+        bbox_color = _pair_colors[pi % len(_pair_colors)]
+        bbox_opacity = max(0.08, 0.25 - nest_d * 0.05)
+        stroke_w = max(0.5, 1.5 - nest_d * 0.3)
+        svg.add("rect", {
+            "x": str(bbox_x), "y": str(bbox_y),
+            "width": str(bbox_w), "height": str(bbox_h),
+            "fill": "none", "stroke": bbox_color,
+            "stroke-width": str(stroke_w),
+            "opacity": str(bbox_opacity),
+            "rx": "8", "ry": "8",
+            "stroke-dasharray": "4,3"
+        })
+        # Label the pair with its nesting depth
+        label_x = bbox_x + 4
+        label_y = bbox_y - 2
+        svg.text(label_x, label_y, f"d{nest_d}", 5, bbox_color, "start", False, "monospace")
+
+    # ── TOPOLOGY OVERLAY (from TopologyReport) ────────────────────────
+    if topology_report:
+        tc = topology_report.get("topology_class", "flat_chain")
+        nd = topology_report.get("nesting_depth", 0)
+        of = topology_report.get("open_forks", 0)
+        cb = topology_report.get("cross_branches", 0)
+        eb = topology_report.get("empty_branches", 0)
+        t_ops = topology_report.get("t_branch_ops", 0)
+        f_ops = topology_report.get("f_branch_ops", 0)
+        nf = topology_report.get("has_negation_first", False)
+        ci = topology_report.get("has_cascading_ifix", False)
+        mic = topology_report.get("max_ifix_cascade", 0)
+        df = topology_report.get("has_dual_fixation", False)
+
+        # Topology class banner (top-right corner)
+        tc_colors = {
+            "flat_chain": "#4e79a7", "nested": "#70ad47",
+            "open_fork_dag": "#ed7d31", "webbed": "#e15759",
+            "mixed": "#9b59b6"
+        }
+        tc_color = tc_colors.get(tc, "#4e79a7")
+        bx, by = SVG_W - 160, 48
+        svg.add("rect", {"x": str(bx), "y": str(by), "width": "145", "height": "22",
+                         "fill": tc_color, "opacity": "0.15", "rx": "4"})
+        svg.add("rect", {"x": str(bx), "y": str(by), "width": "145", "height": "22",
+                         "fill": "none", "stroke": tc_color, "stroke-width": "1", "rx": "4"})
+        svg.text(bx + 72, by + 15, tc.upper(), 8, tc_color, "middle", True)
+
+        # Topology stats row
+        sy = by + 30
+        stats_parts = [f"depth:{nd}", f"open-forks:{of}", f"cross:{cb}", f"empty:{eb}"]
+        svg.text(bx, sy, "  ".join(stats_parts), 6, "#888", "start", False, "monospace")
+
+        # Branch weight ratio bar (T vs F)
+        bar_y = sy + 10
+        total_ops = max(1, t_ops + f_ops)
+        t_frac = t_ops / total_ops
+        f_frac = f_ops / total_ops
+        bar_w = 145
+        svg.text(bx, bar_y - 2, f"T:{t_ops} / F:{f_ops}", 5.5, "#777", "start", False, "monospace")
+        svg.add("rect", {"x": str(bx), "y": str(bar_y), "width": str(bar_w * t_frac),
+                         "height": "6", "fill": T_COLOR, "opacity": "0.6", "rx": "2"})
+        svg.add("rect", {"x": str(bx + bar_w * t_frac), "y": str(bar_y), "width": str(bar_w * f_frac),
+                         "height": "6", "fill": F_COLOR, "opacity": "0.6", "rx": "2"})
+
+        # Modifier badges
+        badge_y = bar_y + 14
+        badges = []
+        if nf: badges.append(("NEG-1ST", "#ff6688"))
+        if ci: badges.append((f"IFIX×{mic}", "#cc3344"))
+        if df: badges.append(("DUAL-FIX", "#ffd700"))
+        for i, (label, color) in enumerate(badges):
+            bxx = bx + i * 55
+            svg.add("rect", {"x": str(bxx), "y": str(badge_y), "width": "50", "height": "12",
+                             "fill": color, "opacity": "0.2", "rx": "2"})
+            svg.text(bxx + 25, badge_y + 9, label, 5.5, color, "middle", True, "monospace")
+
+        # Open fork endpoint markers — draw small open circles at unmatched FSPLIT positions
+        fork_positions = topology_report.get("fork_positions", [])
+        for fp in fork_positions:
+            if isinstance(fp, (list, tuple)) and len(fp) >= 1:
+                fi = fp[0] if isinstance(fp[0], int) else fp[0]
+                if fi in pos:
+                    fx, fy = pos[fi]
+                    # Open diamond = unmatched fork (never fuses)
+                    svg.add("polygon", {
+                        "points": _diamond_points(fx, fy + NODE_R + 18, 5),
+                        "fill": "none", "stroke": "#ed7d31", "stroke-width": "1.5",
+                        "opacity": "0.8"
+                    })
+                    svg.text(fx, fy + NODE_R + 30, "open", 4.5, "#ed7d31", "middle")
+
     svg.close()
     return svg
 
@@ -1110,7 +1242,7 @@ def _pen_backarc(svg: 'SVGBuilder', src, tgt, label: str, r: float = PEN_NODE_R)
 
 
 def render_wiring_pen_svg(graph: WiredGraph, name: str = "", ourobor: str = "",
-                          description: str = "") -> SVGBuilder:
+                          description: str = "", topology_report: dict = None) -> SVGBuilder:
     """Black-and-white pen diagram. Same layout engine as the color renderer;
     every colour dimension is re-expressed as a pen-drawable form."""
     layout = compute_layout(graph)
@@ -1140,22 +1272,32 @@ def render_wiring_pen_svg(graph: WiredGraph, name: str = "", ourobor: str = "",
     if description:
         svg.text(PEN_W/2, 41, description[:155], 7, PEN_INK, "middle")
 
-    # ── lane labels ──
+    # ── lane labels (depth-aware) ──
     has_T = any(layout.lanes.get(i) == "T" for i in range(n))
     has_F = any(layout.lanes.get(i) == "F" for i in range(n))
-    if has_T: svg.text(66, Y_T, "T-lane", 7, PEN_INK, "start")
-    if has_F: svg.text(66, Y_F, "F-lane", 7, PEN_INK, "start")
+    max_nest_t = max((layout.nesting.get(i, 0) for i in range(n) if layout.lanes.get(i) == "T"), default=0)
+    max_nest_f = max((layout.nesting.get(i, 0) for i in range(n) if layout.lanes.get(i) == "F"), default=0)
+    if has_T:
+        svg.text(66, Y_T, "T-lane", 7, PEN_INK, "start")
+        for d in range(1, max_nest_t + 1):
+            svg.text(66, Y_T - d * 55, f"T[d{d}]", 7, PEN_INK, "start")
+    if has_F:
+        svg.text(66, Y_F, "F-lane", 7, PEN_INK, "start")
+        for d in range(1, max_nest_f + 1):
+            svg.text(66, Y_F + d * 55, f"F[d{d}]", 7, PEN_INK, "start")
     svg.text(66, Y_MAIN, "main", 7, PEN_INK, "start")
 
     # ── IFIX barrier (double vertical + × markers) ──
     if layout.ifix_pos is not None:
         bx = layout.ifix_pos
+        _y_top = min(p[1] for p in pos.values()) - PEN_NODE_R - 10
+        _y_bot = max(p[1] for p in pos.values()) + PEN_NODE_R + 10
         for off in (-2.5, 2.5):
-            svg.line(bx + off, Y_T - 45, bx + off, Y_F + 45, stroke=PEN_INK,
+            svg.line(bx + off, _y_top, bx + off, _y_bot, stroke=PEN_INK,
                      width=1.0, dash="4,3", opacity=1.0)
-        for yy in (Y_T - 45, Y_F + 45):
+        for yy in (_y_top, _y_bot):
             svg.text(bx, yy, "×", 8, PEN_INK, "middle")
-        svg.text(bx, Y_T - 52, "IFIX", 6, PEN_INK, "middle")
+        svg.text(bx, _y_top - 7, "IFIX", 6, PEN_INK, "middle")
 
     # ── pair brackets (dashed arc + circled numeral) ──
     for fs, ff in match_pairs(tuple(t.value for t in tokens)):
