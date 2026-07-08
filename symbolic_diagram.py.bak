@@ -914,6 +914,19 @@ def render_wiring_svg_v3(graph: WiredGraph, name: str = "", ourobor: str = "",
             svg.circle_node(cx - NODE_R - 1, cy, 2.5, "#ffffff60", None, 0)
             svg.circle_node(cx + NODE_R + 1, cy, 2.5, "#ffffff90", None, 0)
 
+    # ── Ouroboric back-arc ──
+    if ourobor and ourobor != "O₀" and len(pos) >= 2:
+        i0, iN = min(pos), max(pos)
+        if i0 in pos and iN in pos:
+            x0, y0 = pos[i0]; xn, yn = pos[iN]
+            _bdx, _bdy = xn - x0, yn - y0
+            _bL = math.hypot(_bdx, _bdy) or 1
+            _bux, _buy = _bdx / _bL, _bdy / _bL
+            _bt = NODE_R + PORT_GAP
+            svg.curve_arrow(x0 + _bux * _bt, y0 + _buy * _bt,
+                           xn - _bux * _bt, yn - _buy * _bt,
+                           BACK_COLOR, 1.5, 0.5, 55)
+            svg.text((x0+xn)/2, min(y0, yn) - 70, ourobor, 8, "#9988cc", "middle", False, "serif")
 
     # ── Footer ──
     if ig_type:
@@ -1091,29 +1104,6 @@ def render_wiring_svg_v3(graph: WiredGraph, name: str = "", ourobor: str = "",
                     })
                     svg.text(fx, fy + NODE_R + 30, "open", 4.5, "#ed7d31", "middle")
 
-    # ── Ouroboric back-arc (DRAWN LAST — on top of all elements) ──
-    if ourobor and ourobor != "O₀" and len(pos) >= 2:
-        i0, iN = min(pos), max(pos)
-        if i0 in pos and iN in pos:
-            x0, y0 = pos[i0]; xn, yn = pos[iN]
-            _bdx, _bdy = xn - x0, yn - y0
-            _bL = math.hypot(_bdx, _bdy) or 1
-            _bux, _buy = _bdx / _bL, _bdy / _bL
-            _bt = NODE_R + PORT_GAP
-            _sx = x0 + _bux * _bt; _sy = y0 + _buy * _bt
-            _ex = xn - _bux * _bt; _ey = yn - _buy * _bt
-            # Arc peak well above all content (title is at y=26, T-lane starts at y=135)
-            _arc_peak = 10
-            _mid_x = (x0 + xn) / 2
-            _path = f"M{_ex:.1f},{_ey:.1f} L{_ex:.1f},{_arc_peak:.1f} L{_sx:.1f},{_arc_peak:.1f} L{_sx:.1f},{_sy:.1f}"
-            svg.add("path", {"d": _path, "fill": "none", "stroke": BACK_COLOR,
-                             "stroke-width": "1.8", "opacity": "0.75"})
-            # Arrowhead pointing into return node
-            svg.add("polygon", {
-                "points": _arrow_head_points(_sx, _sy, _sx, _arc_peak, 9),
-                "fill": BACK_COLOR, "opacity": "0.75"
-            })
-            svg.text(_mid_x, _arc_peak + 2, ourobor, 8, "#9988cc", "middle", False, "serif")
     svg.close()
     return svg
 
@@ -1413,15 +1403,7 @@ def render_wiring_pen_svg(graph: WiredGraph, name: str = "", ourobor: str = "",
         svg.text(cx, cy - PEN_NODE_R - 6, TOKEN_SHORT[tokens[i].value], 9, PEN_INK, "middle", True)
         svg.text(cx, cy + PEN_NODE_R + 12, TOKEN_NAMES[tokens[i].value], 5, PEN_INK, "middle")
 
-
-    # ── vertical left legend ──
-    _pen_legend(svg)
-
-    # ── footer ──
-    if ourobor:
-        svg.text(PEN_W/2, SVG_H - 12, f"Ouroboricity: {ourobor}", 7, PEN_INK, "middle")
-
-    # ── ouroboric closure arc (DRAWN LAST — on top of all elements) ──
+    # ── ouroboric closure arc: final node → return anchor (first IMSCRIB, else start) ──
     if len(pos) >= 2:
         last = max(pos)
         tgt = _pen_return_target(tokens, last, pos)
@@ -1431,16 +1413,16 @@ def render_wiring_pen_svg(graph: WiredGraph, name: str = "", ourobor: str = "",
             _pL = math.hypot(_pdx, _pdy) or 1
             _pux, _puy = _pdx / _pL, _pdy / _pL
             _pt = PEN_NODE_R + 7
-            _sx, _sy = _xs + _pux * _pt, _ys + _puy * _pt
-            _ex, _ey = _xt - _pux * _pt, _yt - _puy * _pt
-            # Arc peak well above all content
-            _top = 10
-            _mid_x = (_xs + _xt) / 2
-            svg.add("path", {"d": f"M {_ex:.1f},{_ey:.1f} L {_ex:.1f},{_top:.1f} L {_sx:.1f},{_top:.1f} L {_sx:.1f},{_sy:.1f}",
-                             "fill": "none", "stroke": PEN_INK, "stroke-width": "1.2"})
-            svg.add("polygon", {"points": _arrow_head_points(_sx, _sy, _sx, _top, 8), "fill": PEN_INK})
-            if ourobor:
-                svg.text(_mid_x, _top + 2, ourobor, 7, PEN_INK, "middle")
+            _pen_backarc(svg, (_xs + _pux * _pt, _ys + _puy * _pt),
+                        (_xt - _pux * _pt, _yt - _puy * _pt), ourobor)
+
+    # ── vertical left legend ──
+    _pen_legend(svg)
+
+    # ── footer ──
+    if ourobor:
+        svg.text(PEN_W/2, SVG_H - 12, f"Ouroboricity: {ourobor}", 7, PEN_INK, "middle")
+
     svg.close()
     return svg
 

@@ -133,9 +133,6 @@
 <text x="970.0" y="364.0" fill="#888" font-size="5.5" text-anchor="middle" font-family="monospace">AREV</text>
 <circle cx="947.0" cy="330.0" r="2.5" fill="#ffffff60" stroke-width="0"></circle>
 <circle cx="993.0" cy="330.0" r="2.5" fill="#ffffff90" stroke-width="0"></circle>
-<path d="M941.0,330.0 Q550.0,275.0 159.0,330.0" fill="none" stroke="#9988cc" stroke-width="1.5" opacity="0.5"></path>
-<polygon points="159.0,330.0 150.5,327.2 151.6,335.1" fill="#9988cc" opacity="0.5"></polygon>
-<text x="550.0" y="260.0" fill="#9988cc" font-size="8" text-anchor="middle" font-family="serif">O₁</text>
 <text x="550.0" y="698.0" fill="#5577aa" font-size="7" text-anchor="middle" font-family="monospace">⟨𐑦𐑡𐑑𐑗𐑱𐑘𐑚𐑝⊙𐑒𐑙𐑷⟩</text>
 <text x="550.0" y="711.0" fill="#9988aa" font-size="7" text-anchor="middle" font-family="serif">Ouroboricity: O₁</text>
 <text x="70.0" y="52.0" fill="#666" font-size="6" text-anchor="start" font-family="monospace" font-weight="bold">NODES</text>
@@ -173,4 +170,7 @@
 <text x="362.0" y="82.0" fill="#ffd700" font-size="5.5" text-anchor="start" font-family="monospace">cross-br.</text>
 <line x1="404.0" y1="79.0" x2="418.0" y2="79.0" stroke="#9988cc" stroke-width="1.5" opacity="0.5"></line>
 <text x="422.0" y="82.0" fill="#9988cc" font-size="5.5" text-anchor="start" font-family="monospace">loop</text>
+<path d="M941.0,330.0 L941.0,10.0 L159.0,10.0 L159.0,330.0" fill="none" stroke="#9988cc" stroke-width="1.8" opacity="0.75"></path>
+<polygon points="159.0,330.0 155.4,321.0 162.6,321.0" fill="#9988cc" opacity="0.75"></polygon>
+<text x="550.0" y="12.0" fill="#9988cc" font-size="8" text-anchor="middle" font-family="serif">O₁</text>
 </svg>

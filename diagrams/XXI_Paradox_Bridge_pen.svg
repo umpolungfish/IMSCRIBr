@@ -5,11 +5,6 @@
 <pattern id="hatch-F" width="4" height="4" patternUnits="userSpaceOnUse"><path d="M0,2 L4,2" stroke="#ffffff" stroke-width="0.8"/></pattern>
 <pattern id="hatch-B" width="4" height="4" patternUnits="userSpaceOnUse"><path d="M2,0 L2,4 M0,2 L4,2" stroke="#ffffff" stroke-width="0.8"/></pattern>
 </defs>
-<defs>
-<pattern id="hatch-T" width="4" height="4" patternUnits="userSpaceOnUse"><path d="M2,0 L2,4" stroke="#ffffff" stroke-width="0.8"/></pattern>
-<pattern id="hatch-F" width="4" height="4" patternUnits="userSpaceOnUse"><path d="M0,2 L4,2" stroke="#ffffff" stroke-width="0.8"/></pattern>
-<pattern id="hatch-B" width="4" height="4" patternUnits="userSpaceOnUse"><path d="M2,0 L2,4 M0,2 L4,2" stroke="#ffffff" stroke-width="0.8"/></pattern>
-</defs>
 <line x1="0.0" y1="0.0" x2="0.0" y2="720.0" stroke="#333333" stroke-width="0.4" opacity="0.3"></line>
 <line x1="40.0" y1="0.0" x2="40.0" y2="720.0" stroke="#333333" stroke-width="0.4" opacity="0.3"></line>
 <line x1="80.0" y1="0.0" x2="80.0" y2="720.0" stroke="#333333" stroke-width="0.4" opacity="0.3"></line>
@@ -60,6 +55,7 @@
 <line x1="0.0" y1="640.0" x2="1220.0" y2="640.0" stroke="#333333" stroke-width="0.4" opacity="0.3"></line>
 <line x1="0.0" y1="680.0" x2="1220.0" y2="680.0" stroke="#333333" stroke-width="0.4" opacity="0.3"></line>
 <text x="610.0" y="26.0" fill="#ffffff" font-size="13" text-anchor="middle" font-family="monospace" font-weight="bold">XXI Paradox Bridge</text>
+<text x="610.0" y="41.0" fill="#ffffff" font-size="7" text-anchor="middle" font-family="monospace">ENGAGR-sourced fork with outer F-wire bridging into the inner FFUSE. B-state from ENGAGR splits: T-path reaches inner split where gates EVALT/EVALF discrim</text>
 <text x="66.0" y="190.0" fill="#ffffff" font-size="7" text-anchor="start" font-family="monospace">T-lane</text>
 <text x="66.0" y="135.0" fill="#ffffff" font-size="7" text-anchor="start" font-family="monospace">T[d1]</text>
 <text x="66.0" y="80.0" fill="#ffffff" font-size="7" text-anchor="start" font-family="monospace">T[d2]</text>
@@ -163,9 +159,6 @@
 <circle cx="994.0" cy="330.0" r="2.5" fill="#ffffff"></circle>
 <text x="970.0" y="304.0" fill="#ffffff" font-size="9" text-anchor="middle" font-family="monospace" font-weight="bold">IM</text>
 <text x="970.0" y="362.0" fill="#ffffff" font-size="5" text-anchor="middle" font-family="monospace">IMSCRIB</text>
-<path d="M 943.0,310.0 C 943.0,252.0 157.0,252.0 157.0,310.0" fill="none" stroke="#ffffff" stroke-width="1.0"></path>
-<polygon points="157.0,310.0 153.8,302.0 160.2,302.0" fill="#ffffff"></polygon>
-<text x="550.0" y="248.0" fill="#ffffff" font-size="7" text-anchor="middle" font-family="monospace">O?</text>
 <text x="14.0" y="72.0" fill="#ffffff" font-size="6" text-anchor="start" font-family="monospace" font-weight="bold">EDGES</text>
 <line x1="14.0" y1="82.0" x2="36.0" y2="82.0" stroke="#ffffff" stroke-width="1.5" opacity="0.7"></line>
 <text x="42.0" y="84.0" fill="#ffffff" font-size="5" text-anchor="start" font-family="monospace">VI</text>
@@ -214,6 +207,8 @@
 <text x="14.0" y="336.0" fill="#ffffff" font-size="5" text-anchor="start" font-family="monospace">↑ T</text>
 <text x="14.0" y="345.0" fill="#ffffff" font-size="5" text-anchor="start" font-family="monospace">↓ F</text>
 <text x="14.0" y="354.0" fill="#ffffff" font-size="5" text-anchor="start" font-family="monospace">↑↓ B</text>
-<text x="610.0" y="708.0" fill="#ffffff" font-size="7" text-anchor="middle" font-family="monospace">Ouroboricity: O?</text>
-</svg>
+<text x="610.0" y="708.0" fill="#ffffff" font-size="7" text-anchor="middle" font-family="monospace">Ouroboricity: O₂</text>
+<path d="M 157.0,330.0 L 157.0,10.0 L 943.0,10.0 L 943.0,330.0" fill="none" stroke="#ffffff" stroke-width="1.2"></path>
+<polygon points="943.0,330.0 939.8,322.0 946.2,322.0" fill="#ffffff"></polygon>
+<text x="550.0" y="12.0" fill="#ffffff" font-size="7" text-anchor="middle" font-family="monospace">O₂</text>
 </svg>
