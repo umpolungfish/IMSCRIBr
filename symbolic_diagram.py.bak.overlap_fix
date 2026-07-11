@@ -58,7 +58,6 @@ REG_COLOR = {0: "#222244", 1: "#153530", 2: "#301518", 3: "#332200"}
 REG_LABEL = {0: "", 1: "↑", 2: "↓", 3: "↑↓"}
 
 SVG_W, SVG_H = 1100, 720
-MIN_NODE_SPACING = 2 * 22 + 20   # min center-to-center spacing to prevent token overlap (2*NODE_R + label_pad)
 MARGIN_X = 70
 MARGIN_Y = 70
 LEGEND_Y = 52
@@ -442,9 +441,8 @@ class DiagramLayout:
     states:      List[int]                    # per-node register state
     nesting:     Dict[int, int]               # per-node nesting depth
     pair_of:     Dict[int, int]               # node → pair index (0-based)
-    ifix_pos:       Optional[float]              # x-position of first IFIX barrier
-    pair_wires:     Dict[int, List[Wire]]        # pair index → wires belonging to it
-    dynamic_width:  Optional[float] = None       # expanded SVG width when tokens would overlap
+    ifix_pos:    Optional[float]              # x-position of first IFIX barrier
+    pair_wires:  Dict[int, List[Wire]]        # pair index → wires belonging to it
 
     def x(self, idx): return self.pos[idx][0]
     def y(self, idx): return self.pos[idx][1]
@@ -524,16 +522,6 @@ def compute_layout(graph: WiredGraph) -> DiagramLayout:
     usable_w = SVG_W - 2 * MARGIN_X
     n_tokens = len(tokens)
     span = usable_w / max(n_tokens, 1)
-    dynamic_width: Optional[float] = None
-
-    # ── OVERLAP PREVENTION: if natural span is smaller than minimum node spacing,
-    #     expand the diagram horizontally so tokens never overlap. ──
-    if span < MIN_NODE_SPACING:
-        span = MIN_NODE_SPACING
-        dynamic_width = 2 * MARGIN_X + n_tokens * span
-        dynamic_width = max(dynamic_width, SVG_W)  # never shrink below default
-        usable_w = dynamic_width - 2 * MARGIN_X
-
     pos: Dict[int, Tuple[float, float]] = {}
 
     # Lane Y offsets: deeper nesting pushes branches further from main lane
@@ -583,7 +571,6 @@ def compute_layout(graph: WiredGraph) -> DiagramLayout:
         tokens=tokens, pos=pos, lanes=lanes, wires=graph.wires, n=n,
         states=states, nesting=nesting, pair_of=pair_of,
         ifix_pos=ifix_pos, pair_wires=pair_wires,
-        dynamic_width=dynamic_width,
     )
 
 
@@ -635,17 +622,16 @@ def render_wiring_svg_v3(graph: WiredGraph, name: str = "", ourobor: str = "",
     states = layout.states
     pos = layout.pos
 
-    dw = layout.dynamic_width or SVG_W
-    svg = SVGBuilder(w=dw)
+    svg = SVGBuilder()
 
     # ── Grid background (schematic feel) ──
     svg.draw_grid()
 
     # ── Title ──
     title = name.replace("_", " ") if name else ""
-    svg.text(dw/2, 26, title, 13, FG, "middle", True)
+    svg.text(SVG_W/2, 26, title, 13, FG, "middle", True)
     if description:
-        svg.text(dw/2, 41, description[:155], 7, "#777", "middle")
+        svg.text(SVG_W/2, 41, description[:155], 7, "#777", "middle")
 
     # ── Lane labels (depth-aware) ──
     has_T = any(layout.lanes.get(i) == "T" for i in range(n))
@@ -931,9 +917,9 @@ def render_wiring_svg_v3(graph: WiredGraph, name: str = "", ourobor: str = "",
 
     # ── Footer ──
     if ig_type:
-        svg.text(dw/2, SVG_H - 22, ig_type, 7, "#5577aa", "middle", False, "monospace")
+        svg.text(SVG_W/2, SVG_H - 22, ig_type, 7, "#5577aa", "middle", False, "monospace")
     if ourobor:
-        svg.text(dw/2, SVG_H - 9, f"Ouroboricity: {ourobor}", 7, "#9988aa", "middle", False, "serif")
+        svg.text(SVG_W/2, SVG_H - 9, f"Ouroboricity: {ourobor}", 7, "#9988aa", "middle", False, "serif")
 
     # ── Legend (horizontal strip at top) ─────────────────────────────────
     LEG_Y = LEGEND_Y
@@ -1054,7 +1040,7 @@ def render_wiring_svg_v3(graph: WiredGraph, name: str = "", ourobor: str = "",
             "mixed": "#9b59b6"
         }
         tc_color = tc_colors.get(tc, "#4e79a7")
-        bx, by = dw - 160, 48
+        bx, by = SVG_W - 160, 48
         svg.add("rect", {"x": str(bx), "y": str(by), "width": "145", "height": "22",
                          "fill": tc_color, "opacity": "0.15", "rx": "4"})
         svg.add("rect", {"x": str(bx), "y": str(by), "width": "145", "height": "22",
@@ -1297,9 +1283,8 @@ def render_wiring_pen_svg(graph: WiredGraph, name: str = "", ourobor: str = "",
     layout = compute_layout(graph)
     tokens, n, states, pos = layout.tokens, layout.n, layout.states, layout.pos
 
-    pdw = layout.dynamic_width or PEN_W
-    svg = SVGBuilder(w=pdw)
-    svg.parts[1] = f'<rect width="{pdw}" height="{SVG_H}" fill="#000000"/>'
+    svg = SVGBuilder(w=PEN_W)
+    svg.parts[1] = f'<rect width="{PEN_W}" height="{SVG_H}" fill="#000000"/>'
 
     # ── register-state hatch patterns ──
     svg.add_def('<pattern id="hatch-T" width="4" height="4" patternUnits="userSpaceOnUse">'
@@ -1311,16 +1296,16 @@ def render_wiring_pen_svg(graph: WiredGraph, name: str = "", ourobor: str = "",
     _HATCH = {1: "url(#hatch-T)", 2: "url(#hatch-F)", 3: "url(#hatch-B)"}
 
     # ── faint grid ──
-    for gx in range(0, int(pdw), GRID_SPACING):
+    for gx in range(0, PEN_W, GRID_SPACING):
         svg.line(gx, 0, gx, SVG_H, stroke=PEN_GRID, width=0.4, opacity=0.3)
     for gy in range(0, SVG_H, GRID_SPACING):
-        svg.line(0, gy, pdw, gy, stroke=PEN_GRID, width=0.4, opacity=0.3)
+        svg.line(0, gy, PEN_W, gy, stroke=PEN_GRID, width=0.4, opacity=0.3)
 
     # ── title ──
     title = name.replace("_", " ") if name else ""
-    svg.text(pdw/2, 26, title, 13, PEN_INK, "middle", True)
+    svg.text(PEN_W/2, 26, title, 13, PEN_INK, "middle", True)
     if description:
-        svg.text(pdw/2, 41, description[:155], 7, PEN_INK, "middle")
+        svg.text(PEN_W/2, 41, description[:155], 7, PEN_INK, "middle")
 
     # ── lane labels (depth-aware) ──
     has_T = any(layout.lanes.get(i) == "T" for i in range(n))
@@ -1434,7 +1419,7 @@ def render_wiring_pen_svg(graph: WiredGraph, name: str = "", ourobor: str = "",
 
     # ── footer ──
     if ourobor:
-        svg.text(pdw/2, SVG_H - 12, f"Ouroboricity: {ourobor}", 7, PEN_INK, "middle")
+        svg.text(PEN_W/2, SVG_H - 12, f"Ouroboricity: {ourobor}", 7, PEN_INK, "middle")
 
     # ── ouroboric closure arc (DRAWN LAST — on top of all elements) ──
     if len(pos) >= 2:
