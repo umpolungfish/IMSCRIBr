@@ -1,23 +1,23 @@
-I fixed my wiring-diagram renderer so branching topology actually shows up.
+Retire the Phi_c family: gen-1 criticality names to bare Shavian
 
-Every FSPLIT/FFUSE nesting in an IMASM program was collapsing to a flat horizontal
-line in the SVG output. Two bugs did it: compute_layout() placed nodes by Kahn
-topological layer instead of sequential token order, so an inner nested pair could
-land to the left of the outer pair it sits inside, scrambling the visual nesting;
-and Y position only had three fixed values (Y_T/Y_MAIN/Y_F) regardless of depth, so
-a depth-2 branch sat at the same height as a depth-1 branch, distinguished only by
-a nearly-invisible opacity change.
+Phi_c is ⊙. The `_c` forms only ever existed under Criticality, so unlike bare
+Phi they carry no ambiguity: today's Φ is Parity and has no `_c` value, so
+nothing here needs a judgement call. Rewrote the family to the values
+`models.from_symbol` returns for them: Phi_c / Φ_c / ⊙_c / Phi_ctyogh → ⊙,
+Phi_c_complex → 𐑮, Phi_sub → 𐑢, Phi_EP → 𐑻, Phi_sup → 𐑣. 7,689 refs, 585 files.
 
-I rewrote compute_layout() to place X by sequential token order and Y by a
-depth-aware offset (55px per nesting level, T-branches above the main lane,
-F-branches below, clamped to the SVG bounds). I added dashed nesting bounding
-boxes around each FSPLIT/FFUSE pair labeled with depth (d0, d1, d2...), depth-aware
-lane labels (T[d1], F[d1]) to both the color and pen renderers, and made the IFIX
-barrier span the full dynamic Y range instead of a fixed band. SVG height went from
-630 to 720 to leave room for depth-2 nesting. render_wiring_svg_v3() and
-render_wiring_pen_svg() both now take a topology_report argument and draw the
-topology-class banner, branch-weight bar, and open-fork markers straight from it.
+The whole job is one distinction: Phi_c names a VALUE in prose and data, and it
+also names a CONSTRUCTOR in code. `Criticality.Phi_c` is a live Lean identifier
+(`theorem as_is_QCP : asymptotic_safety.crit = Criticality.Phi_c := rfl`) and
+`Criticality.Phi_ctyogh` is a live Python enum alias. Rewriting those gives
+`Criticality.⊙`, which is not an identifier in either language. So dotted
+occurrences stay and everything else moves. Same string, two roles — the same
+shape as CLINK L8 versus the `=` opcode, where only reading tells them apart.
 
-Nested topology now reads as nested. A depth-2 T-branch sits well above the main
-lane; a depth-1 F-branch sits below it; the boxes and labels make the pairing
-explicit instead of implicit in opacity.
+models.py keeps its old spellings on purpose. Its from_symbol maps are the
+back-compat table: the keys have to go on spelling `Φ_c` or the translation from
+old symbols stops working. Rewriting the dictionary that performs the migration
+would remove the migration.
+
+Verified after: imscrbgrmr imports, from_symbol('Φ_c') still returns ⊙, both
+navigators still answer (cl8nk promote, cl9nk moat), and no syntax regressions.

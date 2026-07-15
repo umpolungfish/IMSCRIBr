@@ -70,7 +70,7 @@ GRAMMAR_PATTERNS: List[str] = [
     # ── Primitive / primitive names ───────────────────────────────────────────
     r'\bprimitive[s]?\b',
 
-    # ── Consciousness / Phi_c ────────────────────────────────────────────────
+    # ── Consciousness / ⊙ ────────────────────────────────────────────────
     r'\bconsciousness[._]score\b',
     r'\bPhi_c\b',
 
