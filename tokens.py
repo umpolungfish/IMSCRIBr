@@ -121,6 +121,27 @@ def arrangement_str(arr: Tuple[int, ...]) -> str:
     return " → ".join(token_name(t) for t in arr)
 
 
+def rotat(arr: Tuple[int, ...], k: int = 1) -> Tuple[int, ...]:
+    """ROTAT — the first op-opcode: the cyclic shift of an arrangement, by k (default 1).
+
+    An op-opcode is an operator ON a word, not a token IN it (not one of the 12); it maps a
+    whole arrangement to another. ROTAT is the ring automorphism, the Weyl-Heisenberg shift.
+    The family `signature` is ROTAT-invariant (rotation permutes positions, never the
+    multiset), so an arrangement and all its rotations share a fingerprint: the rotation
+    ORBIT is the natural equivalence the 12 canonical classes are read up to. Between two
+    arrangements being bound, ROTAT sets their relative phase.
+    """
+    if not arr:
+        return arr
+    s = k % len(arr)
+    return arr[s:] + arr[:s]
+
+
+def rotat_orbit(arr: Tuple[int, ...]) -> frozenset:
+    """The full ROTAT orbit of an arrangement: every distinct cyclic rotation of it."""
+    return frozenset(rotat(arr, k) for k in range(len(arr))) if arr else frozenset()
+
+
 def dag_str(arr: Tuple[int, ...]) -> str:
     """Render arrangement as a DAG expression, unflattened at FSPLIT/FFUSE pairs.
 

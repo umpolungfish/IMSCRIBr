@@ -1,23 +1,7 @@
-Retire the Phi_c family: gen-1 criticality names to bare Shavian
+ROTAT: the rotation op-opcode over arrangements
 
-Phi_c is ⊙. The `_c` forms only ever existed under Criticality, so unlike bare
-Phi they carry no ambiguity: today's Φ is Parity and has no `_c` value, so
-nothing here needs a judgement call. Rewrote the family to the values
-`models.from_symbol` returns for them: Phi_c / Φ_c / ⊙_c / Phi_ctyogh → ⊙,
-Phi_c_complex → 𐑮, Phi_sub → 𐑢, Phi_EP → 𐑻, Phi_sup → 𐑣. 7,689 refs, 585 files.
-
-The whole job is one distinction: Phi_c names a VALUE in prose and data, and it
-also names a CONSTRUCTOR in code. `Criticality.Phi_c` is a live Lean identifier
-(`theorem as_is_QCP : asymptotic_safety.crit = Criticality.Phi_c := rfl`) and
-`Criticality.Phi_ctyogh` is a live Python enum alias. Rewriting those gives
-`Criticality.⊙`, which is not an identifier in either language. So dotted
-occurrences stay and everything else moves. Same string, two roles — the same
-shape as CLINK L8 versus the `=` opcode, where only reading tells them apart.
-
-models.py keeps its old spellings on purpose. Its from_symbol maps are the
-back-compat table: the keys have to go on spelling `Φ_c` or the translation from
-old symbols stops working. Rewriting the dictionary that performs the migration
-would remove the migration.
-
-Verified after: imscrbgrmr imports, from_symbol('Φ_c') still returns ⊙, both
-navigators still answer (cl8nk promote, cl9nk moat), and no syntax regressions.
+tokens.py gains rotat(arr, k) and rotat_orbit(arr). ROTAT is an operator on a
+whole arrangement, not one of the twelve tokens. The family signature is
+ROTAT-invariant (rotation permutes positions, never the multiset), so an
+arrangement and all its rotations share a fingerprint: the rotation orbit is the
+equivalence the twelve canonical classes are already read up to.
