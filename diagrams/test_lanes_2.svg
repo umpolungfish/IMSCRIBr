@@ -1,0 +1,241 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1220 720">
+<rect width="1220" height="720" fill="#000000"/>
+<defs>
+<pattern id="hatch-T" width="4" height="4" patternUnits="userSpaceOnUse"><path d="M2,0 L2,4" stroke="#ffffff" stroke-width="0.8"/></pattern>
+<pattern id="hatch-F" width="4" height="4" patternUnits="userSpaceOnUse"><path d="M0,2 L4,2" stroke="#ffffff" stroke-width="0.8"/></pattern>
+<pattern id="hatch-B" width="4" height="4" patternUnits="userSpaceOnUse"><path d="M2,0 L2,4 M0,2 L4,2" stroke="#ffffff" stroke-width="0.8"/></pattern>
+</defs>
+<line x1="0.0" y1="0.0" x2="0.0" y2="720.0" stroke="#333333" stroke-width="0.4" opacity="0.3"></line>
+<line x1="40.0" y1="0.0" x2="40.0" y2="720.0" stroke="#333333" stroke-width="0.4" opacity="0.3"></line>
+<line x1="80.0" y1="0.0" x2="80.0" y2="720.0" stroke="#333333" stroke-width="0.4" opacity="0.3"></line>
+<line x1="120.0" y1="0.0" x2="120.0" y2="720.0" stroke="#333333" stroke-width="0.4" opacity="0.3"></line>
+<line x1="160.0" y1="0.0" x2="160.0" y2="720.0" stroke="#333333" stroke-width="0.4" opacity="0.3"></line>
+<line x1="200.0" y1="0.0" x2="200.0" y2="720.0" stroke="#333333" stroke-width="0.4" opacity="0.3"></line>
+<line x1="240.0" y1="0.0" x2="240.0" y2="720.0" stroke="#333333" stroke-width="0.4" opacity="0.3"></line>
+<line x1="280.0" y1="0.0" x2="280.0" y2="720.0" stroke="#333333" stroke-width="0.4" opacity="0.3"></line>
+<line x1="320.0" y1="0.0" x2="320.0" y2="720.0" stroke="#333333" stroke-width="0.4" opacity="0.3"></line>
+<line x1="360.0" y1="0.0" x2="360.0" y2="720.0" stroke="#333333" stroke-width="0.4" opacity="0.3"></line>
+<line x1="400.0" y1="0.0" x2="400.0" y2="720.0" stroke="#333333" stroke-width="0.4" opacity="0.3"></line>
+<line x1="440.0" y1="0.0" x2="440.0" y2="720.0" stroke="#333333" stroke-width="0.4" opacity="0.3"></line>
+<line x1="480.0" y1="0.0" x2="480.0" y2="720.0" stroke="#333333" stroke-width="0.4" opacity="0.3"></line>
+<line x1="520.0" y1="0.0" x2="520.0" y2="720.0" stroke="#333333" stroke-width="0.4" opacity="0.3"></line>
+<line x1="560.0" y1="0.0" x2="560.0" y2="720.0" stroke="#333333" stroke-width="0.4" opacity="0.3"></line>
+<line x1="600.0" y1="0.0" x2="600.0" y2="720.0" stroke="#333333" stroke-width="0.4" opacity="0.3"></line>
+<line x1="640.0" y1="0.0" x2="640.0" y2="720.0" stroke="#333333" stroke-width="0.4" opacity="0.3"></line>
+<line x1="680.0" y1="0.0" x2="680.0" y2="720.0" stroke="#333333" stroke-width="0.4" opacity="0.3"></line>
+<line x1="720.0" y1="0.0" x2="720.0" y2="720.0" stroke="#333333" stroke-width="0.4" opacity="0.3"></line>
+<line x1="760.0" y1="0.0" x2="760.0" y2="720.0" stroke="#333333" stroke-width="0.4" opacity="0.3"></line>
+<line x1="800.0" y1="0.0" x2="800.0" y2="720.0" stroke="#333333" stroke-width="0.4" opacity="0.3"></line>
+<line x1="840.0" y1="0.0" x2="840.0" y2="720.0" stroke="#333333" stroke-width="0.4" opacity="0.3"></line>
+<line x1="880.0" y1="0.0" x2="880.0" y2="720.0" stroke="#333333" stroke-width="0.4" opacity="0.3"></line>
+<line x1="920.0" y1="0.0" x2="920.0" y2="720.0" stroke="#333333" stroke-width="0.4" opacity="0.3"></line>
+<line x1="960.0" y1="0.0" x2="960.0" y2="720.0" stroke="#333333" stroke-width="0.4" opacity="0.3"></line>
+<line x1="1000.0" y1="0.0" x2="1000.0" y2="720.0" stroke="#333333" stroke-width="0.4" opacity="0.3"></line>
+<line x1="1040.0" y1="0.0" x2="1040.0" y2="720.0" stroke="#333333" stroke-width="0.4" opacity="0.3"></line>
+<line x1="1080.0" y1="0.0" x2="1080.0" y2="720.0" stroke="#333333" stroke-width="0.4" opacity="0.3"></line>
+<line x1="1120.0" y1="0.0" x2="1120.0" y2="720.0" stroke="#333333" stroke-width="0.4" opacity="0.3"></line>
+<line x1="1160.0" y1="0.0" x2="1160.0" y2="720.0" stroke="#333333" stroke-width="0.4" opacity="0.3"></line>
+<line x1="1200.0" y1="0.0" x2="1200.0" y2="720.0" stroke="#333333" stroke-width="0.4" opacity="0.3"></line>
+<line x1="0.0" y1="0.0" x2="1220.0" y2="0.0" stroke="#333333" stroke-width="0.4" opacity="0.3"></line>
+<line x1="0.0" y1="40.0" x2="1220.0" y2="40.0" stroke="#333333" stroke-width="0.4" opacity="0.3"></line>
+<line x1="0.0" y1="80.0" x2="1220.0" y2="80.0" stroke="#333333" stroke-width="0.4" opacity="0.3"></line>
+<line x1="0.0" y1="120.0" x2="1220.0" y2="120.0" stroke="#333333" stroke-width="0.4" opacity="0.3"></line>
+<line x1="0.0" y1="160.0" x2="1220.0" y2="160.0" stroke="#333333" stroke-width="0.4" opacity="0.3"></line>
+<line x1="0.0" y1="200.0" x2="1220.0" y2="200.0" stroke="#333333" stroke-width="0.4" opacity="0.3"></line>
+<line x1="0.0" y1="240.0" x2="1220.0" y2="240.0" stroke="#333333" stroke-width="0.4" opacity="0.3"></line>
+<line x1="0.0" y1="280.0" x2="1220.0" y2="280.0" stroke="#333333" stroke-width="0.4" opacity="0.3"></line>
+<line x1="0.0" y1="320.0" x2="1220.0" y2="320.0" stroke="#333333" stroke-width="0.4" opacity="0.3"></line>
+<line x1="0.0" y1="360.0" x2="1220.0" y2="360.0" stroke="#333333" stroke-width="0.4" opacity="0.3"></line>
+<line x1="0.0" y1="400.0" x2="1220.0" y2="400.0" stroke="#333333" stroke-width="0.4" opacity="0.3"></line>
+<line x1="0.0" y1="440.0" x2="1220.0" y2="440.0" stroke="#333333" stroke-width="0.4" opacity="0.3"></line>
+<line x1="0.0" y1="480.0" x2="1220.0" y2="480.0" stroke="#333333" stroke-width="0.4" opacity="0.3"></line>
+<line x1="0.0" y1="520.0" x2="1220.0" y2="520.0" stroke="#333333" stroke-width="0.4" opacity="0.3"></line>
+<line x1="0.0" y1="560.0" x2="1220.0" y2="560.0" stroke="#333333" stroke-width="0.4" opacity="0.3"></line>
+<line x1="0.0" y1="600.0" x2="1220.0" y2="600.0" stroke="#333333" stroke-width="0.4" opacity="0.3"></line>
+<line x1="0.0" y1="640.0" x2="1220.0" y2="640.0" stroke="#333333" stroke-width="0.4" opacity="0.3"></line>
+<line x1="0.0" y1="680.0" x2="1220.0" y2="680.0" stroke="#333333" stroke-width="0.4" opacity="0.3"></line>
+<text x="610.0" y="26.0" fill="#ffffff" font-size="13" text-anchor="middle" font-family="monospace" font-weight="bold">test lanes 2</text>
+<text x="610.0" y="41.0" fill="#ffffff" font-size="7" text-anchor="middle" font-family="monospace">Cross-branch: VINIT FSPLIT EVALT AFWD EVALF AREV FFUSE TANCH</text>
+<text x="66.0" y="190.0" fill="#ffffff" font-size="7" text-anchor="start" font-family="monospace">T-lane</text>
+<text x="66.0" y="135.0" fill="#ffffff" font-size="7" text-anchor="start" font-family="monospace">T[d1]</text>
+<text x="66.0" y="470.0" fill="#ffffff" font-size="7" text-anchor="start" font-family="monospace">F-lane</text>
+<text x="66.0" y="525.0" fill="#ffffff" font-size="7" text-anchor="start" font-family="monospace">F[d1]</text>
+<text x="66.0" y="330.0" fill="#ffffff" font-size="7" text-anchor="start" font-family="monospace">main</text>
+<text x="66.0" y="258.0" fill="#ffffff" font-size="6" text-anchor="start" font-family="monospace">I-lane</text>
+<text x="140.0" y="258.0" fill="#ffffff" font-size="4" text-anchor="start" font-family="monospace">≤_i (information: x⊆y)</text>
+<line x1="66.0" y1="274.0" x2="1200.0" y2="274.0" stroke="#ffffff" stroke-width="0.6" opacity="0.5"></line>
+<text x="66.0" y="398.0" fill="#ffffff" font-size="6" text-anchor="start" font-family="monospace">C-lane</text>
+<text x="140.0" y="398.0" fill="#ffffff" font-size="4" text-anchor="start" font-family="monospace">≤_c (constructivity: T,F↑ t,f↓)</text>
+<line x1="66.0" y1="414.0" x2="1200.0" y2="414.0" stroke="#ffffff" stroke-width="0.6" opacity="0.5"></line>
+<text x="130.0" y="270.0" fill="#ffffff" font-size="4.5" text-anchor="middle" font-family="monospace">N</text>
+<text x="130.0" y="410.0" fill="#ffffff" font-size="4.5" text-anchor="middle" font-family="monospace">·|·</text>
+<text x="250.0" y="270.0" fill="#ffffff" font-size="4.5" text-anchor="middle" font-family="monospace">N</text>
+<text x="250.0" y="410.0" fill="#ffffff" font-size="4.5" text-anchor="middle" font-family="monospace">·|·</text>
+<text x="370.0" y="270.0" fill="#ffffff" font-size="4.5" text-anchor="middle" font-family="monospace">T</text>
+<text x="370.0" y="410.0" fill="#ffffff" font-size="4.5" text-anchor="middle" font-family="monospace">T|·</text>
+<text x="490.0" y="270.0" fill="#ffffff" font-size="4.5" text-anchor="middle" font-family="monospace">T</text>
+<text x="490.0" y="410.0" fill="#ffffff" font-size="4.5" text-anchor="middle" font-family="monospace">T|·</text>
+<text x="610.0" y="270.0" fill="#ffffff" font-size="4.5" text-anchor="middle" font-family="monospace">TF</text>
+<text x="610.0" y="410.0" fill="#ffffff" font-size="4.5" text-anchor="middle" font-family="monospace">TF|·</text>
+<text x="730.0" y="270.0" fill="#ffffff" font-size="4.5" text-anchor="middle" font-family="monospace">TF</text>
+<text x="730.0" y="410.0" fill="#ffffff" font-size="4.5" text-anchor="middle" font-family="monospace">TF|·</text>
+<text x="850.0" y="270.0" fill="#ffffff" font-size="4.5" text-anchor="middle" font-family="monospace">TF</text>
+<text x="850.0" y="410.0" fill="#ffffff" font-size="4.5" text-anchor="middle" font-family="monospace">TF|·</text>
+<text x="970.0" y="270.0" fill="#ffffff" font-size="4.5" text-anchor="middle" font-family="monospace">TF</text>
+<text x="970.0" y="410.0" fill="#ffffff" font-size="4.5" text-anchor="middle" font-family="monospace">TF|·</text>
+<line x1="250.0" y1="310.0" x2="250.0" y2="292.0" stroke="#ffffff" stroke-width="0.6" opacity="0.8" stroke-dasharray="3,3"></line>
+<line x1="250.0" y1="292.0" x2="850.0" y2="292.0" stroke="#ffffff" stroke-width="0.6" opacity="0.8" stroke-dasharray="3,3"></line>
+<line x1="850.0" y1="292.0" x2="850.0" y2="310.0" stroke="#ffffff" stroke-width="0.6" opacity="0.8" stroke-dasharray="3,3"></line>
+<circle cx="550.0" cy="292.0" r="6" fill="#000000" stroke="#ffffff" stroke-width="0.8"></circle>
+<text x="550.0" y="295.0" fill="#ffffff" font-size="7" text-anchor="middle" font-family="monospace">1</text>
+<line x1="264.2" y1="307.0" x2="355.8" y2="158.0" stroke="#ffffff" stroke-width="1.5" opacity="1.0"></line>
+<polygon points="355.8,158.0 354.4,166.5 348.9,163.1" fill="#ffffff"></polygon>
+<circle cx="310.0" cy="232.5" r="5" fill="#000000" stroke="#ffffff" stroke-width="0.6"></circle>
+<text x="310.0" y="235.5" fill="#ffffff" font-size="7" text-anchor="middle" font-family="monospace">◇</text>
+<text x="310.0" y="224.5" fill="#ffffff" font-size="6" text-anchor="middle" font-family="monospace">↑</text>
+<line x1="397.0" y1="135.0" x2="463.0" y2="135.0" stroke="#ffffff" stroke-width="1.5" opacity="1.0"></line>
+<polygon points="463.0,135.0 455.0,138.2 455.0,131.8" fill="#ffffff"></polygon>
+<circle cx="430.0" cy="135.0" r="5" fill="#000000" stroke="#ffffff" stroke-width="0.6"></circle>
+<text x="430.0" y="138.0" fill="#ffffff" font-size="7" text-anchor="middle" font-family="monospace">+</text>
+<text x="430.0" y="127.0" fill="#ffffff" font-size="6" text-anchor="middle" font-family="monospace">↑→↑</text>
+<line x1="513.7" y1="147.9" x2="826.3" y2="317.1" stroke="#ffffff" stroke-width="2.5" opacity="1.0"></line>
+<polygon points="826.3,317.1 817.7,316.1 820.7,310.5" fill="#ffffff"></polygon>
+<text x="670.0" y="224.5" fill="#ffffff" font-size="6" text-anchor="middle" font-family="monospace">↑→↑</text>
+<line x1="273.7" y1="342.9" x2="586.3" y2="512.1" stroke="#ffffff" stroke-width="1.5" opacity="1.0"></line>
+<polygon points="586.3,512.1 577.7,511.1 580.7,505.5" fill="#ffffff"></polygon>
+<circle cx="430.0" cy="427.5" r="5" fill="#000000" stroke="#ffffff" stroke-width="0.6"></circle>
+<text x="430.0" y="430.5" fill="#ffffff" font-size="7" text-anchor="middle" font-family="monospace">◇</text>
+<text x="430.0" y="419.5" fill="#ffffff" font-size="6" text-anchor="middle" font-family="monospace">↑↓</text>
+<line x1="637.0" y1="525.0" x2="703.0" y2="525.0" stroke="#ffffff" stroke-width="1.5" opacity="1.0"></line>
+<polygon points="703.0,525.0 695.0,528.2 695.0,521.8" fill="#ffffff"></polygon>
+<circle cx="670.0" cy="525.0" r="5" fill="#000000" stroke="#ffffff" stroke-width="0.6"></circle>
+<text x="670.0" y="528.0" fill="#ffffff" font-size="7" text-anchor="middle" font-family="monospace">×</text>
+<text x="670.0" y="517.0" fill="#ffffff" font-size="6" text-anchor="middle" font-family="monospace">↑↓→↑↓</text>
+<line x1="744.2" y1="502.0" x2="835.8" y2="353.0" stroke="#ffffff" stroke-width="1.5" opacity="1.0" stroke-dasharray="6,4"></line>
+<polygon points="835.8,353.0 834.4,361.5 828.9,358.1" fill="#ffffff"></polygon>
+<text x="790.0" y="419.5" fill="#ffffff" font-size="6" text-anchor="middle" font-family="monospace">↑↓→↑</text>
+<line x1="157.0" y1="330.0" x2="223.0" y2="330.0" stroke="#ffffff" stroke-width="2.0" opacity="1.0"></line>
+<polyline points="223.0,330.0 215.0,333.2 215.0,326.8" fill="none" stroke="#ffffff" stroke-width="1.0"></polyline>
+<line x1="877.0" y1="330.0" x2="943.0" y2="330.0" stroke="#ffffff" stroke-width="1.5" opacity="1.0"></line>
+<polygon points="943.0,330.0 935.0,333.2 935.0,326.8" fill="#ffffff"></polygon>
+<circle cx="910.0" cy="330.0" r="5" fill="#000000" stroke="#ffffff" stroke-width="0.6"></circle>
+<text x="910.0" y="333.0" fill="#ffffff" font-size="7" text-anchor="middle" font-family="monospace">●</text>
+<text x="910.0" y="322.0" fill="#ffffff" font-size="6" text-anchor="middle" font-family="monospace">↑→↑</text>
+<circle fill="none" stroke="#ffffff" stroke-width="1.3" cx="130.0" cy="330.0" r="20.0"></circle>
+<circle cx="106.0" cy="330.0" r="2.5" fill="#000000" stroke="#ffffff" stroke-width="0.8"></circle>
+<circle cx="154.0" cy="330.0" r="2.5" fill="#ffffff"></circle>
+<text x="130.0" y="304.0" fill="#ffffff" font-size="9" text-anchor="middle" font-family="monospace" font-weight="bold">VI</text>
+<text x="130.0" y="362.0" fill="#ffffff" font-size="5" text-anchor="middle" font-family="monospace">VINIT</text>
+<polygon fill="none" stroke="#ffffff" stroke-width="1.3" points="250.0,310.0 270.0,330 250.0,350.0 230.0,330"></polygon>
+<circle cx="226.0" cy="330.0" r="2.5" fill="#000000" stroke="#ffffff" stroke-width="0.8"></circle>
+<circle cx="274.0" cy="330.0" r="2.5" fill="#ffffff"></circle>
+<text x="250.0" y="304.0" fill="#ffffff" font-size="9" text-anchor="middle" font-family="monospace" font-weight="bold">FS</text>
+<text x="250.0" y="362.0" fill="#ffffff" font-size="5" text-anchor="middle" font-family="monospace">FSPLIT</text>
+<polygon fill="none" stroke="#ffffff" stroke-width="1.3" points="387.3,145.0 370.0,155.0 352.7,145.0 352.7,125.0 370.0,115.0 387.3,125.0"></polygon>
+<circle cx="370.0" cy="135.0" r="8" fill="url(#hatch-T)" stroke="#ffffff" stroke-width="0.6"></circle>
+<circle cx="346.0" cy="135.0" r="2.5" fill="#000000" stroke="#ffffff" stroke-width="0.8"></circle>
+<circle cx="394.0" cy="135.0" r="2.5" fill="#ffffff"></circle>
+<text x="370.0" y="109.0" fill="#ffffff" font-size="9" text-anchor="middle" font-family="monospace" font-weight="bold">ET</text>
+<text x="370.0" y="167.0" fill="#ffffff" font-size="5" text-anchor="middle" font-family="monospace">EVALT</text>
+<circle fill="none" stroke="#ffffff" stroke-width="1.3" cx="490.0" cy="135.0" r="20.0"></circle>
+<circle cx="490.0" cy="135.0" r="8" fill="url(#hatch-T)" stroke="#ffffff" stroke-width="0.6"></circle>
+<circle cx="466.0" cy="135.0" r="2.5" fill="#000000" stroke="#ffffff" stroke-width="0.8"></circle>
+<circle cx="514.0" cy="135.0" r="2.5" fill="#ffffff"></circle>
+<text x="490.0" y="109.0" fill="#ffffff" font-size="9" text-anchor="middle" font-family="monospace" font-weight="bold">AF</text>
+<text x="490.0" y="167.0" fill="#ffffff" font-size="5" text-anchor="middle" font-family="monospace">AFWD</text>
+<polygon fill="none" stroke="#ffffff" stroke-width="1.3" points="627.3,535.0 610.0,545.0 592.7,535.0 592.7,515.0 610.0,505.0 627.3,515.0"></polygon>
+<circle cx="610.0" cy="525.0" r="8" fill="url(#hatch-B)" stroke="#ffffff" stroke-width="0.6"></circle>
+<circle cx="586.0" cy="525.0" r="2.5" fill="#000000" stroke="#ffffff" stroke-width="0.8"></circle>
+<circle cx="634.0" cy="525.0" r="2.5" fill="#ffffff"></circle>
+<text x="610.0" y="499.0" fill="#ffffff" font-size="9" text-anchor="middle" font-family="monospace" font-weight="bold">EF</text>
+<text x="610.0" y="557.0" fill="#ffffff" font-size="5" text-anchor="middle" font-family="monospace">EVALF</text>
+<circle fill="none" stroke="#ffffff" stroke-width="1.3" cx="730.0" cy="525.0" r="20.0"></circle>
+<circle cx="730.0" cy="525.0" r="8" fill="url(#hatch-B)" stroke="#ffffff" stroke-width="0.6"></circle>
+<circle cx="706.0" cy="525.0" r="2.5" fill="#000000" stroke="#ffffff" stroke-width="0.8"></circle>
+<circle cx="754.0" cy="525.0" r="2.5" fill="#ffffff"></circle>
+<text x="730.0" y="499.0" fill="#ffffff" font-size="9" text-anchor="middle" font-family="monospace" font-weight="bold">AR</text>
+<text x="730.0" y="557.0" fill="#ffffff" font-size="5" text-anchor="middle" font-family="monospace">AREV</text>
+<polygon fill="none" stroke="#ffffff" stroke-width="1.3" points="850.0,310.0 870.0,330 850.0,350.0 830.0,330"></polygon>
+<circle cx="850.0" cy="330.0" r="8" fill="url(#hatch-T)" stroke="#ffffff" stroke-width="0.6"></circle>
+<circle cx="826.0" cy="330.0" r="2.5" fill="#000000" stroke="#ffffff" stroke-width="0.8"></circle>
+<circle cx="874.0" cy="330.0" r="2.5" fill="#ffffff"></circle>
+<text x="850.0" y="304.0" fill="#ffffff" font-size="9" text-anchor="middle" font-family="monospace" font-weight="bold">FF</text>
+<text x="850.0" y="362.0" fill="#ffffff" font-size="5" text-anchor="middle" font-family="monospace">FFUSE</text>
+<circle fill="none" stroke="#ffffff" stroke-width="1.3" cx="970.0" cy="330.0" r="20.0"></circle>
+<circle cx="970.0" cy="330.0" r="8" fill="url(#hatch-T)" stroke="#ffffff" stroke-width="0.6"></circle>
+<circle cx="946.0" cy="330.0" r="2.5" fill="#000000" stroke="#ffffff" stroke-width="0.8"></circle>
+<circle cx="994.0" cy="330.0" r="2.5" fill="#ffffff"></circle>
+<text x="970.0" y="304.0" fill="#ffffff" font-size="9" text-anchor="middle" font-family="monospace" font-weight="bold">TA</text>
+<text x="970.0" y="362.0" fill="#ffffff" font-size="5" text-anchor="middle" font-family="monospace">TANCH</text>
+<text x="14.0" y="72.0" fill="#ffffff" font-size="6" text-anchor="start" font-family="monospace" font-weight="bold">EDGES</text>
+<line x1="14.0" y1="82.0" x2="36.0" y2="82.0" stroke="#ffffff" stroke-width="1.5" opacity="0.7"></line>
+<text x="42.0" y="84.0" fill="#ffffff" font-size="5" text-anchor="start" font-family="monospace">VI</text>
+<line x1="14.0" y1="91.5" x2="36.0" y2="91.5" stroke="#ffffff" stroke-width="1.5" opacity="0.7" stroke-dasharray="5,2,1,2,1,2"></line>
+<text x="42.0" y="93.5" fill="#ffffff" font-size="5" text-anchor="start" font-family="monospace">TA</text>
+<line x1="14.0" y1="101.0" x2="36.0" y2="101.0" stroke="#ffffff" stroke-width="2.0" opacity="0.7"></line>
+<text x="42.0" y="103.0" fill="#ffffff" font-size="5" text-anchor="start" font-family="monospace">AF</text>
+<line x1="14.0" y1="110.5" x2="36.0" y2="110.5" stroke="#ffffff" stroke-width="1.5" opacity="0.7" stroke-dasharray="6,4"></line>
+<text x="42.0" y="112.5" fill="#ffffff" font-size="5" text-anchor="start" font-family="monospace">AR</text>
+<line x1="14.0" y1="119.0" x2="36.0" y2="119.0" stroke="#ffffff" stroke-width="1.0" opacity="0.7"></line>
+<line x1="14.0" y1="121.0" x2="36.0" y2="121.0" stroke="#ffffff" stroke-width="1.0" opacity="0.7"></line>
+<text x="42.0" y="122.0" fill="#ffffff" font-size="5" text-anchor="start" font-family="monospace">CL</text>
+<line x1="14.0" y1="129.5" x2="36.0" y2="129.5" stroke="#ffffff" stroke-width="1.5" opacity="0.7"></line>
+<text x="42.0" y="131.5" fill="#ffffff" font-size="5" text-anchor="start" font-family="monospace">IM</text>
+<line x1="14.0" y1="139.0" x2="36.0" y2="139.0" stroke="#ffffff" stroke-width="1.5" opacity="0.7"></line>
+<text x="42.0" y="141.0" fill="#ffffff" font-size="5" text-anchor="start" font-family="monospace">FS</text>
+<line x1="14.0" y1="148.5" x2="36.0" y2="148.5" stroke="#ffffff" stroke-width="1.5" opacity="0.7"></line>
+<text x="42.0" y="150.5" fill="#ffffff" font-size="5" text-anchor="start" font-family="monospace">FF</text>
+<line x1="14.0" y1="158.0" x2="36.0" y2="158.0" stroke="#ffffff" stroke-width="1.5" opacity="0.7"></line>
+<text x="42.0" y="160.0" fill="#ffffff" font-size="5" text-anchor="start" font-family="monospace">ET</text>
+<line x1="14.0" y1="167.5" x2="36.0" y2="167.5" stroke="#ffffff" stroke-width="1.5" opacity="0.7"></line>
+<text x="42.0" y="169.5" fill="#ffffff" font-size="5" text-anchor="start" font-family="monospace">EF</text>
+<polyline points="14.0,179.0 18.0,175.0 22.0,179.0 26.0,175.0 30.0,179.0 34.0,175.0 36.0,177.0" fill="none" stroke="#ffffff" stroke-width="1.0"></polyline>
+<text x="42.0" y="179.0" fill="#ffffff" font-size="5" text-anchor="start" font-family="monospace">EG</text>
+<line x1="14.0" y1="186.5" x2="36.0" y2="186.5" stroke="#ffffff" stroke-width="1.5" opacity="0.7" stroke-dasharray="2,2"></line>
+<text x="42.0" y="188.5" fill="#ffffff" font-size="5" text-anchor="start" font-family="monospace">IX</text>
+<text x="14.0" y="195.0" fill="#ffffff" font-size="6" text-anchor="start" font-family="monospace" font-weight="bold">GUARD</text>
+<circle cx="17" cy="206" r="2.5" fill="#000000" stroke="#ffffff" stroke-width="0.8"></circle>
+<text x="24.0" y="208.0" fill="#ffffff" font-size="5" text-anchor="start" font-family="monospace">in</text>
+<circle cx="17" cy="216" r="2.5" fill="#ffffff"></circle>
+<text x="24.0" y="218.0" fill="#ffffff" font-size="5" text-anchor="start" font-family="monospace">out</text>
+<text x="14.0" y="231.0" fill="#ffffff" font-size="6" text-anchor="start" font-family="monospace" font-weight="bold">NODES</text>
+<circle fill="none" stroke="#ffffff" stroke-width="1.0" cx="18.0" cy="246.0" r="4.0"></circle>
+<text x="28.0" y="248.0" fill="#ffffff" font-size="5" text-anchor="start" font-family="monospace">LOGI</text>
+<polygon fill="none" stroke="#ffffff" stroke-width="1.0" points="18,254.0 22.0,258 18,262.0 14.0,258"></polygon>
+<text x="28.0" y="260.0" fill="#ffffff" font-size="5" text-anchor="start" font-family="monospace">FROB</text>
+<polygon fill="none" stroke="#ffffff" stroke-width="1.0" points="21.5,272.0 18.0,274.0 14.5,272.0 14.5,268.0 18.0,266.0 21.5,268.0"></polygon>
+<text x="28.0" y="272.0" fill="#ffffff" font-size="5" text-anchor="start" font-family="monospace">DIAL</text>
+<rect fill="none" stroke="#ffffff" stroke-width="1.0" x="14.0" y="278.0" width="8.0" height="8.0"></rect>
+<text x="28.0" y="284.0" fill="#ffffff" font-size="5" text-anchor="start" font-family="monospace">LINE</text>
+<text x="14.0" y="294.0" fill="#ffffff" font-size="6" text-anchor="start" font-family="monospace" font-weight="bold">PAIRS</text>
+<circle cx="18" cy="306" r="5" fill="#000000" stroke="#ffffff" stroke-width="0.8"></circle>
+<text x="18.0" y="309.0" fill="#ffffff" font-size="6" text-anchor="middle" font-family="monospace">1</text>
+<text x="28.0" y="308.0" fill="#ffffff" font-size="5" text-anchor="start" font-family="monospace">pair</text>
+<text x="14.0" y="324.0" fill="#ffffff" font-size="6" text-anchor="start" font-family="monospace" font-weight="bold">REG Δ</text>
+<text x="14.0" y="336.0" fill="#ffffff" font-size="5" text-anchor="start" font-family="monospace">↑ T</text>
+<text x="14.0" y="345.0" fill="#ffffff" font-size="5" text-anchor="start" font-family="monospace">↓ F</text>
+<text x="14.0" y="354.0" fill="#ffffff" font-size="5" text-anchor="start" font-family="monospace">↑↓ B</text>
+<text x="14.0" y="380.0" fill="#ffffff" font-size="6" text-anchor="start" font-family="monospace" font-weight="bold">SIXTEEN_3 LANES</text>
+<text x="14.0" y="390.0" fill="#ffffff" font-size="5" text-anchor="start" font-family="monospace">I-lane: reg. names</text>
+<text x="14.0" y="400.0" fill="#ffffff" font-size="4.5" text-anchor="start" font-family="monospace">  ≤_i (info: x⊆y)</text>
+<text x="14.0" y="413.0" fill="#ffffff" font-size="5" text-anchor="start" font-family="monospace">C-lane: c|n splits</text>
+<text x="14.0" y="423.0" fill="#ffffff" font-size="4.5" text-anchor="start" font-family="monospace">  ≤_c (constr.)</text>
+<text x="14.0" y="436.0" fill="#ffffff" font-size="5" text-anchor="start" font-family="monospace">T,F lanes: ≤_t arms</text>
+<text x="14.0" y="448.0" fill="#ffffff" font-size="6" text-anchor="start" font-family="monospace" font-weight="bold">16₃ REG KEY</text>
+<text x="14.0" y="458.0" fill="#ffffff" font-size="4.5" text-anchor="start" font-family="monospace">T=proven F=refuted</text>
+<text x="14.0" y="465.0" fill="#ffffff" font-size="4.5" text-anchor="start" font-family="monospace">t=accept. f=reject.</text>
+<text x="14.0" y="472.0" fill="#ffffff" font-size="4.5" text-anchor="start" font-family="monospace">N=∅ A=full(TtFf)</text>
+<text x="610.0" y="708.0" fill="#ffffff" font-size="7" text-anchor="middle" font-family="monospace">Ouroboricity: O₂</text>
+<path d="M 157.0,330.0 L 157.0,10.0 L 943.0,10.0 L 943.0,330.0" fill="none" stroke="#ffffff" stroke-width="1.2"></path>
+<polygon points="943.0,330.0 939.8,322.0 946.2,322.0" fill="#ffffff"></polygon>
+<text x="550.0" y="12.0" fill="#ffffff" font-size="7" text-anchor="middle" font-family="monospace">O₂</text>
+<rect x="880.0" y="625.0" width="320.0" height="80.0" fill="#000000" stroke="#ffffff" stroke-width="0.5" opacity="0.9"></rect>
+<text x="886.0" y="635.0" fill="#ffffff" font-size="6" text-anchor="start" font-family="monospace" font-weight="bold">SIXTEEN₃ TRILATTICE</text>
+<text x="886.0" y="647.0" fill="#ffffff" font-size="4.5" text-anchor="start" font-family="monospace">16₃ reg: N → N → T → T → TF → TF → TF → TF</text>
+<text x="886.0" y="659.0" fill="#ffffff" font-size="4.5" text-anchor="start" font-family="monospace">Verdict: T  —  Tri-ancestral reconnection — closes</text>
+<text x="886.0" y="671.0" fill="#ffffff" font-size="4.5" text-anchor="start" font-family="monospace">Word: ⊢☊+>×<☋⊣</text>
+<text x="886.0" y="683.0" fill="#ffffff" font-size="4.5" text-anchor="start" font-family="monospace">Walk: OPEN</text>
+<text x="1040.0" y="647.0" fill="#ffffff" font-size="4" text-anchor="start" font-family="monospace">I-lane: ≤_i register trace</text>
+<text x="1040.0" y="659.0" fill="#ffffff" font-size="4" text-anchor="start" font-family="monospace">C-lane: ≤_c projection</text>
+<text x="1040.0" y="671.0" fill="#ffffff" font-size="4" text-anchor="start" font-family="monospace">T/F-lanes: ≤_t arms</text>
+</svg>

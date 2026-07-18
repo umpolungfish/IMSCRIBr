@@ -1353,12 +1353,34 @@ def render_wiring_pen_svg(graph: WiredGraph, name: str = "", ourobor: str = "",
             svg.text(66, Y_F + d * 55, f"F[d{d}]", 7, PEN_INK, "start")
     svg.text(66, Y_MAIN, "main", 7, PEN_INK, "start")
 
-    # ── SIXTEEN_3 trilattice reference lanes ──
-    svg.text(66, Y_I, "I-lane", 5, PEN_INK, "start")
-    svg.text(66, Y_C, "C-lane", 5, PEN_INK, "start")
-    # Thin reference lines for trilattice orderings
-    svg.line(66, Y_I + 12, pdw - 20, Y_I + 12, stroke=PEN_INK, width=0.3, dash="2,8", opacity=0.4)
-    svg.line(66, Y_C + 12, pdw - 20, Y_C + 12, stroke=PEN_INK, width=0.3, dash="2,8", opacity=0.4)
+    # ── SIXTEEN_3 trilattice lanes (explicit) ──
+    # I-lane — information ordering (≤_i: subset inclusion)
+    # Solid guide line, proper header, register-state indicators at every step
+    svg.text(66, Y_I - 2, "I-lane", 6, PEN_INK, "start")
+    svg.text(140, Y_I - 2, "≤_i (information: x⊆y)", 4, PEN_INK, "start")
+    svg.line(66, Y_I + 14, pdw - 20, Y_I + 14, stroke=PEN_INK, width=0.6, opacity=0.5)
+
+    # C-lane — constructivity ordering (≤_c: T,F↑ t,f↓)
+    svg.text(66, Y_C - 2, "C-lane", 6, PEN_INK, "start")
+    svg.text(140, Y_C - 2, "≤_c (constructivity: T,F↑ t,f↓)", 4, PEN_INK, "start")
+    svg.line(66, Y_C + 14, pdw - 20, Y_C + 14, stroke=PEN_INK, width=0.6, opacity=0.5)
+
+    # Register-state indicators along I and C lanes — one per step position
+    _reg_seq = (trilattice_data or {}).get("register_seq", [])
+    if _reg_seq and pos:
+        _n_reg = min(len(_reg_seq), n)
+        for i in range(_n_reg):
+            if i not in pos:
+                continue
+            x = pos[i][0]
+            rv = _reg_seq[i]
+            # I-lane: full 16₃ register name (the subset of {T,F,t,f})
+            svg.text(x, Y_I + 10, rv, 4.5, PEN_INK, "middle")
+            # C-lane: constructivity projection — constructive part | non-constructive part
+            c_part = ''.join(b for b in ['T','F'] if b in rv) or '·'
+            n_part = ''.join(b for b in ['t','f'] if b in rv) or '·'
+            c_proj = f"{c_part}|{n_part}"
+            svg.text(x, Y_C + 10, c_proj, 4.5, PEN_INK, "middle")
 
     # ── IFIX barrier (double vertical + × markers) ──
     if layout.ifix_pos is not None:
@@ -1514,10 +1536,10 @@ def _pen_trilattice_panel(svg: 'SVGBuilder', layout, w: float):
     closed = tri.get("closed", False)
     walk_label = "CLOSED" if closed else "OPEN"
     svg.text(bx + 6, by + 58, f"Walk: {walk_label}", 4.5, PEN_INK, "start")
-    # Three ordering labels
-    svg.text(bx + 160, by + 22, "≤_i: information (subset)", 4, PEN_INK, "start")
-    svg.text(bx + 160, by + 34, "≤_t: truth (T,t↑ F,f↓)", 4, PEN_INK, "start")
-    svg.text(bx + 160, by + 46, "≤_c: constructivity (T,F↑ t,f↓)", 4, PEN_INK, "start")
+    # Lane summary — ordering labels are on the lanes themselves
+    svg.text(bx + 160, by + 22, "I-lane: ≤_i register trace", 4, PEN_INK, "start")
+    svg.text(bx + 160, by + 34, "C-lane: ≤_c projection", 4, PEN_INK, "start")
+    svg.text(bx + 160, by + 46, "T/F-lanes: ≤_t arms", 4, PEN_INK, "start")
 def _pen_legend(svg: 'SVGBuilder'):
     """Vertical left-side legend strip (EDGES / GUARD / NODES / PAIRS / REG Δ)."""
     x0 = 14
@@ -1565,18 +1587,18 @@ def _pen_legend(svg: 'SVGBuilder'):
 
 
 
-    # ── SIXTEEN_3 trilattice ──
-    hdr(y0 := 380, "SIXTEEN_3")
-    for k, lbl in enumerate(["≤_i (info.)", "≤_t (truth)", "≤_c (constr.)"]):
-        svg.text(x0, y0 + 10 + k*9, lbl, 5, PEN_INK, "start")
-    # 16_3 register hatch legend
-    hdr(y0 + 42, "16₃ REG")
-    svg.add("circle", {"cx": f"{x0+3}", "cy": f"{y0+52}", "r": "2.5", "fill": "#000000", "stroke": PEN_INK, "stroke-width": "0.8"})
-    svg.text(x0 + 10, y0 + 54, "∅ void", 5, PEN_INK, "start")
-    svg.add("circle", {"cx": f"{x0+3}", "cy": f"{y0+62}", "r": "2.5", "fill": PEN_INK})
-    svg.text(x0 + 10, y0 + 64, "A full", 5, PEN_INK, "start")
-    svg.text(x0, y0 + 73, "T prov.", 4, PEN_INK, "start")
-    svg.text(x0, y0 + 80, "t accep.", 4, PEN_INK, "start")
+    # ── SIXTEEN_3 trilattice lanes ──
+    hdr(y0 := 380, "SIXTEEN_3 LANES")
+    svg.text(x0, y0 + 10, "I-lane: reg. names", 5, PEN_INK, "start")
+    svg.text(x0, y0 + 20, "  ≤_i (info: x⊆y)", 4.5, PEN_INK, "start")
+    svg.text(x0, y0 + 33, "C-lane: c|n splits", 5, PEN_INK, "start")
+    svg.text(x0, y0 + 43, "  ≤_c (constr.)", 4.5, PEN_INK, "start")
+    svg.text(x0, y0 + 56, "T,F lanes: ≤_t arms", 5, PEN_INK, "start")
+    # 16_3 register key
+    hdr(y0 + 68, "16₃ REG KEY")
+    svg.text(x0, y0 + 78, "T=proven F=refuted", 4.5, PEN_INK, "start")
+    svg.text(x0, y0 + 85, "t=accept. f=reject.", 4.5, PEN_INK, "start")
+    svg.text(x0, y0 + 92, "N=∅ A=full(TtFf)", 4.5, PEN_INK, "start")
 def generate_all_diagrams_v3():
     """Generate all SVG wiring diagrams with full edge granularity."""
     OUT_DIR.mkdir(parents=True, exist_ok=True)
