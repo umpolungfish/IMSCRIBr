@@ -158,6 +158,9 @@ def reg_delta_color(src_reg: int, dst_reg: int) -> str:
 
 
 # ── SVG primitives ───────────────────────────────────────────────────────────
+def _xml_escape(s: str) -> str:
+    return s.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+
 def _svg_attrs(d: dict) -> str:
     return " ".join(f'{k}="{v}"' for k, v in d.items() if v is not None)
 
@@ -197,7 +200,7 @@ class SVGBuilder:
     def add(self, tag: str, attrs: dict = None, text: str = None, close=True):
         a = _svg_attrs(attrs or {})
         if close:
-            self.parts.append(f"<{tag} {a}>{text or ''}</{tag}>")
+            self.parts.append(f"<{tag} {a}>{_xml_escape(text or '')}</{tag}>")
         else:
             self.parts.append(f"<{tag} {a}>")
         return self
@@ -1339,6 +1342,11 @@ def render_wiring_pen_svg(graph: WiredGraph, name: str = "", ourobor: str = "",
         svg.text(pdw/2, 41, description[:155], 7, PEN_INK, "middle")
 
     # ── lane labels (depth-aware) ──
+    # ── IMASM Word header (SIXTEEN₃ glyph sequence from IMASM_QUICKREF) ──
+    imasm_word = (trilattice_data or {}).get("glyph_word", "")
+    if imasm_word:
+        svg.text(pdw/2, 58, f"IMASM Word: {imasm_word}", 10, PEN_INK, "middle", True)
+    
     has_T = any(layout.lanes.get(i) == "T" for i in range(n))
     has_F = any(layout.lanes.get(i) == "F" for i in range(n))
     max_nest_t = max((layout.nesting.get(i, 0) for i in range(n) if layout.lanes.get(i) == "T"), default=0)
@@ -1408,8 +1416,25 @@ def render_wiring_pen_svg(graph: WiredGraph, name: str = "", ourobor: str = "",
                                "fill": "#000000", "stroke": PEN_INK, "stroke-width": "0.8"})
             svg.text(mxb, yb + 3, str(pi), 7, PEN_INK, "middle")
 
-    # ── wires ──
-    for w in layout.wires:
+    # ── wires (with channel separation + proper arrow termination) ──
+    ARROW_SZ = 8
+    wire_list = list(layout.wires)
+
+    # ── Channel assignment: group wires by (source_node, dest_lane)
+    #     to prevent overlapping lines from the same source. ──
+    wire_groups: dict = {}
+    for wi, w in enumerate(wire_list):
+        if w.src_node not in pos or w.dst_node not in pos:
+            continue
+        lane = layout.lanes.get(w.dst_node, "main")
+        key = (w.src_node, lane)
+        wire_groups.setdefault(key, []).append(wi)
+    channel_of: dict = {}
+    for grp in wire_groups.values():
+        for ch, wi in enumerate(grp):
+            channel_of[wi] = ch
+
+    for wi, w in enumerate(wire_list):
         if w.src_node not in pos or w.dst_node not in pos:
             continue
         xs, ys = pos[w.src_node]; xd, yd = pos[w.dst_node]
@@ -1419,39 +1444,72 @@ def render_wiring_pen_svg(graph: WiredGraph, name: str = "", ourobor: str = "",
         width = _PEN_DEPTH_W.get(min(depth, 3), 1.0)
         if tokv == Token.AFWD.value:
             width = max(width, 2.5)
-        # shorten to node borders — include port dot gap so arrows terminate
-        # before the in/out circles, not underneath them
+
         L = math.hypot(xd - xs, yd - ys) or 1
         ux, uy = (xd - xs) / L, (yd - ys) / L
-        _pen_trim = PEN_NODE_R + 7  # node radius + port dot offset + dot radius
-        sx, sy = xs + ux * _pen_trim, ys + uy * _pen_trim
-        ex, ey = xd - ux * _pen_trim, yd - uy * _pen_trim
-        if dash == "double":
-            px, py = -uy, ux
-            for o in (-1.6, 1.6):
-                svg.line(sx + px*o, sy + py*o, ex + px*o, ey + py*o, stroke=PEN_INK, width=width, opacity=1.0)
-        elif dash == "zigzag":
-            svg.add("polyline", {"points": _pen_zigzag(sx, sy, ex, ey), "fill": "none",
-                                 "stroke": PEN_INK, "stroke-width": str(width)})
+        px, py = -uy, ux  # perpendicular unit vector
+
+        # Channel spread: 4px per channel lane
+        ch = channel_of.get(wi, 0)
+        ch_off = ch * 4.0
+
+        # Trim endpoints to port-dot centers (PEN_NODE_R + 4 from node center).
+        # The shaft stops at the back of the arrowhead; the arrowhead bridges
+        # the final ARROW_SZ px to the port dot.
+        _pen_trim = PEN_NODE_R + 4
+        sx = xs + ux * _pen_trim + px * ch_off
+        sy = ys + uy * _pen_trim + py * ch_off
+        ex = xd - ux * _pen_trim + px * ch_off
+        ey = yd - uy * _pen_trim + py * ch_off
+
+        # Compute shaft endpoints: stop at back of arrowhead
+        if arrow == "reverse":
+            # Arrow points backward from sx toward source; shaft starts after it
+            shaft_sx, shaft_sy = sx + ARROW_SZ * ux, sy + ARROW_SZ * uy
+            shaft_ex, shaft_ey = ex, ey
+        elif arrow in ("filled", "open"):
+            # Arrow points forward from shaft end to ex; shaft stops early
+            shaft_sx, shaft_sy = sx, sy
+            shaft_ex, shaft_ey = ex - ARROW_SZ * ux, ey - ARROW_SZ * uy
         else:
-            svg.line(sx, sy, ex, ey, stroke=PEN_INK, width=width, dash=dash, opacity=1.0)
+            shaft_sx, shaft_sy = sx, sy
+            shaft_ex, shaft_ey = ex, ey
+
+        if dash == "double":
+            for o in (-1.6, 1.6):
+                svg.line(shaft_sx + px*o, shaft_sy + py*o,
+                         shaft_ex + px*o, shaft_ey + py*o,
+                         stroke=PEN_INK, width=width, opacity=1.0)
+        elif dash == "zigzag":
+            svg.add("polyline", {"points": _pen_zigzag(shaft_sx, shaft_sy, shaft_ex, shaft_ey),
+                                 "fill": "none", "stroke": PEN_INK, "stroke-width": str(width)})
+        else:
+            svg.line(shaft_sx, shaft_sy, shaft_ex, shaft_ey,
+                     stroke=PEN_INK, width=width, dash=dash, opacity=1.0)
+
         # arrowhead
         if arrow == "filled":
-            svg.add("polygon", {"points": _arrow_head_points(ex, ey, sx, sy, 8), "fill": PEN_INK})
+            svg.add("polygon", {"points": _arrow_head_points(ex, ey, shaft_sx, shaft_sy, ARROW_SZ),
+                                "fill": PEN_INK})
         elif arrow == "open":
-            svg.add("polyline", {"points": _arrow_head_points(ex, ey, sx, sy, 8),
+            svg.add("polyline", {"points": _arrow_head_points(ex, ey, shaft_sx, shaft_sy, ARROW_SZ),
                                  "fill": "none", "stroke": PEN_INK, "stroke-width": "1.0"})
         elif arrow == "reverse":
-            svg.add("polygon", {"points": _arrow_head_points(sx, sy, ex, ey, 8), "fill": PEN_INK})
-        # midpoint glyph
+            svg.add("polygon", {"points": _arrow_head_points(sx, sy, shaft_ex, shaft_ey, ARROW_SZ),
+                                "fill": PEN_INK})
+
+        # midpoint glyph (midpoint of drawn shaft, excluding arrowhead)
+        mid_x = (shaft_sx + shaft_ex) / 2
+        mid_y = (shaft_sy + shaft_ey) / 2
         if glyph:
-            svg.add("circle", {"cx": f"{(sx+ex)/2:.1f}", "cy": f"{(sy+ey)/2:.1f}", "r": "5",
+            svg.add("circle", {"cx": f"{mid_x:.1f}", "cy": f"{mid_y:.1f}", "r": "5",
                                "fill": "#000000", "stroke": PEN_INK, "stroke-width": "0.6"})
-            svg.text((sx+ex)/2, (sy+ey)/2 + 3, glyph, 7, PEN_INK, "middle")
+            svg.text(mid_x, mid_y + 3, glyph, 7, PEN_INK, "middle")
+
         # register delta label
         lbl = reg_delta_label(states[w.src_node], states[w.dst_node])
         if lbl and lbl != "=":
-            svg.text((sx+ex)/2, (sy+ey)/2 - 8, lbl, 6, PEN_INK, "middle")
+            svg.text(mid_x, mid_y - 8, lbl, 6, PEN_INK, "middle")
 
     # ── nodes ──
     for i in range(n):
@@ -1490,15 +1548,19 @@ def render_wiring_pen_svg(graph: WiredGraph, name: str = "", ourobor: str = "",
             _pdx, _pdy = _xt - _xs, _yt - _ys
             _pL = math.hypot(_pdx, _pdy) or 1
             _pux, _puy = _pdx / _pL, _pdy / _pL
-            _pt = PEN_NODE_R + 7
+            # Arrowhead tip at port dot center (NODE_R+4); shaft stops at back of head
+            _OURO_ARROW = 8
+            _pt = PEN_NODE_R + 4
             _sx, _sy = _xs + _pux * _pt, _ys + _puy * _pt
             _ex, _ey = _xt - _pux * _pt, _yt - _puy * _pt
             # Arc peak well above all content
             _top = 10
             _mid_x = (_xs + _xt) / 2
-            svg.add("path", {"d": f"M {_ex:.1f},{_ey:.1f} L {_ex:.1f},{_top:.1f} L {_sx:.1f},{_top:.1f} L {_sx:.1f},{_sy:.1f}",
+            # Shaft path stops at back of arrowhead (ARROW_SZ above the tip)
+            _shaft_y = _sy + _OURO_ARROW   # arrowhead points downward from _top toward _sy
+            svg.add("path", {"d": f"M {_ex:.1f},{_ey:.1f} L {_ex:.1f},{_top:.1f} L {_sx:.1f},{_top:.1f} L {_sx:.1f},{_shaft_y:.1f}",
                              "fill": "none", "stroke": PEN_INK, "stroke-width": "1.2"})
-            svg.add("polygon", {"points": _arrow_head_points(_sx, _sy, _sx, _top, 8), "fill": PEN_INK})
+            svg.add("polygon", {"points": _arrow_head_points(_sx, _sy, _sx, _top, _OURO_ARROW), "fill": PEN_INK})
             if ourobor:
                 svg.text(_mid_x, _top + 2, ourobor, 7, PEN_INK, "middle")
 
@@ -1532,7 +1594,7 @@ def _pen_trilattice_panel(svg: 'SVGBuilder', layout, w: float):
         svg.text(bx + 6, by + 34, f"Verdict: {verdict}  —  {tri.get('verdict_reading', '')[:50]}", 4.5, PEN_INK, "start")
     glyph_word = tri.get("glyph_word", "")
     if glyph_word:
-        svg.text(bx + 6, by + 46, f"Word: {glyph_word[:40]}", 4.5, PEN_INK, "start")
+        svg.text(bx + 6, by + 46, f"Word: {glyph_word}", 4.5, PEN_INK, "start")
     closed = tri.get("closed", False)
     walk_label = "CLOSED" if closed else "OPEN"
     svg.text(bx + 6, by + 58, f"Walk: {walk_label}", 4.5, PEN_INK, "start")
