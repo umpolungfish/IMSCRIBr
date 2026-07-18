@@ -58,7 +58,7 @@ REG_COLOR = {0: "#222244", 1: "#153530", 2: "#301518", 3: "#332200"}
 REG_LABEL = {0: "", 1: "↑", 2: "↓", 3: "↑↓"}
 
 SVG_W, SVG_H = 1100, 720
-MIN_NODE_SPACING = 2 * 22 + 20   # min center-to-center spacing to prevent token overlap (2*NODE_R + label_pad)
+MIN_NODE_SPACING = 2 * 22 + 50   # min center-to-center spacing (2*NODE_R + edge_gap); 50px edge gap
 MARGIN_X = 70
 MARGIN_Y = 70
 LEGEND_Y = 52
