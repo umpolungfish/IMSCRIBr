@@ -252,7 +252,7 @@
 <text x="886.0" y="635.0" fill="#ffffff" font-size="6" text-anchor="start" font-family="monospace" font-weight="bold">SIXTEEN₃ TRILATTICE</text>
 <text x="886.0" y="647.0" fill="#ffffff" font-size="4.5" text-anchor="start" font-family="monospace">16₃ reg: N → T → T → Tt → TtF → TtFtf → TtFtf → A → A</text>
 <text x="886.0" y="659.0" fill="#ffffff" font-size="4.5" text-anchor="start" font-family="monospace">Verdict: T  —  Tri-ancestral reconnection over a transformed obje</text>
-<text x="886.0" y="671.0" fill="#ffffff" font-size="4.5" text-anchor="start" font-family="monospace">Word: ⊢>☊+×⊞☋¬⊣</text>
+<text x="886.0" y="671.0" fill="#ffffff" font-size="4.5" text-anchor="start" font-family="monospace">Word: ⊢>∈+×⊞∋¬⊣</text>
 <text x="886.0" y="683.0" fill="#ffffff" font-size="4.5" text-anchor="start" font-family="monospace">Walk: OPEN</text>
 <text x="1040.0" y="647.0" fill="#ffffff" font-size="4" text-anchor="start" font-family="monospace">≤_i: information (subset)</text>
 <text x="1040.0" y="659.0" fill="#ffffff" font-size="4" text-anchor="start" font-family="monospace">≤_t: truth (T,t↑ F,f↓)</text>

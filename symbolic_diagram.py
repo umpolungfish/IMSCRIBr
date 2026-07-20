@@ -1248,8 +1248,8 @@ _PEN_EDGE = {
     Token.ENGAGR.value:  ("zigzag",         1.5, "filled",  None),
     Token.IFIX.value:    ("2,2",            1.5, "filled",  None),
     # ── SIXTEEN_3 trilattice tokens ──
-    "FSPLIT3": (None,             2.0, "filled",  "☊"),
-    "FFUSE3":  (None,             2.0, "filled",  "☋"),
+    "FSPLIT3": (None,             2.0, "filled",  "∈"),
+    "FFUSE3":  (None,             2.0, "filled",  "∋"),
     "EVALI":   ("4,2,1,2",        1.5, "filled",  "⊞"),
     "TNEG":    ("1,3",            1.5, "open",    "~"),
     "INEG":    ("2,1,1,1,1,1",    1.5, "open",    "≁"),

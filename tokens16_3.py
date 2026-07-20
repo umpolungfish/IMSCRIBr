@@ -76,8 +76,8 @@ class Token16_3(IntEnum):
     AREV    = 3    # Logical: reverse morphism, glyph <
     CLINK   = 4    # Logical: composition of morphisms, glyph =
     IMSCRIB = 5    # Logical: identity morphism, glyph ⊙
-    FSPLIT3 = 6    # Trilattice: 3-way split (δ₃), glyph ☊
-    FFUSE3  = 7    # Trilattice: 3-way fuse (μ₃), glyph ☋
+    FSPLIT3 = 6    # Trilattice: 3-way split (δ₃), glyph ∈
+    FFUSE3  = 7    # Trilattice: 3-way fuse (μ₃), glyph ∋
     EVALT   = 8    # Eval: sets T (constructively proven), glyph +
     EVALF   = 9    # Eval: sets F (constructively refuted), glyph ×
     EVALI   = 10   # Eval: sets t AND f (the information layer), glyph ⊞
@@ -97,8 +97,8 @@ TOKEN_GLYPH: Dict[Token16_3, str] = {
     Token16_3.AREV:    "<",
     Token16_3.CLINK:   "=",
     Token16_3.IMSCRIB: "⊙",
-    Token16_3.FSPLIT3: "☊",
-    Token16_3.FFUSE3:  "☋",
+    Token16_3.FSPLIT3: "∈",
+    Token16_3.FFUSE3:  "∋",
     Token16_3.EVALT:   "+",
     Token16_3.EVALF:   "×",
     Token16_3.EVALI:   "⊞",
@@ -300,14 +300,14 @@ def tri_ancestral_verdict(arr: Tuple[int, ...]) -> Tuple[str, str]:
 
 
 if __name__ == "__main__":
-    example = parse_glyph_word("⊢>☊+×⊞≁☋¬⊣")
+    example = parse_glyph_word("⊢>∈+×⊞≁∋¬⊣")
     print("Example word:", glyph_word(tuple(int(t) for t in example)))
     print("Names:       ", " → ".join(t.name for t in example))
     print("Signature:   ", signature16_3(tuple(int(t) for t in example)))
     verdict, msg = tri_ancestral_verdict(tuple(int(t) for t in example))
     print(f"Verdict:      {verdict} — {msg}")
 
-    neutral = parse_glyph_word("⊢☊⊙⊙⊙☋⊣")
+    neutral = parse_glyph_word("⊢∈⊙⊙⊙∋⊣")
     print("\nNeutral inflation word:", glyph_word(tuple(int(t) for t in neutral)))
     verdict, msg = tri_ancestral_verdict(tuple(int(t) for t in neutral))
     print(f"Verdict:      {verdict} — {msg}")
