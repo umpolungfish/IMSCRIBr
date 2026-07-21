@@ -29,6 +29,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "IMSCRIBr"))
 from tokens import Token, TOKEN_NAMES, TOKEN_FAMILY
 
 TOKEN_SHORT = ["VI","TA","AF","AR","CL","IM","FS","FF","ET","EF","EG","IX"]
+TOKEN_SYMBOLS = ["⊢","⊣",">","<","=","⊙","◇","●","+","×","⊞","¬"]
+
 
 from wiring import (
     imscr_wiring, WiredGraph, Wire, NOVEL_GRAPHS,
@@ -911,7 +913,7 @@ def render_wiring_svg_v3(graph: WiredGraph, name: str = "", ourobor: str = "",
 
         # Token labels
         label_color = "#000" if fam == 1 else "#fff"
-        svg.text(cx, cy - NODE_R - 8, TOKEN_SHORT[tok.value], 8, FG, "middle", True)
+        svg.text(cx, cy - NODE_R - 8, TOKEN_SYMBOLS[tok.value], 10, FG, "middle", True)
         svg.text(cx, cy + NODE_R + 12, TOKEN_NAMES[tok.value], 5.5, "#888", "middle")
 
         # ── GUARD PORT MARKERS (dimension 5) ───────────────────────────
@@ -1527,8 +1529,8 @@ def render_wiring_pen_svg(graph: WiredGraph, name: str = "", ourobor: str = "",
         svg.add("circle", {"cx": f"{cx-PEN_NODE_R-4:.1f}", "cy": f"{cy:.1f}", "r": "2.5",
                            "fill": "#000000", "stroke": PEN_INK, "stroke-width": "0.8"})
         svg.add("circle", {"cx": f"{cx+PEN_NODE_R+4:.1f}", "cy": f"{cy:.1f}", "r": "2.5", "fill": PEN_INK})
-        # labels: 2-letter above, full name below
-        svg.text(cx, cy - PEN_NODE_R - 6, TOKEN_SHORT[tokens[i].value], 9, PEN_INK, "middle", True)
+        # labels: symbol above, full name below
+        svg.text(cx, cy - PEN_NODE_R - 6, TOKEN_SYMBOLS[tokens[i].value], 11, PEN_INK, "middle", True)
         svg.text(cx, cy + PEN_NODE_R + 12, TOKEN_NAMES[tokens[i].value], 5, PEN_INK, "middle")
 
 
@@ -1622,7 +1624,7 @@ def _pen_legend(svg: 'SVGBuilder'):
                                  "fill": "none", "stroke": PEN_INK, "stroke-width": "1.0"})
         else:
             svg.line(x0, ys, x0+22, ys, stroke=PEN_INK, width=min(wdt, 2.0), dash=dash)
-        svg.text(x0 + 28, ys + 2, TOKEN_SHORT[tv], 5, PEN_INK, "start")
+        svg.text(x0 + 28, ys + 2, TOKEN_SYMBOLS[tv], 7, PEN_INK, "start")
         ys += 9.5
     # GUARD
     hdr(195, "GUARD")
