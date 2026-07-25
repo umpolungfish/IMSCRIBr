@@ -561,8 +561,13 @@ def emit_scaffold(
     # the ground imscription; its value is the answer, by construction.
     out.append(f"-- Tier: apply the Grammar to the object (self-application). "
                f"assess_tier verdict on the imscribed tuple: .{tier}.")
-    out.append(f"def {safe_name}_tier : OuroboricityTier := TierFunctor.obj {o_start}")
-    out.append(f"#eval {safe_name}_tier  -- the Grammar's own verdict on its tier")
+    # The tier that carries information is the one taken over the TRANSFORMED
+    # object. Taken over the ground imscription it reports the tier of the
+    # pre-VINIT state, which is O₀ for every object and so discriminates nothing.
+    out.append(f"def {safe_name}_tier_ground : OuroboricityTier := TierFunctor.obj {o_start}")
+    out.append(f"def {safe_name}_tier : OuroboricityTier := TierFunctor.obj {o_end}")
+    out.append(f"#eval {safe_name}_tier_ground  -- tier of the ground (pre-transformation)")
+    out.append(f"#eval {safe_name}_tier  -- the Grammar's own verdict on the closed object")
     out.append("")
     # Frobenius — emit a REAL, compiling theorem (not a comment that only
     # looks like a proof). igFrobAlg_self_fusion : igFrobeniusAlg.mul a a = a
