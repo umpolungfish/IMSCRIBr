@@ -29,7 +29,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "IMSCRIBr"))
 from tokens import Token, TOKEN_NAMES, TOKEN_FAMILY
 
 TOKEN_SHORT = ["VI","TA","AF","AR","CL","IM","FS","FF","ET","EF","EG","IX"]
-TOKEN_SYMBOLS = ["⊢","⊣",">","<","=","⊙","◇","●","+","×","⊞","¬"]
+TOKEN_SYMBOLS = ["⊢","⊣",">","<","⋈","⊤","∈","∋","⊙","⊥","⊞","◻"]
 
 
 from wiring import (
@@ -1243,18 +1243,16 @@ _PEN_EDGE = {
     Token.AREV.value:    ("6,4",            1.5, "filled",  None),
     Token.CLINK.value:   ("double",         1.0, "filled",  None),
     Token.IMSCRIB.value: (None,             1.5, "reverse", "←"),
-    Token.FSPLIT.value:  (None,             1.5, "filled",  "◇"),
-    Token.FFUSE.value:   (None,             1.5, "filled",  "●"),
-    Token.EVALT.value:   (None,             1.5, "filled",  "+"),
-    Token.EVALF.value:   (None,             1.5, "filled",  "×"),
+    Token.FSPLIT.value:  (None,             1.5, "filled",  "∈"),
+    Token.FFUSE.value:   (None,             1.5, "filled",  "∋"),
+    Token.EVALT.value:   (None,             1.5, "filled",  "⊤"),
+    Token.EVALF.value:   (None,             1.5, "filled",  "⊥"),
     Token.ENGAGR.value:  ("zigzag",         1.5, "filled",  None),
     Token.IFIX.value:    ("2,2",            1.5, "filled",  None),
     # ── SIXTEEN_3 trilattice tokens ──
     "FSPLIT3": (None,             2.0, "filled",  "∈"),
     "FFUSE3":  (None,             2.0, "filled",  "∋"),
     "EVALI":   ("4,2,1,2",        1.5, "filled",  "⊞"),
-    "TNEG":    ("1,3",            1.5, "open",    "~"),
-    "INEG":    ("2,1,1,1,1,1",    1.5, "open",    "≁"),
 }
 _PEN_DEPTH_W = {0: 2.0, 1: 1.5, 2: 1.0, 3: 0.5}
 

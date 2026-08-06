@@ -32,12 +32,10 @@ from pathlib import Path
 GLYPH_TO_OPCODE: Dict[str, str] = {
     "⊢": "VINIT",   "⊣": "TANCH",
     ">": "AFWD",    "<": "AREV",
-    "=": "CLINK",   "⊙": "IMSCRIB",
-    "◇": "FSPLIT",  "●": "FFUSE",
+    "⋈": "CLINK",   "⊤": "EVALT",
     "∈": "FSPLIT3", "∋": "FFUSE3",
-    "+": "EVALT",   "×": "EVALF",
-    "⊞": "ENGAGR",  "¬": "IFIX",
-    "~": "TNEG",    "≁": "INEG",
+    "⊙": "IMSCRIB", "⊥": "EVALF",
+    "⊞": "ENGAGR",  "◻": "IFIX",
 }
 OPCODE_TO_GLYPH: Dict[str, str] = {v: k for k, v in GLYPH_TO_OPCODE.items()}
 
@@ -178,8 +176,8 @@ def parse_word(word: str) -> List[str]:
         else:
             # Try opcode name form
             for name in ["VINIT", "TANCH", "AFWD", "AREV", "CLINK", "IMSCRIB",
-                         "FSPLIT", "FFUSE", "FSPLIT3", "FFUSE3",
-                         "EVALT", "EVALF", "ENGAGR", "EVALI", "IFIX", "TNEG", "INEG"]:
+                         "FSPLIT3", "FFUSE3",
+                         "EVALT", "EVALF", "ENGAGR", "EVALI", "IFIX"]:
                 if word[i:].startswith(name):
                     opcodes.append(name)
                     i += len(name)

@@ -26,9 +26,10 @@ except ImportError:
 
 # ── Glyph mapping ────────────────────────────────────────────────
 GLYPH_TO_OPCODE: Dict[str, str] = {
-    "\u22a2": "VINIT", "\u22a3": "TANCH", ">": "AFWD", "<": "AREV",
-    "=": "CLINK", "\u2299": "IMSCRIB", "\u25c7": "FSPLIT", "\u25cf": "FFUSE",
-    "+": "EVALT", "\u00d7": "EVALF", "\u229e": "ENGAGR", "\u00ac": "IFIX",
+    # The twelve, in catalog order: ⊙ at slot nine, Criticality.
+    "⊢": "VINIT", "⊣": "TANCH", ">": "AFWD", "<": "AREV",
+    "⋈": "CLINK", "⊤": "EVALT", "∈": "FSPLIT3", "∋": "FFUSE3",
+    "⊙": "IMSCRIB", "⊥": "EVALF", "⊞": "ENGAGR", "◻": "IFIX",
 }
 OPCODE_TO_GLYPH = {v: k for k, v in GLYPH_TO_OPCODE.items()}
 

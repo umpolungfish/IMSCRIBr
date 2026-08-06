@@ -20,9 +20,10 @@ from pathlib import Path
 
 # ── Glyph mapping ────────────────────────────────────────────────
 GLYPH_TO_OPCODE: Dict[str, str] = {
+    # The twelve, in catalog order: ⊙ at slot nine, Criticality.
     "⊢": "VINIT", "⊣": "TANCH", ">": "AFWD", "<": "AREV",
-    "=": "CLINK", "⊙": "IMSCRIB", "◇": "FSPLIT", "●": "FFUSE",
-    "+": "EVALT", "×": "EVALF", "⊞": "ENGAGR", "¬": "IFIX",
+    "⋈": "CLINK", "⊤": "EVALT", "∈": "FSPLIT3", "∋": "FFUSE3",
+    "⊙": "IMSCRIB", "⊥": "EVALF", "⊞": "ENGAGR", "◻": "IFIX",
 }
 OPCODE_TO_GLYPH = {v: k for k, v in GLYPH_TO_OPCODE.items()}
 

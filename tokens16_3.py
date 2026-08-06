@@ -1,5 +1,5 @@
 """
-IMASM-16_3 TOKEN SPACE — 14 tokens in 5 algebraic families, purely symbolic.
+IMASM-16_3 TOKEN SPACE — the twelve, in 4 algebraic families, purely symbolic.
 
 Sibling to `tokens.py` (the classic 12-token space), not a replacement: this file
 does NOT renumber or extend the 0-11 `Token` enum (that would corrupt every
@@ -35,16 +35,15 @@ under ≤_t — the conjunction of two "truths" gives NOTHING, because neither
 conjunct is both T and t simultaneously. `meet_t` below reproduces this
 exactly (see the `if __name__` sanity check at the bottom of this file).
 
-Opcode → base-value mapping for IMASM-16_3's EVALT/EVALF/EVALI/TNEG/INEG:
+Opcode → base-value mapping for IMASM-16_3's EVALT/EVALF/EVALI:
 
     EVALT sets T (constructive truth touched)
     EVALF sets F (constructive falsity touched)
     EVALI sets BOTH t and f (the acceptable/rejectable pair IS the
           information layer beyond classical T/F)
-    TNEG  swaps T ↔ F   (the paper's negation: inverts ≤_t, leaves ≤_i
-          exactly unchanged — a swap preserves |x|, the defining property
-          the paper requires of a bilattice/trilattice negation)
-    INEG  swaps t ↔ f   (the same negation, on the acceptable/rejectable pair)
+
+The paper's two negations, swapping T ↔ F and t ↔ f, are not opcodes. They are
+internal to AREV `<`, which is the whole reverse morphism.
 
 No token uses a Latin letter as its GLYPH (see TOKEN_GLYPH) — a trilattice
 verdict (T, N, B, F) can never be confused with a graph node.
@@ -64,30 +63,30 @@ class Family16_3(IntEnum):
     LOGICAL = 0      # 6 tokens: VINIT, TANCH, AFWD, AREV, CLINK, IMSCRIB
     TRILATTICE = 1   # 2 tokens: FSPLIT3, FFUSE3 (3-way fork/join)
     EVAL = 2         # 3 tokens: EVALT, EVALF, EVALI (the three orthogonal axes)
-    NEGATION = 3     # 2 tokens: TNEG, INEG
-    LINEAR = 4       # 1 token:  IFIX
+    LINEAR = 3       # 1 token:  IFIX
 
 
 class Token16_3(IntEnum):
-    """The 14 IMASM-16_3 tokens. Integer value = index (0-13)."""
+    """The twelve. Integer value = index, in catalog order, so ⊙ stands at
+    slot nine — Criticality. TNEG and INEG were never a thirteenth and
+    fourteenth: the two-layer swaps they named are internal to AREV `<`, the
+    whole reverse morphism, and ◻ IFIX replaced the rest."""
     VINIT   = 0    # Logical: initial object (void), glyph ⊢
     TANCH   = 1    # Logical: terminal object (boundary), glyph ⊣
     AFWD    = 2    # Logical: forward morphism, glyph >
     AREV    = 3    # Logical: reverse morphism, glyph <
-    CLINK   = 4    # Logical: composition of morphisms, glyph =
-    IMSCRIB = 5    # Logical: identity morphism, glyph ⊙
+    CLINK   = 4    # Logical: composition of morphisms, glyph ⋈
+    EVALT   = 5    # Eval: sets T (constructively proven), glyph ⊤
     FSPLIT3 = 6    # Trilattice: 3-way split (δ₃), glyph ∈
     FFUSE3  = 7    # Trilattice: 3-way fuse (μ₃), glyph ∋
-    EVALT   = 8    # Eval: sets T (constructively proven), glyph +
-    EVALF   = 9    # Eval: sets F (constructively refuted), glyph ×
+    IMSCRIB = 8    # Logical: identity morphism, self-reference, glyph ⊙
+    EVALF   = 9    # Eval: sets F (constructively refuted), glyph ⊥
     EVALI   = 10   # Eval: sets t AND f (the information layer), glyph ⊞
-    TNEG    = 11   # Negation: swaps T ↔ F, glyph ~
-    INEG    = 12   # Negation: swaps t ↔ f, glyph ≁
-    IFIX    = 13   # Linear: irreversible fixation, glyph ¬
+    IFIX    = 11   # Linear: irreversible fixation, glyph ◻
 
 
 TOKEN16_3_NAMES: List[str] = [t.name for t in Token16_3]
-TOKEN16_3_COUNT: int = 14
+TOKEN16_3_COUNT: int = 12
 
 # ─── Symbolic glyphs — no Latin letters ─────────────────────────────────────
 TOKEN_GLYPH: Dict[Token16_3, str] = {
@@ -95,19 +94,17 @@ TOKEN_GLYPH: Dict[Token16_3, str] = {
     Token16_3.TANCH:   "⊣",
     Token16_3.AFWD:    ">",
     Token16_3.AREV:    "<",
-    Token16_3.CLINK:   "=",
+    Token16_3.CLINK:   "⋈",
     Token16_3.IMSCRIB: "⊙",
     Token16_3.FSPLIT3: "∈",
     Token16_3.FFUSE3:  "∋",
-    Token16_3.EVALT:   "+",
-    Token16_3.EVALF:   "×",
+    Token16_3.EVALT:   "⊤",
+    Token16_3.EVALF:   "⊥",
     Token16_3.EVALI:   "⊞",
-    Token16_3.TNEG:    "~",
-    Token16_3.INEG:    "≁",
-    Token16_3.IFIX:    "¬",
+    Token16_3.IFIX:    "◻",
 }
 GLYPH_TO_TOKEN: Dict[str, Token16_3] = {g: t for t, g in TOKEN_GLYPH.items()}
-assert len(TOKEN_GLYPH) == len(GLYPH_TO_TOKEN) == 14, "glyphs must be unique"
+assert len(TOKEN_GLYPH) == len(GLYPH_TO_TOKEN) == 12, "glyphs must be unique"
 for _g in TOKEN_GLYPH.values():
     assert not _g.isalpha(), f"glyph {_g!r} is a Latin letter — violates the no-Latin-opcode rule"
 
@@ -124,8 +121,6 @@ TOKEN_ARITY: Dict[Token16_3, Tuple[int, int]] = {
     Token16_3.EVALT:   (1, 1),
     Token16_3.EVALF:   (1, 1),
     Token16_3.EVALI:   (1, 1),
-    Token16_3.TNEG:    (1, 1),
-    Token16_3.INEG:    (1, 1),
     Token16_3.IFIX:    (1, 1),
 }
 
@@ -140,8 +135,7 @@ JOIN_TOKENS: frozenset = frozenset({Token16_3.FFUSE3})
 
 WORK_TOKENS: frozenset = frozenset({
     Token16_3.AFWD, Token16_3.AREV, Token16_3.CLINK,
-    Token16_3.EVALT, Token16_3.EVALF, Token16_3.EVALI,
-    Token16_3.TNEG, Token16_3.INEG, Token16_3.IFIX,
+    Token16_3.EVALT, Token16_3.EVALF, Token16_3.EVALI, Token16_3.IFIX,
 })
 
 TOKEN_FAMILY: Dict[Token16_3, Family16_3] = {
@@ -156,25 +150,22 @@ TOKEN_FAMILY: Dict[Token16_3, Family16_3] = {
     Token16_3.EVALT:   Family16_3.EVAL,
     Token16_3.EVALF:   Family16_3.EVAL,
     Token16_3.EVALI:   Family16_3.EVAL,
-    Token16_3.TNEG:    Family16_3.NEGATION,
-    Token16_3.INEG:    Family16_3.NEGATION,
     Token16_3.IFIX:    Family16_3.LINEAR,
 }
 
 FAMILY_SIZE: Dict[Family16_3, int] = {
     Family16_3.LOGICAL: 6, Family16_3.TRILATTICE: 2, Family16_3.EVAL: 3,
-    Family16_3.NEGATION: 2, Family16_3.LINEAR: 1,
+    Family16_3.LINEAR: 1,
 }
 FAMILY_NAMES: Dict[Family16_3, str] = {
     Family16_3.LOGICAL: "Logical", Family16_3.TRILATTICE: "Trilattice",
-    Family16_3.EVAL: "Eval", Family16_3.NEGATION: "Negation", Family16_3.LINEAR: "Linear",
+    Family16_3.EVAL: "Eval", Family16_3.LINEAR: "Linear",
 }
 FAMILY_TOKENS: Dict[Family16_3, List[Token16_3]] = {
     Family16_3.LOGICAL:    [Token16_3.VINIT, Token16_3.TANCH, Token16_3.AFWD,
                              Token16_3.AREV, Token16_3.CLINK, Token16_3.IMSCRIB],
     Family16_3.TRILATTICE: [Token16_3.FSPLIT3, Token16_3.FFUSE3],
     Family16_3.EVAL:       [Token16_3.EVALT, Token16_3.EVALF, Token16_3.EVALI],
-    Family16_3.NEGATION:   [Token16_3.TNEG, Token16_3.INEG],
     Family16_3.LINEAR:     [Token16_3.IFIX],
 }
 assert sum(FAMILY_SIZE.values()) == TOKEN16_3_COUNT
