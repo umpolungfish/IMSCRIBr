@@ -32,8 +32,7 @@ Maps the **12⁸ = 429,981,696** possible arrangements of the 12 IMASM tokens in
 11. [Performance](#performance)
 12. [Relationship to Imscribing Grammar](#relationship-to-the-imscribing-grammar)
 13. [Files](#files)
-14. [Document Error Discovered](#document-error-discovered)
-15. [License](#license)
+14. [License](#license)
 
 ---
 
@@ -396,11 +395,11 @@ IMSCRIB → FSPLIT → EVALT → IFIX → IMSCRIB → FSPLIT → EVALF → IFIX
 |----------|-------|
 | Signature | (2, 2, 2, 2) |
 | Start/End | IMSCRIB → IFIX |
-| Frobenius | **None** (FSPLIT appears twice but FFUSE never, see §Document Error) |
+| Frobenius | **None** (FSPLIT appears twice, FFUSE never) |
 | Dialetheia | Partial (EVALT + EVALF, no ENGAGR) |
 | Coarse class size | 360 arrangements |
 
-**O₁ classifier**: two parallel classification paths. Path 1: IMSCRIB → FSPLIT → EVALT → IFIX (split then evaluate true, record). Path 2: IMSCRIB → FSPLIT → EVALF → IFIX (split then evaluate false, record). A binary classifier, true or false, no paradox, no synthesis. Notably **does not contain a Frobenius pair** (no FFUSE), contrary to earlier documentation.
+**O₁ classifier**: two parallel classification paths. Path 1: IMSCRIB → FSPLIT → EVALT → IFIX (split then evaluate true, record). Path 2: IMSCRIB → FSPLIT → EVALF → IFIX (split then evaluate false, record). A binary classifier, true or false, no paradox, no synthesis. It carries **no Frobenius pair**: FSPLIT opens twice and nothing fuses, so each arm terminates at IFIX rather than rejoining.
 
 ### XI. Eternal Return, *The Unclosed Period-3*
 
@@ -553,9 +552,21 @@ The largest family signatures, those with 4–6 Logical tokens, exactly 1 Froben
 
 (Percentages overlap because the top 3 signatures are nearly tied in total count.)
 
-### 6. Frobenius-Closed Systems Are 5, Not 6
+### 6. Only 5 of the 12 Classes Are Frobenius-Closed
 
-See [Document Error Discovered](#document-error-discovered). Class X (Truth Machine) was previously documented as containing a Frobenius pair, but it does not, FSPLIT appears twice without FFUSE. Only 5 of the 12 canonical classes contain a Frobenius pair.
+A Frobenius pair needs both halves. Class X (Truth Machine) carries FSPLIT twice and FFUSE never, so its `frobenius_order` is 0 and it does not close:
+
+| ✓ Has Frobenius pair | ✗ No Frobenius pair |
+|-----------------------|---------------------|
+| I. Dialetheic Bootstrap (split→fuse) | III. Anchor Protocol |
+| II. Void Genesis (split→fuse) | V. Linear Chain |
+| IV. Dual Bootstrap (fuse→split) | VI. Empty Bootstrap |
+| VII. Parakernel (split→fuse) | IX. Chiral Pairs |
+| VIII. Frobenius Kernel (split→fuse) | X. Truth Machine |
+| | XI. Eternal Return |
+| | XII. ROM Burn |
+
+`compute_fingerprint()` reports this directly from the token sequence.
 
 ---
 
@@ -745,7 +756,7 @@ noncomputable def my_ob3ect_false_arm : IGProtocol Gamma_seq Gamma_seq :=
 -- Verification theorems (feature 1):
 theorem my_ob3ect_tier      : TierFunctor.obj Gamma_seq = .O_inf := by decide
 theorem my_ob3ect_frobenius : igFrobeniusAlg.frob (my_ob3ect_protocol (by decide)) := by
-  apply igFrobAlg_self_fusion; sorry  -- one honest sorry: requires library .prod arm proof
+  apply igFrobAlg_self_fusion; sorry  -- one sorry: requires library .prod arm proof
 theorem my_ob3ect_self_ref  : (igProtoDelta Gamma_seq (by decide)).isDagger = true ∧ ... := by
   constructorexact igProtoCopy_isDaggerexact igProtoMu_depth
 theorem my_ob3ect_loop_closure : ∃ loop, loop = ... ∧ loop.period = 8 ∧ loop.depth = 1 :=
@@ -758,7 +769,7 @@ end Imscribing
 
 | Feature | What it produces |
 |---------|-----------------|
-| **Theorem stubs** | Named Lean `theorem` declarations for tier (`by decide`), Frobenius (`apply igFrobAlg_self_fusion`), self-reference (`exact igProtoCopy_isDagger`), and loop closure (`⟨_, rfl, by decide, by decide⟩`). One `sorry` in the Frobenius theorem is an honest obligation, the main term has none. |
+| **Theorem stubs** | Named Lean `theorem` declarations for tier (`by decide`), Frobenius (`apply igFrobAlg_self_fusion`), self-reference (`exact igProtoCopy_isDagger`), and loop closure (`⟨_, rfl, by decide, by decide⟩`). One `sorry` in the Frobenius theorem is a stated obligation; the main term has none. |
 | **EVALT/EVALF arm defs** | When `EVALT` or `EVALF` appear in the token sequence, emits named `_true_arm` / `_false_arm` `noncomputable def`s restricting the main protocol to each evaluation branch via `.restrictToEVALT` / `.restrictToEVALF`. |
 | **Domain opcode annotations** | Optional `opcode_map: Dict[str, str]` appends domain-semantic labels to each `.arrow` comment (e.g. `(Amendment proposal)`). Supplied automatically by `ob3ect/auto.py` from the artifact's bootstrap step `domain_action` fields. |
 
@@ -915,39 +926,9 @@ Class IV (Dual Bootstrap) is the only O_∞ canonical, it combines self-referenc
 
 ---
 
-## Document Error Discovered
-
-The original `IMASM_ARRANGEMENT_CLASSES.md` claimed that **Class X (Truth Machine)** contains a Frobenius pair (FSPLIT + FFUSE). It does **not**.
-
-The actual arrangement:
-
-```
-IMSCRIB → FSPLIT → EVALT → IFIX → IMSCRIB → FSPLIT → EVALF → IFIX
-```
-
-FSPLIT appears **twice** (positions 1 and 5), but FFUSE appears **zero times**. There is no μ∘δ=id structure, no Frobenius pair. The `frobenius_order` is 0, not 1.
-
-### Correction
-
-The correct Frobenius pair count across the 12 canonical classes is **5**, not 6:
-
-| ✓ Has Frobenius pair | ✗ No Frobenius pair |
-|-----------------------|---------------------|
-| I. Dialetheic Bootstrap (split→fuse) | III. Anchor Protocol |
-| II. Void Genesis (split→fuse) | V. Linear Chain |
-| IV. Dual Bootstrap (fuse→split) | VI. Empty Bootstrap |
-| VII. Parakernel (split→fuse) | IX. Chiral Pairs |
-| VIII. Frobenius Kernel (split→fuse) | **X. Truth Machine** |
-| | XI. Eternal Return |
-| | XII. ROM Burn |
-
-This was discovered automatically by the `compute_fingerprint()` function during space mapping, the classifier correctly reports `frobenius_order=0` for Class X. No manual audit was needed.
-
----
-
 ## License
 
-IMSCRIBr is part of the red-hot_rebis project. All rights reserved.
+Unlicense. Public domain.
 
 ---
 
