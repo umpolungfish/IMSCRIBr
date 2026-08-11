@@ -837,7 +837,7 @@ Examples:
     lift_p.add_argument("--output", "-o", required=True, help="Output file path")
     lift_p.add_argument("--format", default="markdown", choices=["markdown", "latex"])
     lift_p.add_argument("--style", help="Style guidance for the LLM")
-    lift_p.add_argument("--model", default=os.environ.get("MODEL", "deepseek-chat"))
+    lift_p.add_argument("--model", default=os.environ.get("IG_MODEL") or os.environ.get("MODEL", "deepseek-chat"))
     lift_p.add_argument("--max-retries", type=int, default=3)
     lift_p.add_argument("--quiet", action="store_true")
     lift_p.add_argument("--ledger-path", default=str(DEFAULT_LEDGER_PATH), help="Path to pathway ledger JSON")
@@ -850,7 +850,7 @@ Examples:
     dissolve_p.add_argument("findings", help="JSON file with grammar findings")
     dissolve_p.add_argument("--format", default="markdown", choices=["markdown", "latex"])
     dissolve_p.add_argument("--style")
-    dissolve_p.add_argument("--model", default=os.environ.get("MODEL", "deepseek-chat"))
+    dissolve_p.add_argument("--model", default=os.environ.get("IG_MODEL") or os.environ.get("MODEL", "deepseek-chat"))
     dissolve_p.add_argument("--quiet", action="store_true")
 
     verify_p = sub.add_parser("verify", help="Verify only (check prose for grammar notation)")

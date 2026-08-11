@@ -445,7 +445,7 @@ Examples:
     p.add_argument("--target",                         help="Target canonical class name")
     p.add_argument("--list-canonicals", action="store_true")
     p.add_argument("--model",
-                   default=os.environ.get("MODEL", "deepseek-chat"),
+                   default=os.environ.get("IG_MODEL") or os.environ.get("MODEL", "deepseek-chat"),
                    help="DeepSeek model name")
     args = p.parse_args()
 

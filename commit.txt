@@ -1,7 +1,4 @@
-ROTAT: the rotation op-opcode over arrangements
+Read IG_MODEL and IG_PROVIDER first
 
-tokens.py gains rotat(arr, k) and rotat_orbit(arr). ROTAT is an operator on a
-whole arrangement, not one of the twelve tokens. The family signature is
-ROTAT-invariant (rotation permutes positions, never the multiset), so an
-arrangement and all its rotations share a fingerprint: the rotation orbit is the
-equivalence the twelve canonical classes are already read up to.
+One name for the model and one for the provider across every repo here. The old
+spellings still read behind them, so nothing in an existing shell breaks.
