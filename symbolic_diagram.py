@@ -37,7 +37,7 @@ TOKEN_SHORT = ["VI","TA","AF","AR","CL","IM","FS","FF","ET","EF","EG","IX"]
 # IMSCRIB node and ⊙ on every EVALT node. Built from names so the two orders
 # cannot drift apart again.
 _TOKEN_GLYPH = {
-    "VINIT": "⊢", "TANCH": "⊣", "AFWD": ">", "AREV": "<",
+    "VINIT": "⊢", "TANCH": "⊣", "AFWD": "≻", "AREV": "≺",
     "CLINK": "⋈", "IMSCRIB": "⊙", "FSPLIT": "∈", "FFUSE": "∋",
     "EVALT": "⊤", "EVALF": "⊥", "ENGAGR": "⊞", "IFIX": "◻",
 }

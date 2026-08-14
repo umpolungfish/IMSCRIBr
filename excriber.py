@@ -31,7 +31,7 @@ from pathlib import Path
 # ── IMASM Glyph → Opcode mapping ──────────────────────────────────
 GLYPH_TO_OPCODE: Dict[str, str] = {
     "⊢": "VINIT",   "⊣": "TANCH",
-    ">": "AFWD",    "<": "AREV",
+    "≻": "AFWD",    "≺": "AREV",
     "⋈": "CLINK",   "⊤": "EVALT",
     "∈": "FSPLIT3", "∋": "FFUSE3",
     "⊙": "IMSCRIB", "⊥": "EVALF",

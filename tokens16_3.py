@@ -92,8 +92,8 @@ TOKEN16_3_COUNT: int = 12
 TOKEN_GLYPH: Dict[Token16_3, str] = {
     Token16_3.VINIT:   "⊢",
     Token16_3.TANCH:   "⊣",
-    Token16_3.AFWD:    ">",
-    Token16_3.AREV:    "<",
+    Token16_3.AFWD:    "≻",
+    Token16_3.AREV:    "≺",
     Token16_3.CLINK:   "⋈",
     Token16_3.IMSCRIB: "⊙",
     Token16_3.FSPLIT3: "∈",

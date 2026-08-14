@@ -21,7 +21,7 @@ from pathlib import Path
 # ── Glyph mapping ────────────────────────────────────────────────
 GLYPH_TO_OPCODE: Dict[str, str] = {
     # The twelve, in catalog order: ⊙ at slot nine, Criticality.
-    "⊢": "VINIT", "⊣": "TANCH", ">": "AFWD", "<": "AREV",
+    "⊢": "VINIT", "⊣": "TANCH", "≻": "AFWD", "≺": "AREV",
     "⋈": "CLINK", "⊤": "EVALT", "∈": "FSPLIT3", "∋": "FFUSE3",
     "⊙": "IMSCRIB", "⊥": "EVALF", "⊞": "ENGAGR", "◻": "IFIX",
 }
