@@ -1,4 +1,15 @@
-Read IG_MODEL and IG_PROVIDER first
+AREV and AFWD are now the marks ≺ and ≻
 
-One name for the model and one for the provider across every repo here. The old
-spellings still read behind them, so nothing in an existing shell breaks.
+They were < and >, the only two of the twelve that arrived already meaning
+something else: shell redirection, XML, LaTeX relations, Rust generics — and,
+where it actually bit, 36 angle-bracket placeholders in the design prompt itself,
+so the same characters were a mark and a slot in one text.
+
+≺ and ≻ are unclaimed and read as precedes/succeeds, which is what a forward and
+a reverse morphism are.
+
+Only mark bindings changed. Struct endianness in Vox/vox.py and the folio-tag
+parsing in manuscript_zfct.py use the same characters for their own reasons and
+were left alone. < and > still READ as AFWD and AREV so words written before this
+resolve; nothing writes them. The momonados-proof-* snapshots are crystallized
+and untouched.
