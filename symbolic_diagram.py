@@ -29,7 +29,19 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "IMSCRIBr"))
 from tokens import Token, TOKEN_NAMES, TOKEN_FAMILY
 
 TOKEN_SHORT = ["VI","TA","AF","AR","CL","IM","FS","FF","ET","EF","EG","IX"]
-TOKEN_SYMBOLS = ["⊢","⊣",">","<","⋈","⊤","∈","∋","⊙","⊥","⊞","◻"]
+# Every node label in a diagram is TOKEN_SYMBOLS[tok.value], so this list is
+# indexed by the Token ENUM's order (VINIT TANCH AFWD AREV CLINK IMSCRIB FSPLIT
+# FFUSE EVALT EVALF ENGAGR IFIX), not by the twelve axes' order (…CLINK EVALT
+# FSPLIT FFUSE IMSCRIB…). The two orders agree everywhere except slots 5 and 8,
+# which is exactly where a hand-written list in axis order printed ⊤ on every
+# IMSCRIB node and ⊙ on every EVALT node. Built from names so the two orders
+# cannot drift apart again.
+_TOKEN_GLYPH = {
+    "VINIT": "⊢", "TANCH": "⊣", "AFWD": ">", "AREV": "<",
+    "CLINK": "⋈", "IMSCRIB": "⊙", "FSPLIT": "∈", "FFUSE": "∋",
+    "EVALT": "⊤", "EVALF": "⊥", "ENGAGR": "⊞", "IFIX": "◻",
+}
+TOKEN_SYMBOLS = [_TOKEN_GLYPH[t.name] for t in Token]
 
 
 from wiring import (
