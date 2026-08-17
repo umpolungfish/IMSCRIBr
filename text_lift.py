@@ -240,14 +240,54 @@ def classify_section(sec: Section, model: str, api_key: str, base_url: str) -> T
     return Token.CLINK
 
 
+def classify_sections(sections, model: str, api_key: str, base_url: str,
+                       verbose: bool = True):
+    """Classify every section in one pass.
+
+    Returns one token per section, in order. A missing or unreadable answer
+    falls back to CLINK for that section alone rather than failing the run.
+    """
+    numbered = []
+    for sec in sections:
+        head = f"[{sec.heading}] " if sec.heading else ""
+        numbered.append(f"{sec.index}. {head}{sec.body[:600]}")
+    prompt = (
+        "Each numbered passage below is one section of a document, and each performs "
+        "exactly one structural operation. Name the operation for every passage.\n\n"
+        f"{_TOKEN_PROMPT_LINES}\n\n"
+        "Answer with one line per passage, in order, formatted exactly as\n"
+        "  <index>: <TOKEN>\n"
+        f"using only these names: {', '.join(t.name for t in Token)}.\n\n"
+        + "\n\n".join(numbered)
+    )
+    if verbose:
+        print(f"    classifying {len(sections)} sections in one pass...", flush=True)
+    raw = _llm(prompt, model, api_key, base_url)
+
+    answers = {}
+    for line in raw.splitlines():
+        m = re.match(r'\s*(\d+)\s*[:.\)-]\s*([A-Z]+)', line.strip().upper())
+        if m:
+            idx = int(m.group(1))
+            for t in Token:
+                if t.name == m.group(2):
+                    answers[idx] = t
+                    break
+    return [answers.get(sec.index, Token.CLINK) for sec in sections]
+
+
 def imscribe_document(text: str, path: str, model: str, api_key: str, base_url: str,
                        verbose: bool = True) -> ImscribedDoc:
     sections = parse_sections(text)
     if verbose:
         print(f"  {len(sections)} section(s) parsed")
 
-    for sec in sections:
-        sec.token = classify_section(sec, model, api_key, base_url)
+    # One call for the whole document. Classifying section by section meant a
+    # separate invocation each time, and on the native lane every invocation
+    # loads the model again, so eight sections cost eight cold loads.
+    tokens = classify_sections(sections, model, api_key, base_url, verbose=verbose)
+    for sec, tok in zip(sections, tokens):
+        sec.token = tok
         if verbose:
             label = sec.heading or sec.body[:50].replace('\n', ' ')
             print(f"    [{sec.index}] {sec.token.name:8s}  \"{label}\"")
@@ -488,6 +528,81 @@ def list_canonicals() -> str:
 
 # ── CLI ───────────────────────────────────────────────────────────────────────
 
+# ── The verdict on the document itself ───────────────────────────────────────
+# A document is a word. It divides where it opens something, rejoins where it
+# answers it, and does work in between. Whether it closes is the same question
+# the closure engine answers for a gene or a compiled function, so it is asked
+# here in the same way rather than by comparing the document against a menu of
+# preferred shapes. There is no target arc. A paper that closes closes; a paper
+# that forks and never comes back is told where.
+
+_TOKEN_MARK = {
+    "VINIT": "\u22a2", "TANCH": "\u22a3", "AFWD": "\u227b", "AREV": "\u227a",
+    "CLINK": "\u22c8", "EVALT": "\u22a4", "FSPLIT": "\u2208", "FFUSE": "\u220b",
+    "IMSCRIB": "\u2299", "EVALF": "\u22a5", "ENGAGR": "\u229e", "IFIX": "\u25fb",
+}
+_WORK_MARKS = frozenset("\u227b\u227a\u22c8\u22a4\u22a5\u229e\u25fb")
+
+
+def document_word(doc) -> str:
+    """The document as a word in the twelve."""
+    return "".join(_TOKEN_MARK[s.token.name] for s in doc.sections if s.token)
+
+
+def document_verdict(word: str):
+    """Does the document close? The engine decides, not a preferred shape."""
+    import sys as _sys
+    from pathlib import Path as _Path
+    vox = _Path.home() / "imsgct" / "Vox"
+    if vox.exists() and str(vox) not in _sys.path:
+        _sys.path.insert(0, str(vox))
+    import vox as _vox
+    return _vox.verdict(list(word))
+
+
+def closure_report(doc) -> str:
+    """What the document does, and whether it comes back."""
+    word = document_word(doc)
+    verdict, why = document_verdict(word)
+    forks = word.count("\u2208")
+    fuses = word.count("\u220b")
+    reading = {
+        "T": "closes: it opens something, works on it, and comes back",
+        "B": "hangs open: it opens something it never answers",
+        "F": "ill-typed: it answers something it never opened",
+        "N": "null: it opens and closes without doing work between",
+    }
+    lines = ["", "\u2500\u2500 THE DOCUMENT AS A WORD " + "\u2500" * 40, ""]
+    lines.append(f"  word       {word}")
+    lines.append(f"  divisions  {forks}   rejoinings  {fuses}   difference {forks - fuses:+d}")
+    lines.append(f"  verdict    {verdict}   {reading.get(verdict, '')}")
+    lines.append(f"  {why}")
+    lines.append("")
+    for sec in doc.sections:
+        if sec.token:
+            lines.append(f"    {_TOKEN_MARK[sec.token.name]}  {sec.token.name:<8} {sec.heading[:56]}")
+    if verdict == "B":
+        depth = 0
+        for sec in doc.sections:
+            if not sec.token:
+                continue
+            m = _TOKEN_MARK[sec.token.name]
+            if m == "\u2208":
+                depth += 1
+                opened = sec.heading
+            elif m == "\u220b" and depth:
+                depth -= 1
+        if depth:
+            lines.append("")
+            lines.append(f"  The unanswered division is \"{opened}\". Either answer it later"
+                         " in the paper or fold it into the section that raises it.")
+    if verdict == "N":
+        lines.append("")
+        lines.append("  Nothing between the division and the rejoining does work. The paper"
+                     " states and restates without transforming what it holds.")
+    return "\n".join(lines)
+
+
 def main():
     p = argparse.ArgumentParser(
         description="IMASM structural lift for text documents.",
@@ -495,17 +610,20 @@ def main():
         epilog="""
 Examples:
   python text_lift.py paper.md
-  python text_lift.py paper.md --target VII_Parakernel
+  python text_lift.py paper.tex
   python text_lift.py paper.md --list-canonicals
-  python text_lift.py paper.md --model deepseek/deepseek-r1-0528
+
+The verdict is whether the document closes. There is no target shape: a paper
+that opens something and answers it closes, and one that forks and never comes
+back is told where it forked.
 """,
     )
-    p.add_argument("file",            nargs="?",       help="Markdown file to analyze")
-    p.add_argument("--target",                         help="Target canonical class name")
+    p.add_argument("file", nargs="?", help="Document to read: Markdown or LaTeX")
+    p.add_argument("--target", help="Compare against one of the twelve arcs (optional; the verdict does not need it)")
     p.add_argument("--list-canonicals", action="store_true")
     p.add_argument("--model",
                    default="native",
-                   help="DeepSeek model name")
+                   help="Inference lane; 'native' is this project's own")
     args = p.parse_args()
 
     if args.list_canonicals:
@@ -529,6 +647,7 @@ Examples:
 
     print()
     print(fingerprint_report(doc))
+    print(closure_report(doc))
 
     if args.target:
         print()
