@@ -117,6 +117,19 @@ class LiftPlan:
 
 # ── Document parsing ──────────────────────────────────────────────────────────
 
+def _detex(chunk: str) -> str:
+    """Strip the markup so a section reads as the prose it is."""
+    chunk = re.sub(r'\\begin\{(tabular|center|thebibliography|tcolorbox)\}.*?\\end\{\1\}',
+                   ' ', chunk, flags=re.S)
+    chunk = re.sub(r'\\(cite|ref|Cref|label)\{[^}]*\}', ' ', chunk)
+    chunk = re.sub(r'\\ig\{([^}]*)\}', r'\1', chunk)
+    chunk = re.sub(r'\\(emph|textbf|texttt)\{([^}]*)\}', r'\2', chunk)
+    chunk = re.sub(r'\\begin\{[^}]*\}|\\end\{[^}]*\}', ' ', chunk)
+    chunk = re.sub(r'\\[a-zA-Z]+\*?', ' ', chunk)
+    chunk = re.sub(r'[{}$&]', ' ', chunk)
+    return re.sub(r'\s+', ' ', chunk).strip()
+
+
 def parse_sections(text: str) -> list:
     """
     Split document into sections by ## headers.
@@ -126,6 +139,29 @@ def parse_sections(text: str) -> list:
     text = re.sub(r'^---\n.*?\n---\n', '', text, flags=re.DOTALL)
 
     sections = []
+
+    # A LaTeX manuscript carries its sections in \section and its argument in
+    # braces; reading it as Markdown finds no headings at all and falls through
+    # to a paragraph split, which imscribes the preamble rather than the paper.
+    if '\\begin{document}' in text or re.search(r'^\\section\{', text, re.M):
+        body = text.split('\\begin{document}', 1)[-1]
+        body = body.split('\\end{document}', 1)[0]
+        abstract = re.search(r'\\begin\{abstract\}(.*?)\\end\{abstract\}', body, re.S)
+        parts_tex = re.split(r'^\\section\*?\{([^}]*)\}', body, flags=re.M)
+        if len(parts_tex) > 1:
+            if abstract:
+                sections.append(Section(0, "Abstract", _detex(abstract.group(1))))
+            i = 1
+            while i + 1 < len(parts_tex):
+                heading = parts_tex[i].strip()
+                sec_body = _detex(parts_tex[i + 1])
+                if sec_body:
+                    sections.append(Section(len(sections), heading, sec_body))
+                i += 2
+            if len(sections) > 8:
+                merged = "\n\n".join(x.body for x in sections[7:])
+                sections = sections[:7] + [Section(7, "…", merged)]
+            return sections
 
     parts = re.split(r'^(#{1,3} .+)$', text, flags=re.MULTILINE)
     if len(parts) > 1:
@@ -152,7 +188,30 @@ def parse_sections(text: str) -> list:
 
 # ── LLM ──────────────────────────────────────────────────────────────────────
 
+def _llm_native(prompt: str) -> str:
+    """This project's own inference, through the ask binary.
+
+    The lift used to require a key for an outside service, which made a
+    structural tool depend on an account. The native lane needs neither.
+    """
+    import shutil
+    import subprocess
+    ask = shutil.which("ask") or str(Path.home() / "imsgct" / "MoDoT" / "ask")
+    proc = subprocess.run(
+        [ask, "--raw", "--ask", prompt],
+        capture_output=True, text=True, timeout=600,
+    )
+    if proc.returncode != 0:
+        raise RuntimeError(f"native lane failed: {proc.stderr.strip()[:200]}")
+    return proc.stdout.strip()
+
+
 def _llm(prompt: str, model: str, api_key: str, base_url: str) -> str:
+    # The native lane is the default. An outside service is used only when one
+    # is named, so the presence of a key in the environment does not silently
+    # route a structural tool through an account.
+    if not model or model == "native":
+        return _llm_native(prompt)
     r = requests.post(
         f"{base_url.rstrip('/')}/chat/completions",
         headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
@@ -445,7 +504,7 @@ Examples:
     p.add_argument("--target",                         help="Target canonical class name")
     p.add_argument("--list-canonicals", action="store_true")
     p.add_argument("--model",
-                   default=os.environ.get("IG_MODEL") or os.environ.get("MODEL", "deepseek-chat"),
+                   default="native",
                    help="DeepSeek model name")
     args = p.parse_args()
 

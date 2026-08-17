@@ -1,15 +1,14 @@
-AREV and AFWD are now the marks ≺ and ≻
+The lift reads LaTeX and runs on this project's own inference
 
-They were < and >, the only two of the twelve that arrived already meaning
-something else: shell redirection, XML, LaTeX relations, Rust generics — and,
-where it actually bit, 36 angle-bracket placeholders in the design prompt itself,
-so the same characters were a mark and a slot in one text.
+Two things kept the lift from being usable on a manuscript.
 
-≺ and ≻ are unclaimed and read as precedes/succeeds, which is what a forward and
-a reverse morphism are.
+It classified sections through an outside service and required a key for it, so a
+structural tool depended on an account, and it failed with a payment error rather than
+a fingerprint. The native lane is the default now, through the ask binary, needing no
+key and nothing external; naming a model still routes to the service that serves it.
 
-Only mark bindings changed. Struct endianness in Vox/vox.py and the folio-tag
-parsing in manuscript_zfct.py use the same characters for their own reasons and
-were left alone. < and > still READ as AFWD and AREV so words written before this
-resolve; nothing writes them. The momonados-proof-* snapshots are crystallized
-and untouched.
+And it read only Markdown headings. A LaTeX manuscript has none, so the parser fell
+through to a paragraph split and imscribed the preamble instead of the paper. It now
+reads the document body, takes the abstract as the opening section and each \section
+as a section, and strips the markup so the classifier sees prose rather than macros.
+The manuscript parses as eight sections, which is the arrangement length.
