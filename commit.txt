@@ -1,14 +1,5 @@
-The lift reads LaTeX and runs on this project's own inference
+I fixed emit_scaffold so an ob3ect name starting with a digit no longer breaks the Lean it generates. "16_3_kernel_rs" produced private def 16_3_kernel_rs_s0, and Lean's lexer reads a leading digit as the start of a numeral: 16_3 parses as a number with an underscore digit-separator, then chokes on the first letter after it. Fifty-odd "expected decimal number" errors, one per generated identifier.
 
-Two things kept the lift from being usable on a manuscript.
+A leading underscore is a valid Lean identifier start and never a numeral, so I prefix the sanitized name with one only when its first character is a digit. Nothing else about the name changes, and it does not touch the ob3ect's slug used for directories and filenames, which tolerate a leading digit fine.
 
-It classified sections through an outside service and required a key for it, so a
-structural tool depended on an account, and it failed with a payment error rather than
-a fingerprint. The native lane is the default now, through the ask binary, needing no
-key and nothing external; naming a model still routes to the service that serves it.
-
-And it read only Markdown headings. A LaTeX manuscript has none, so the parser fell
-through to a paragraph split and imscribed the preamble instead of the paper. It now
-reads the document body, takes the abstract as the opening section and each \section
-as a section, and strips the markup so the classifier sees prose rather than macros.
-The manuscript parses as eight sections, which is the arrangement length.
+Verified against the actual failing case: regenerated 16_3_kernel_rs's gate-check file with the fix and ran it through lake env lean directly. It compiles clean and evaluates to the same tier the design called for, O_0 to O_2dag. Checked the fix doesn't touch names that already worked: the sibling ob3ect starting with a letter generates byte-identical identifiers to before.

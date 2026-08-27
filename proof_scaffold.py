@@ -364,6 +364,16 @@ def emit_scaffold(
     import re
     safe_name = re.sub(r'[^a-z0-9_]', '_', safe_name)
     safe_name = re.sub(r'_+', '_', safe_name).strip('_')
+    # A name that starts with a digit (e.g. an ob3ect called "16_3_kernel_rs")
+    # makes every "private def {safe_name}_s0" identifier below start with a
+    # digit too, and Lean's lexer reads that as the start of a numeral —
+    # "16_3" parses as a number with an underscore digit-separator, then
+    # chokes on the first letter after it ("expected decimal number"). A
+    # leading underscore is a valid Lean identifier start and isn't a numeral,
+    # so it sidesteps the lexer without changing the name anywhere else this
+    # slug is used (directories and filenames tolerate a leading digit fine).
+    if safe_name and safe_name[0].isdigit():
+        safe_name = f"_{safe_name}"
     # Cap the identifier stem: free-text class names can be whole sentences, which
     # make unusable Lean idents (300-char names repeated dozens of times). Truncate
     # to a short word-boundary stem; when truncated, append a short hash so distinct
