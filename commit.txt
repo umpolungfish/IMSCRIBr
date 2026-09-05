@@ -1,5 +1,8 @@
-I fixed emit_scaffold so an ob3ect name starting with a digit no longer breaks the Lean it generates. "16_3_kernel_rs" produced private def 16_3_kernel_rs_s0, and Lean's lexer reads a leading digit as the start of a numeral: 16_3 parses as a number with an underscore digit-separator, then chokes on the first letter after it. Fifty-odd "expected decimal number" errors, one per generated identifier.
+Add render_wiring_ascii: terminal logical-circuit diagram, edge weights explicit
 
-A leading underscore is a valid Lean identifier start and never a numeral, so I prefix the sanitized name with one only when its first character is a digit. Nothing else about the name changes, and it does not touch the ob3ect's slug used for directories and filenames, which tolerate a leading digit fine.
-
-Verified against the actual failing case: regenerated 16_3_kernel_rs's gate-check file with the fix and ran it through lake env lean directly. It compiles clean and evaluates to the same tier the design called for, O_0 to O_2dag. Checked the fix doesn't touch names that already worked: the sibling ob3ect starting with a letter generates byte-identical identifiers to before.
+A terminal counterpart to render_wiring_svg_v3, sharing the same wire graph and
+register simulation. Draws the port-level circuit node by node, one connector
+per outgoing wire, and makes the edge weight explicit as the Belnap register
+delta the SVG already carries: ↑ true, ↓ false, ↑↓ both, · none, with «B» for a
+paradox held, ⚡ for a truth flip, and a heavy ═▶ for a cross-branch wire. IFIX
+is shown ⊡ to match the ob3ect glyph.

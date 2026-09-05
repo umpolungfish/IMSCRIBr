@@ -1750,5 +1750,75 @@ def main():
             print("cairosvg not available for PNG conversion")
 
 
+def render_wiring_ascii(graph: WiredGraph, name: str = "") -> str:
+    """Terminal circuit diagram of a wired token graph, with edge weights
+    explicit. The weight on each edge is its Belnap register delta (the same
+    label the SVG carries): a spin ↑ (TRUE), ↓ (FALSE), ↑↓ (BOTH), or · (no
+    change). A delta that involves BOTH is tagged «B» (the paradox held); a
+    truth flip T↔F is tagged ⚡; a cross-branch wire (a fork arm routed to a
+    non-matched fuse) is drawn with a heavy ═▶ arrow. Node-by-node, top to
+    bottom, one connector line per outgoing wire."""
+    tokens = graph.tokens
+    n = len(tokens)
+    regs = simulate_register(tuple(t.value for t in tokens))
+    cross = set(graph.cross_branch_wires())
+
+    forks = {i for i, t in enumerate(tokens) if t == Token.FSPLIT}
+    fuses = {i for i, t in enumerate(tokens) if t == Token.FFUSE}
+
+    def state(i: int) -> str:
+        return REG_LABEL[regs[i]] or "·"
+
+    def tag(a: int, b: int) -> str:
+        if BOTH in (a, b):
+            return " «B»"
+        if (a, b) in ((TRUE, FALSE), (FALSE, TRUE)):
+            return " ⚡"
+        return ""
+
+    def disp(t: Token) -> str:
+        # IFIX is written ⊡ in ob3ect words; the shared table renders it ◻.
+        return "⊡" if t == Token.IFIX else TOKEN_SYMBOLS[t.value]
+
+    def weight(a: int, b: int) -> str:
+        d = reg_delta_label(a, b) or "·"
+        if d.endswith("→"):
+            d += "·"
+        return d
+
+    out = []
+    title = name or graph.name or "circuit"
+    out.append(f"◇ CIRCUIT  {title}   {n} nodes, {len(graph.wires)} wires"
+               f"   open forks {len(forks) - len(fuses) if len(forks) > len(fuses) else 0}")
+    out.append("  weight = Belnap register delta: ↑ true  ↓ false  ↑↓ both  · none"
+               "   «B» paradox held   ⚡ truth flip   ═▶ cross-branch")
+    out.append("")
+    for i in range(n):
+        t = tokens[i]
+        glyph = disp(t)
+        nm = TOKEN_NAMES[t.value]
+        mark = ""
+        if i in forks:
+            mark = "  ┐ fork"
+        elif i in fuses:
+            mark = "  ┘ join"
+        out.append(f"{i:>3} {glyph} {nm:<8} {state(i):<3}{mark}")
+        ows = sorted(graph.out_wires(i), key=lambda w: {"T": 0, "F": 1, "o": 2}.get(w.src_port, 3))
+        for k, w in enumerate(ows):
+            last = (k == len(ows) - 1)
+            elbow = "└" if last else "├"
+            arrow = "═▶" if w in cross else "─▶"
+            delta = weight(regs[i], regs[w.dst_node])
+            port = f"{w.src_port}→{w.dst_port}"
+            dstg = disp(tokens[w.dst_node])
+            out.append(f"     {elbow}{arrow} {w.dst_node:>2} {dstg}   [{port}]  "
+                       f"{delta}{tag(regs[i], regs[w.dst_node])}")
+    # closure line
+    closed = len(forks) == len(fuses)
+    out.append("")
+    out.append(f"  walk: {'CLOSED' if closed else 'OPEN'}   final register {state(n - 1)}")
+    return "\n".join(out)
+
+
 if __name__ == "__main__":
     main()
