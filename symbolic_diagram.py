@@ -1750,16 +1750,41 @@ def main():
             print("cairosvg not available for PNG conversion")
 
 
-def render_wiring_ascii(graph: WiredGraph, name: str = "") -> str:
+def _carrier_is_paradox(nm: str) -> bool:
+    """A SIXTEEN_3 carrier holds a paradox when it carries both classical
+    values (T and F) or both underdeterminate atoms (t and f), or is the top A
+    (all four). On the canonical carrier names (N, T, F, TF, Ttf, A, tf, ...)
+    the atom membership is read straight off the name."""
+    if nm == "A":
+        return True
+    if "T" in nm and "F" in nm:
+        return True
+    if "t" in nm and "f" in nm:
+        return True
+    return False
+
+
+def render_wiring_ascii(graph: WiredGraph, name: str = "",
+                        carriers: "list[str] | None" = None) -> str:
     """Terminal circuit diagram of a wired token graph, with edge weights
-    explicit. The weight on each edge is its Belnap register delta (the same
-    label the SVG carries): a spin ↑ (TRUE), ↓ (FALSE), ↑↓ (BOTH), or · (no
-    change). A delta that involves BOTH is tagged «B» (the paradox held); a
-    truth flip T↔F is tagged ⚡; a cross-branch wire (a fork arm routed to a
-    non-matched fuse) is drawn with a heavy ═▶ arrow. Node-by-node, top to
-    bottom, one connector line per outgoing wire."""
+    explicit.
+
+    When ``carriers`` is given (one SIXTEEN_3 carrier name per node, in graph
+    order, e.g. from the trilattice register machine), the weight on each edge
+    is the full-lattice carrier the wire carries into its destination, written
+    ``src→dst`` (e.g. ``TF→A`` where ENGAGR deposits t+f and the register
+    reaches the top A). Otherwise the weight falls back to the FOUR-valued
+    Belnap register delta (↑ true, ↓ false, ↑↓ both, · none), the same label
+    the SVG carries.
+
+    A carrier or delta that holds a paradox is tagged «A» in the full-lattice
+    reading (both T,F or both t,f present, or the top A) or «B» in the
+    four-valued reading; a truth flip T↔F is tagged ⚡; a cross-branch wire (a
+    fork arm routed to a non-matched fuse) is drawn with a heavy ═▶ arrow.
+    Node-by-node, top to bottom, one connector line per outgoing wire."""
     tokens = graph.tokens
     n = len(tokens)
+    full = carriers is not None and len(carriers) == n
     regs = simulate_register(tuple(t.value for t in tokens))
     cross = set(graph.cross_branch_wires())
 
@@ -1767,31 +1792,49 @@ def render_wiring_ascii(graph: WiredGraph, name: str = "") -> str:
     fuses = {i for i, t in enumerate(tokens) if t == Token.FFUSE}
 
     def state(i: int) -> str:
+        if full:
+            return carriers[i] or "N"
         return REG_LABEL[regs[i]] or "·"
-
-    def tag(a: int, b: int) -> str:
-        if BOTH in (a, b):
-            return " «B»"
-        if (a, b) in ((TRUE, FALSE), (FALSE, TRUE)):
-            return " ⚡"
-        return ""
 
     def disp(t: Token) -> str:
         # IFIX is written ⊡ in ob3ect words; the shared table renders it ◻.
         return "⊡" if t == Token.IFIX else TOKEN_SYMBOLS[t.value]
 
     def weight(a: int, b: int) -> str:
-        d = reg_delta_label(a, b) or "·"
+        if full:
+            ca, cb = carriers[a] or "N", carriers[b] or "N"
+            return f"{ca}→{cb}"
+        d = reg_delta_label(regs[a], regs[b]) or "·"
         if d.endswith("→"):
             d += "·"
         return d
+
+    def tag(a: int, b: int) -> str:
+        if full:
+            if _carrier_is_paradox(carriers[a] or "N") or _carrier_is_paradox(carriers[b] or "N"):
+                return " «A»"
+            ca, cb = carriers[a], carriers[b]
+            if {ca, cb} == {"T", "F"}:
+                return " ⚡"
+            return ""
+        ra, rb = regs[a], regs[b]
+        if BOTH in (ra, rb):
+            return " «B»"
+        if (ra, rb) in ((TRUE, FALSE), (FALSE, TRUE)):
+            return " ⚡"
+        return ""
 
     out = []
     title = name or graph.name or "circuit"
     out.append(f"◇ CIRCUIT  {title}   {n} nodes, {len(graph.wires)} wires"
                f"   open forks {len(forks) - len(fuses) if len(forks) > len(fuses) else 0}")
-    out.append("  weight = Belnap register delta: ↑ true  ↓ false  ↑↓ both  · none"
-               "   «B» paradox held   ⚡ truth flip   ═▶ cross-branch")
+    if full:
+        out.append("  weight = SIXTEEN_3 carrier on the wire (src→dst): "
+                   "N T F TF Ttf … A=top (all four)"
+                   "   «A» paradox held   ⚡ truth flip   ═▶ cross-branch")
+    else:
+        out.append("  weight = Belnap register delta: ↑ true  ↓ false  ↑↓ both  · none"
+                   "   «B» paradox held   ⚡ truth flip   ═▶ cross-branch")
     out.append("")
     for i in range(n):
         t = tokens[i]
@@ -1802,17 +1845,17 @@ def render_wiring_ascii(graph: WiredGraph, name: str = "") -> str:
             mark = "  ┐ fork"
         elif i in fuses:
             mark = "  ┘ join"
-        out.append(f"{i:>3} {glyph} {nm:<8} {state(i):<3}{mark}")
+        out.append(f"{i:>3} {glyph} {nm:<8} {state(i):<4}{mark}")
         ows = sorted(graph.out_wires(i), key=lambda w: {"T": 0, "F": 1, "o": 2}.get(w.src_port, 3))
         for k, w in enumerate(ows):
             last = (k == len(ows) - 1)
             elbow = "└" if last else "├"
             arrow = "═▶" if w in cross else "─▶"
-            delta = weight(regs[i], regs[w.dst_node])
+            delta = weight(i, w.dst_node)
             port = f"{w.src_port}→{w.dst_port}"
             dstg = disp(tokens[w.dst_node])
             out.append(f"     {elbow}{arrow} {w.dst_node:>2} {dstg}   [{port}]  "
-                       f"{delta}{tag(regs[i], regs[w.dst_node])}")
+                       f"{delta}{tag(i, w.dst_node)}")
     # closure line
     closed = len(forks) == len(fuses)
     out.append("")
