@@ -1711,8 +1711,174 @@ def generate_herb_entry(rng: random.Random) -> dict:
     }
 
 
-def generate_recipe(rng: random.Random) -> dict:
-    """Generate a synthetic Voynich procedural recipe (f103r+ style)."""
+_STEP_LABEL_RE = re.compile(r'^Step \d+:\s*')
+_ACCIPE_RE = re.compile(r'Accipe (\d+) materias')
+
+
+def _recipe_step_label(raw: str) -> str:
+    """The opcode label of a recipe step, with its 'Step N: ' prefix removed."""
+    return _STEP_LABEL_RE.sub('', raw).strip()
+
+
+def _ingredients_from_opener(label: str) -> int:
+    """The ingredient count an opener step declares. 'Accipe materiam' loads one;
+    'Accipe k materias' loads k; a transform opener (Divide/Calefac) loads none,
+    which is the zero-ingredient program that operates on an existing output."""
+    if label.startswith('Accipe materiam'):
+        return 1
+    m = _ACCIPE_RE.search(label)
+    if m:
+        return int(m.group(1))
+    return 0
+
+
+def load_recipe_model(path: str | Path) -> dict | None:
+    """Build a first-order step model from the real VMS recipe corpus
+    (voynich_recipe_bio.json). The corpus is 1076 attested recipes; the model
+    carries the step-count distribution, the opening-step distribution, and the
+    step-to-step transition counts. Walking that chain reproduces the corpus:
+    the openers (recipes open with an Accipe that names the ingredient count,
+    the zero-ingredient ones with a transform), the opcode frequencies
+    (Extrahe, Divide, Calefac lead), and the ~7.5 mean step count. Returns None
+    if the corpus is unreadable, and the caller falls back to the closed-form
+    synthetic recipe."""
+    try:
+        data = json.loads(Path(path).read_text())
+        recs = data['recipe_section']['recipes']
+    except Exception:
+        return None
+    n_steps: Counter = Counter()
+    start: Counter = Counter()
+    last: Counter = Counter()
+    trans: dict[str, Counter] = defaultdict(Counter)
+    opcodes: Counter = Counter()
+    for r in recs:
+        steps = [_recipe_step_label(s) for s in r.get('steps', [])]
+        if not steps:
+            continue
+        n_steps[len(steps)] += 1
+        start[steps[0]] += 1
+        for s in steps:
+            opcodes[s] += 1
+        # The last step is modelled separately (see generate_recipe): the
+        # interior chain is learned from the recipe with its terminal removed,
+        # so the walk never emits the terminal opcode and it is supplied once,
+        # by the terminal draw. Otherwise Compone is counted twice.
+        if len(steps) > 1:
+            last[steps[-1]] += 1
+            prefix = steps[:-1]
+        else:
+            prefix = steps
+        for a, b in zip(prefix, prefix[1:]):
+            trans[a][b] += 1
+    if not n_steps:
+        return None
+    return {
+        'n_steps': n_steps,
+        'start': start,
+        'last': last,
+        'trans': {k: dict(v) for k, v in trans.items()},
+        'opcodes': opcodes,
+        'n_recipes': sum(n_steps.values()),
+    }
+
+
+def _pick_counter(c, rng: random.Random):
+    keys = list(c)
+    return rng.choices(keys, weights=[c[k] for k in keys], k=1)[0]
+
+
+def _resolve_recipe_model(explicit: str | None, transcription: str | None) -> dict | None:
+    """Find and load the recipe corpus. An explicit --recipe-corpus wins; else
+    look next to the transcription file and in the sibling Voynich_Phytoglyphica
+    data directory."""
+    candidates: list[Path] = []
+    if explicit:
+        candidates.append(Path(explicit))
+    if transcription:
+        candidates.append(Path(transcription).resolve().parent / "voynich_recipe_bio.json")
+    here = Path(__file__).resolve().parent
+    candidates.append(here.parent / "Voynich_Phytoglyphica" / "data" / "voynich_recipe_bio.json")
+    for c in candidates:
+        if c.exists():
+            model = load_recipe_model(c)
+            if model:
+                return model
+    return None
+
+
+def print_recipe_verification(gen_recipes: list[dict], model: dict) -> None:
+    """Compare the generated recipes to the real corpus on the step statistics
+    the recipe model reproduces: mean step count, the fraction opening with an
+    Accipe, and the leading step-opcode frequencies."""
+    print("\n=== RECIPE VERIFICATION ===\n")
+
+    def _mean_steps(dist: Counter) -> float:
+        tot = sum(dist.values())
+        return sum(k * v for k, v in dist.items()) / tot if tot else 0.0
+
+    real_mean = _mean_steps(model['n_steps'])
+    gen_mean = sum(len(r['steps']) for r in gen_recipes) / len(gen_recipes)
+
+    real_start_tot = sum(model['start'].values())
+    real_accipe = sum(c for lbl, c in model['start'].items()
+                      if lbl.startswith('Accipe')) / real_start_tot
+    gen_accipe = sum(1 for r in gen_recipes
+                     if _recipe_step_label(r['steps'][0]).startswith('Accipe')) / len(gen_recipes)
+
+    gen_opc: Counter = Counter()
+    for r in gen_recipes:
+        for s in r['steps']:
+            gen_opc[_recipe_step_label(s)] += 1
+    real_tot = sum(model['opcodes'].values())
+    gen_tot = sum(gen_opc.values()) or 1
+
+    print(f"  {'Metric':<34} {'Corpus':<12} {'Synthetic':<12} Match")
+    print(f"  {'-'*34} {'-'*12} {'-'*12} -----")
+    print(f"  {'Mean steps per recipe':<34} {real_mean:<12.3f} {gen_mean:<12.3f} {_pct(real_mean, gen_mean)}")
+    print(f"  {'Opens with Accipe':<34} {real_accipe:<12.3f} {gen_accipe:<12.3f} {_pct(real_accipe, gen_accipe)}")
+    print(f"\n  Leading step-opcode frequency:")
+    for lbl, _c in model['opcodes'].most_common(6):
+        rv = model['opcodes'][lbl] / real_tot
+        gv = gen_opc.get(lbl, 0) / gen_tot
+        name = _STEP_LABEL_RE.sub('', lbl)[:38]
+        print(f"    {name:<40} {rv:<10.4f} {gv:<10.4f} {_pct(rv, gv)}")
+
+
+def generate_recipe(rng: random.Random, model: dict | None = None) -> dict:
+    """Generate a synthetic Voynich procedural recipe (f103r+ style).
+
+    With a model from load_recipe_model, the step count is drawn from the real
+    distribution and the steps are a walk of the real step-to-step chain, so the
+    opener, the opcode mix, and the ingredient load match the corpus. Without
+    one, it falls back to the closed-form synthetic: real ingredient
+    distribution, uniform opcode draw."""
+    if model:
+        n_steps = _pick_counter(model['n_steps'], rng)
+        cur = _pick_counter(model['start'], rng)
+        seq = [cur]
+        # Walk the chain for the interior steps, then draw the final step from
+        # the real terminal distribution. Compone (compose to endpoint) is the
+        # last step of ~71% of recipes and is terminal in almost every one of
+        # its occurrences; a forward chain of fixed length undersamples it, so
+        # the terminal draw restores it.
+        for _ in range(max(0, n_steps - 2)):
+            row = model['trans'].get(cur)
+            cur = _pick_counter(row, rng) if row else _pick_counter(model['opcodes'], rng)
+            seq.append(cur)
+        if n_steps > 1:
+            seq.append(_pick_counter(model['last'], rng))
+        n_ingredients = _ingredients_from_opener(seq[0])
+        steps = [f"Step {i+1}: {lbl}" for i, lbl in enumerate(seq)]
+        return {
+            'folio': f"f{rng.randint(103, 116)}r",
+            'para': rng.randint(1, 30),
+            'n_ops': max(n_steps, rng.randint(6, 18)),
+            'n_steps': n_steps,
+            'n_ingredients': n_ingredients,
+            'steps': steps,
+        }
+
     n_ops = rng.randint(6, 18)
     n_steps = rng.randint(4, min(n_ops, 15))
     n_ingredients = rng.choices(
@@ -2093,6 +2259,11 @@ V3 Session Engine:
                         help="Generate N synthetic herb entries")
     parser.add_argument("--recipes", type=int, default=0,
                         help="Generate N synthetic recipe entries")
+    parser.add_argument("--recipe-corpus", type=str, default=None,
+                        help="Path to voynich_recipe_bio.json. If omitted, looked "
+                             "for next to the transcription and in the sibling "
+                             "Voynich_Phytoglyphica/data. Drives recipe generation "
+                             "from the real 1076-recipe corpus.")
     parser.add_argument("--semantic-only", action="store_true",
                         help="Only output semantic entries, no raw text")
     parser.add_argument("--session", action="store_true",
@@ -2198,14 +2369,23 @@ V3 Session Engine:
         text_parts.append('\n'.join(herb_text))
 
     if args.recipes > 0:
+        recipe_model = _resolve_recipe_model(args.recipe_corpus, args.transcription)
         print(f"\n=== GENERATING {args.recipes} RECIPES ===\n")
+        if recipe_model:
+            print(f"    Recipe model: real corpus, {recipe_model['n_recipes']} attested recipes")
+        else:
+            print(f"    Recipe model: closed-form synthetic (corpus not found)")
         recipe_text: list[str] = ["\n# Synthetic Voynich Recipes (f103r+ style)", ""]
+        gen_recipes = []
         for i in range(args.recipes):
-            recipe = generate_recipe(rng)
+            recipe = generate_recipe(rng, recipe_model)
+            gen_recipes.append(recipe)
             recipe_text.append(render_recipe(recipe))
             preview = f"  [{i+1}/{args.recipes}] {recipe['folio']} para {recipe['para']}"
             print(preview)
         text_parts.append('\n'.join(recipe_text))
+        if recipe_model:
+            print_recipe_verification(gen_recipes, recipe_model)
 
     # Phase 2c: Session engine summary
     if engine and engine.session_records:
