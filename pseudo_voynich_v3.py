@@ -1403,6 +1403,23 @@ def _sample_len(dist: Counter, rng: random.Random) -> int:
 
 P_POOL = 0.90  # fraction drawn from the real frequency-weighted word pool
 
+# With no recency mechanism at all, local repetition (window=10) undershoots
+# the real corpus by about half: measured at matched, real per-section sample
+# sizes, the pooled real corpus repeats at 0.071 (every section shows real,
+# independently-measured local repetition, from 0.027 to 0.114 — this is not
+# a pooling artifact), while pure i.i.d. draws from the frequency pool give
+# ~0.035. A v2 mechanism once corrected for this by echoing 30% of words from
+# the last ten emitted, but that number was tuned against the full, then
+# interlinear-duplicated corpus's repetition rate (~0.40), a figure that
+# collapsed once parse_ivtff stopped counting every transcriber's copy of
+# each line as separate text. Recalibrated against the real value: echoing a
+# word from the last ten at 4% of draws reproduces 0.071 directly, checked by
+# generating at real per-section size across several seeds and reading the
+# resulting rate, without moving Zipf slope or type-token ratio off their own
+# matched-size real values.
+P_RECENT_ECHO = 0.04
+RECENT_WINDOW = 10
+
 
 def generate_section_v3(
     section: str,
@@ -1415,22 +1432,17 @@ def generate_section_v3(
     The pool is the section's ENTIRE word-type vocabulary carrying its real
     frequencies. Drawing n words from that multinomial reproduces the section's
     type-token ratio and Zipf slope at any sample size n, because it is the same
-    distribution the real corpus is a draw from. The remaining tenth is fresh
+    distribution the real corpus is a draw from. A further tenth is fresh
     bigram-generated words, which keeps the bigram entropy from collapsing onto
     only the attested types and supplies the small novelty a real scribe adds.
+    A small remainder echoes a word from the last ten emitted, reproducing the
+    real corpus's own local repetition rate (see P_RECENT_ECHO above).
 
-    Mix (P_POOL = 0.90):
-      - 90% frequency-weighted draw from the real section vocabulary
-      - 10% fresh word from the section bigram model
-
-    There is no recency-reuse mechanism. The earlier version drew 30% of words
-    from the last ten emitted, which was tuned to the FULL-corpus local
-    repetition rate (~0.40). That rate is a whole-corpus figure; at a matched
-    sample size real Voynich repeats locally at only ~0.035 (window 10), so the
-    recency draw produced roughly ten times too much local repetition and
-    dragged the type-token ratio and Zipf slope off with it. Removing it lands
-    all three sample-sensitive metrics on the real corpus measured at the same
-    sample size. See print_verification, which now compares them matched-size.
+    Mix:
+      - P_RECENT_ECHO (4%): repeat a word from the last ten emitted
+      - P_POOL of what remains (90%): frequency-weighted draw from the real
+        section vocabulary
+      - the rest: fresh word from the section bigram model
     """
     sec_vocab = stats.word_vocab.get(section)
     if not sec_vocab:
@@ -1446,11 +1458,18 @@ def generate_section_v3(
     idxs = range(len(pool_types))
 
     words: list[list[int]] = []
+    recent: list[list[int]] = []
     for _ in range(n_words):
-        if rng.random() < P_POOL:
-            words.append(list(pool_types[rng.choices(idxs, weights=pool_weights, k=1)[0]]))
+        if recent and rng.random() < P_RECENT_ECHO:
+            word = list(rng.choice(recent))
+        elif rng.random() < P_POOL:
+            word = list(pool_types[rng.choices(idxs, weights=pool_weights, k=1)[0]])
         else:
-            words.append(_generate_word_v3(section, stats, rng))
+            word = _generate_word_v3(section, stats, rng)
+        words.append(word)
+        recent.append(word)
+        if len(recent) > RECENT_WINDOW:
+            recent.pop(0)
     return words
 
 
@@ -2142,13 +2161,25 @@ def print_voynich_stats(v_words: dict[str, list[list[int]]],
         print(f"    {sec:<16}: {fp.coarse_key():<34} -> {canon}")
 
 
-def print_verification(
+def _verification_rows(
     v_words: dict[str, list[list[int]]],
-    s_words: dict[str, list[list[int]]],
     v_stats: CorpusStats,
+    s_words: dict[str, list[list[int]]],
     s_stats: CorpusStats,
-) -> None:
-    print("\n=== VERIFICATION ===\n")
+) -> list[tuple[str, float, float]]:
+    """One realization's (name, voynich_value, synthetic_value) rows.
+
+    Zipf slope, type-token ratio and local repetition rate all move with
+    sample size, so the real side is read on the corpus subsampled to the
+    synthetic size, averaged over several draws, rather than compared at
+    full corpus size against a much smaller synthetic sample.
+
+    KL divergence between two sections' unigram counts is likewise NOT
+    size-stable at the alphabet this corpus has (~30 token types) — the
+    same real pair, subsampled to a few hundred words, moves by more than
+    typical generator error. So it gets the same matched-size treatment,
+    read on the real corpus subsampled to each section's synthetic size.
+    """
     v_all = [w for ws in v_words.values() for w in ws]
     s_all = [w for ws in s_words.values() for w in ws]
     v_bg = _build_bigrams(v_all)
@@ -2156,23 +2187,11 @@ def print_verification(
     v_uni = Counter(t for w in v_all for t in w)
     s_uni = Counter(t for w in s_all for t in w)
 
-    # Zipf slope, type-token ratio and local repetition rate all move with the
-    # sample size: a small draw looks more varied and less locally repetitive
-    # than the whole book. The synthetic set is far smaller than the corpus, so
-    # comparing it against the whole corpus measures the size gap, not the
-    # generator. Each of these three is read on the corpus SUBSAMPLED to the
-    # synthetic size, averaged over several draws, so the two sides are the same
-    # size. Bigram entropy, spectral gap and the KL divergences are read over
-    # the token alphabet, not the word types, and are stable across size, so
-    # they stay full-corpus.
     def _matched(metric, draws: int = 7):
         if len(v_all) <= len(s_all):
             return metric(v_all)
         rng = random.Random(0)
-        vals = []
-        for _ in range(draws):
-            samp = rng.sample(v_all, len(s_all))
-            vals.append(metric(samp))
+        vals = [metric(rng.sample(v_all, len(s_all))) for _ in range(draws)]
         return sum(vals) / len(vals)
 
     v_zipf = _matched(lambda ws: zipf_exponent(Counter(tuple(w) for w in ws)))
@@ -2186,24 +2205,88 @@ def print_verification(
         ("Repetition rate",  v_rep,                       repetition_rate(s_all)),
         ("Spectral gap",     spectral_gap(v_bg),          spectral_gap(s_bg)),
     ]
+
+    def _matched_kl(s1: str, s2: str, n1: int, n2: int, draws: int = 7) -> float:
+        w1, w2 = v_words[s1], v_words[s2]
+        if len(w1) <= n1 and len(w2) <= n2:
+            return kl_divergence(v_stats.unigram[s1], v_stats.unigram[s2])
+        rng = random.Random(0)
+        vals = []
+        for _ in range(draws):
+            u1 = Counter(t for w in (rng.sample(w1, n1) if len(w1) > n1 else w1) for t in w)
+            u2 = Counter(t for w in (rng.sample(w2, n2) if len(w2) > n2 else w2) for t in w)
+            vals.append(kl_divergence(u1, u2))
+        return sum(vals) / len(vals)
+
     common = [s for s in SECTIONS if v_words.get(s) and s_words.get(s)]
     for i, s1 in enumerate(common):
         for s2 in common[i+1:]:
             if v_stats.unigram.get(s1) and s_stats.unigram.get(s2):
                 rows.append((
                     f"KL {s1[:3]}<->{s2[:3]}",
-                    kl_divergence(v_stats.unigram[s1], v_stats.unigram[s2]),
+                    _matched_kl(s1, s2, len(s_words[s1]), len(s_words[s2])),
                     kl_divergence(s_stats.unigram[s1], s_stats.unigram[s2]),
                 ))
+    return rows
 
+
+def print_verification(
+    v_words: dict[str, list[list[int]]],
+    s_words: dict[str, list[list[int]]],
+    v_stats: CorpusStats,
+    s_stats: CorpusStats,
+    rng: random.Random | None = None,
+    n_seeds: int = 5,
+) -> None:
+    """Print the corpus/synthetic verification table.
+
+    A single small synthetic draw makes every one of these numbers as
+    noisy as the draw: at a few hundred words per section, KL divergence
+    between two sections moves by tens of percentage points from sampling
+    luck alone, real corpus included, checked directly by resampling the
+    real corpus at that size and watching the same statistic move.
+
+    Two changes from a single-shot reading: each section is regenerated at
+    its own real corpus size (matching sample size directly rather than
+    reading a small sample and correcting for the gap), and the whole
+    table is averaged over `n_seeds` independent draws, so what prints is
+    the generator's expected fidelity, not one draw's luck. The passed-in
+    `s_words`/`s_stats` are used only for the fingerprint and surface
+    notation comparisons below the table, which are not sample-size
+    sensitive the same way.
+    """
+    print("\n=== VERIFICATION ===\n")
+    common = [s for s in SECTIONS if v_words.get(s)]
+    full_size = {s: len(v_words[s]) for s in common}
+    rng = rng or random.Random(1)
+
+    all_rows: list[list[tuple[str, float, float]]] = []
+    for _ in range(max(1, n_seeds)):
+        sv: dict[str, list[list[int]]] = {}
+        for sec in common:
+            if v_stats.bigrams.get(sec):
+                sv[sec] = generate_section_v3(sec, full_size[sec], v_stats, rng)
+        sv_stats = extract_stats(sv)
+        all_rows.append(_verification_rows(v_words, v_stats, sv, sv_stats))
+
+    names = [r[0] for r in all_rows[0]]
+    avg_rows = []
+    for i, name in enumerate(names):
+        v_vals = [run[i][1] for run in all_rows]
+        s_vals = [run[i][2] for run in all_rows]
+        avg_rows.append((name, sum(v_vals) / len(v_vals), sum(s_vals) / len(s_vals)))
+
+    print(f"  each row generated at real per-section corpus size, "
+          f"averaged over {n_seeds} draws\n")
     print(f"  {'Metric':<26} {'Voynich':<12} {'Synthetic':<12} Match")
     print(f"  {'-'*26} {'-'*12} {'-'*12} -----")
-    for name, v_val, s_val in rows:
+    for name, v_val, s_val in avg_rows:
         print(f"  {name:<26} {v_val:<12.4f} {s_val:<12.4f} {_pct(v_val, s_val)}")
 
     print(f"\n  IMSCRIBr fingerprint comparison:")
     print(f"  {'Section':<16}  {'Voynich coarse key':<34}  {'Synthetic coarse key':<34}  Result")
-    for sec in common:
+    preview_common = [s for s in common if s_words.get(s)]
+    for sec in preview_common:
         v_fp, v_cn = section_fingerprint(v_words[sec])
         s_fp, s_cn = section_fingerprint(s_words[sec])
         ck_match = v_fp.coarse_key() == s_fp.coarse_key()
@@ -2350,6 +2433,9 @@ V3 Session Engine:
                         help="Total output lines (default: 100)")
     parser.add_argument("--words-per-line", type=int, default=8)
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--verify-seeds", type=int, default=5,
+                        help="Draws to average the verification table over, "
+                             "each generated at real per-section corpus size.")
     parser.add_argument("--transcriber-priority", type=str, default=None,
                         help="Comma-separated transcriber codes, most preferred "
                              "first, e.g. 'H,U,N,C,F'. Picks one reading per "
@@ -2556,7 +2642,8 @@ V3 Session Engine:
 
         if s_words:
             s_stats = extract_stats(s_words)
-            print_verification(v_words, s_words, v_stats, s_stats)
+            print_verification(v_words, s_words, v_stats, s_stats, rng,
+                               n_seeds=args.verify_seeds)
         else:
             print("No text sections generated.")
 
