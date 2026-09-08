@@ -105,9 +105,18 @@ EVA_GLYPHS: dict[str, tuple[int, str, str]] = {
 FALLBACK_TOKEN = 30
 FALLBACK_SHAVIAN = '\U0001046A'
 
+# A single EVA '?' marks one character the transcriber could see was there
+# but could not identify — a real, present, unknown glyph. That is a
+# different fact from FALLBACK_TOKEN (a recognized-but-uncatalogued glyph
+# sequence), so it gets its own token rather than being merged into either
+# FALLBACK_TOKEN or silently deleted.
+UNCERTAIN_TOKEN = 31
+UNCERTAIN_SHAVIAN = '\U0001046C'
+
 TOKEN_TO_GLYPH: dict[int, str] = {v[0]: k for k, v in EVA_GLYPHS.items()}
 TOKEN_TO_SHAVIAN_FULL: dict[int, str] = {v[0]: v[1] for v in EVA_GLYPHS.values()}
 TOKEN_TO_SHAVIAN_FULL[FALLBACK_TOKEN] = FALLBACK_SHAVIAN
+TOKEN_TO_SHAVIAN_FULL[UNCERTAIN_TOKEN] = UNCERTAIN_SHAVIAN
 
 TOKEN_TO_SHAVIAN: dict[int, str] = {
     0: '\U0001045B', 1: '\U00010461', 2: '\U00010469',
@@ -154,13 +163,65 @@ def classify_folio(folio: str) -> str:
 
 # ============================================================================
 # IVTFF PARSING
+#
+# The IVTFF format is genuinely interlinear: one physical manuscript line
+# can carry several parallel transcriptions, one per transcriber code
+# (<fNNN.UU.LL;T>, T an uppercase letter — see the file's own header,
+# section "Transcriber codes"), because different people transcribed
+# different, overlapping stretches of the manuscript and disagree on some
+# characters. Reading every ;T line as independent text — the v2/early-v3
+# behavior — counts the same physical line once per transcriber who
+# happened to cover it, which inflates word counts and corrupts every
+# frequency-based statistic by an amount that depends on transcriber
+# coverage, not on the manuscript. The fix is to choose ONE reading per
+# physical line (locus) and use only that one, so the corpus reflects the
+# manuscript's lines rather than the historical transcription effort.
+#
+# Within a chosen line, three EVA markers carry real information the old
+# blanket character-class strip destroyed:
+#   '?'   one character the transcriber could see existed but could not
+#         identify — kept as UNCERTAIN_TOKEN, not deleted, so word length
+#         and position statistics still see a glyph there.
+#   ','   a "dubious word break" (vs '.', a definite one) — treated as a
+#         break like '.', not left to fall through into the glyph
+#         tokenizer, where it became a spurious FALLBACK_TOKEN glued into
+#         the middle of a word.
+#   <...> / {...}  inline editorial comments and annotations (e.g. an
+#         editor's guessed reading of a damaged character, a paragraph
+#         marker). These must be dropped as whole units before glyph
+#         tokenization — stripping only their bracket punctuation, as the
+#         old regex did, left real EVA letters typed inside the comment
+#         (an editor's guess, not confirmed text) to leak in as if they
+#         were part of the word.
+# '!' and '%' are alignment fillers used to pad parallel transcriptions to
+# the same length (the file's own header, section "Filler characters");
+# per that section a bare '!' denotes zero characters, so deleting it is
+# the documented reading, not an approximation.
 # ============================================================================
 
-LOC_RE = re.compile(r'^<(f(\d+)\w*)[.,]')
+# H is Takahashi's, the only complete transcription of the whole
+# manuscript; the rest are partial, page-by-page efforts by different
+# people, some (F, C) from the 1940s-70s with known transcription
+# disagreements the file's own header discusses. Preferring H, then the
+# editors who worked from it (U = Stolfi, N = Landini) before the older
+# partial sources gives the most internally consistent single reading per
+# line. Override with --transcriber-priority if a different source should
+# lead.
+DEFAULT_TRANSCRIBER_PRIORITY = [
+    'H', 'U', 'N', 'Z', 'X', 'V', 'C', 'F', 'T', 'L', 'R', 'K', 'J', 'P',
+    'D', 'G', 'I', 'Q', 'M',
+]
+
+DATA_LINE_RE = re.compile(r'^<(f\d+\w*)([^;>]*);([A-Za-z])>\s*(.*)$')
 
 
 def _parse_eva_word_full(raw: str) -> list[int] | None:
-    cleaned = re.sub(r'[!*%{}&=\-\s\d;:?@()\[\]<>/]', '', raw)
+    # Drop inline comments/annotations as whole units first, so an
+    # editor's guessed letter inside <...> or {...} never leaks into the
+    # token stream as if it were transcribed text.
+    raw = re.sub(r'<[^>]*>', '', raw)
+    raw = re.sub(r'\{[^}]*\}', '', raw)
+    cleaned = re.sub(r'[!*%&=\-\s\d;:@()\[\]/]', '', raw)
     if not cleaned:
         return None
     cleaned = cleaned.strip("'\"\\|$#")
@@ -169,6 +230,10 @@ def _parse_eva_word_full(raw: str) -> list[int] | None:
     tokens: list[int] = []
     i = 0
     while i < len(cleaned):
+        if cleaned[i] == '?':
+            tokens.append(UNCERTAIN_TOKEN)
+            i += 1
+            continue
         matched = False
         for dg in ['cth', 'ckh', 'cph', 'cfh', 'tch', 'sch']:
             if cleaned[i:i+3] == dg and dg in EVA_GLYPHS:
@@ -195,25 +260,60 @@ def _parse_eva_word_full(raw: str) -> list[int] | None:
     return tokens if tokens else None
 
 
-def parse_ivtff(path: str | Path) -> dict[str, list[list[int]]]:
-    section_words: dict[str, list[list[int]]] = defaultdict(list)
-    current_folio = 'f1r'
+def parse_ivtff(
+    path: str | Path,
+    transcriber_priority: list[str] | None = None,
+    report: dict | None = None,
+) -> dict[str, list[list[int]]]:
+    """Parse an IVTFF transcription, choosing one reading per physical line.
+
+    Each locus (folio + line/unit locator, independent of transcriber) is
+    kept once, using whichever available transcriber ranks highest in
+    `transcriber_priority`. If `report` is passed, it is filled with
+    {'loci': n, 'variant_lines_seen': n, 'variant_lines_dropped': n} so a
+    caller can show how much duplication was resolved.
+    """
+    priority = transcriber_priority or DEFAULT_TRANSCRIBER_PRIORITY
+    rank = {code: i for i, code in enumerate(priority)}
+    default_rank = len(priority)
+
+    # locus -> (rank, folio, text)
+    chosen: dict[str, tuple[int, str, str]] = {}
+    locus_order: list[str] = []
+    variant_lines_seen = 0
+
     with open(path, encoding='latin-1') as fh:
         for line in fh:
-            line = line.strip()
-            if not line or line.startswith('#'):
+            line = line.rstrip('\n')
+            if not line.strip() or line.startswith('#'):
                 continue
-            m = LOC_RE.match(line)
-            if m:
-                current_folio = m.group(1)
-                text = re.sub(r'^<[^>]+>\s*', '', line)
-            else:
-                text = line
-            section = classify_folio(current_folio)
-            for raw_word in text.split('.'):
-                toks = _parse_eva_word_full(raw_word)
-                if toks:
-                    section_words[section].append(toks)
+            m = DATA_LINE_RE.match(line)
+            if not m:
+                continue
+            folio, locus_rest, transcriber, text = m.groups()
+            locus = folio + locus_rest
+            variant_lines_seen += 1
+            r = rank.get(transcriber.upper(), default_rank)
+            prev = chosen.get(locus)
+            if prev is None:
+                locus_order.append(locus)
+                chosen[locus] = (r, folio, text)
+            elif r < prev[0]:
+                chosen[locus] = (r, folio, text)
+
+    if report is not None:
+        report['loci'] = len(locus_order)
+        report['variant_lines_seen'] = variant_lines_seen
+        report['variant_lines_dropped'] = variant_lines_seen - len(locus_order)
+
+    section_words: dict[str, list[list[int]]] = defaultdict(list)
+    for locus in locus_order:
+        _, folio, text = chosen[locus]
+        section = classify_folio(folio)
+        for raw_word in re.split(r'[.,]', text):
+            toks = _parse_eva_word_full(raw_word)
+            if toks:
+                section_words[section].append(toks)
     return dict(section_words)
 
 # ============================================================================
@@ -2250,6 +2350,11 @@ V3 Session Engine:
                         help="Total output lines (default: 100)")
     parser.add_argument("--words-per-line", type=int, default=8)
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--transcriber-priority", type=str, default=None,
+                        help="Comma-separated transcriber codes, most preferred "
+                             "first, e.g. 'H,U,N,C,F'. Picks one reading per "
+                             "physical line from the interlinear corpus; "
+                             "default is H,U,N,Z,X,V,C,F,T,L,R,K,J,P,D,G,I,Q,M.")
     parser.add_argument("--stats-only", action="store_true")
     parser.add_argument("--output", help="Save synthetic text to file")
     parser.add_argument("--mode", default="shavian",
@@ -2301,9 +2406,16 @@ V3 Session Engine:
 
     # Phase 1: Parse and extract stats
     print("Parsing IVTFF corpus...")
-    v_words = parse_ivtff(args.transcription)
+    priority = (args.transcriber_priority.split(',') if args.transcriber_priority
+                else None)
+    parse_report: dict = {}
+    v_words = parse_ivtff(args.transcription, transcriber_priority=priority,
+                          report=parse_report)
     total_parsed = sum(len(ws) for ws in v_words.values())
     active_secs = [s for s in SECTIONS if v_words.get(s)]
+    print(f"  {parse_report['loci']:,} physical lines "
+          f"({parse_report['variant_lines_seen']:,} transcriber-variant lines seen, "
+          f"{parse_report['variant_lines_dropped']:,} duplicate readings dropped)")
     print(f"  {total_parsed:,} words parsed across {len(active_secs)} sections")
     for sec in active_secs:
         print(f"    {sec:<16}: {len(v_words[sec]):>6,} words")
