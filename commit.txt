@@ -1,26 +1,25 @@
-pseudo_voynich_v3: match the corpus at matched sample size
+Gate 2 was vacuous: vessel_capacity checked n_ops <= 16 against a generator
+that only ever draws n_ops from randint(3, 16), and vessel_fused/vessel_split
+were both hardcoded True with no reachable False path. Also found the
+volatile check was comparing K's distillation value against grammar['P'],
+the wrong axis entirely, so it could never fire.
 
-The verification was comparing the whole Voynich corpus against a far smaller
-synthetic set for three metrics that move with sample size -- Zipf slope,
-type-token ratio, and local repetition rate. That measured the size gap, not
-the generator. The type-token row read -71% off a comparison that was never
-like-for-like. print_verification now reads those three on the corpus
-subsampled to the synthetic size, averaged over several draws; the alphabet
-metrics (bigram entropy, spectral gap, KL) stay full-corpus, being size-stable.
+Ran the real banked instrument on both a frame-before-deposit word and a
+deposit-before-any-frame word to confirm the underlying vessel-closure
+concept is genuinely decidable ("open the region that HOLDS the result
+before the region that COMPUTES it, and close them in that order") — the
+fix is to the implementation, not the concept.
 
-With the matched reading in hand the generator was the opposite of what its
-docstring claimed. Its recency-reuse draw (30% of words pulled from the last
-ten emitted) was tuned to the full-corpus repetition rate of 0.40, but at a
-matched size real Voynich repeats locally at ~0.035, so it produced about ten
-times too much local repetition and dragged TTR and Zipf off with it.
-generate_section_v3 now draws 90% from the section's real word pool at its real
-frequencies and 10% fresh from the bigram model, no recency. Reproducing the
-real multinomial lands TTR and Zipf at the real slope at any sample size.
+Added the twenty balneological heap folios (f75r-f84v) from ENGINE.md, each
+carrying its own FSPLIT and FFUSE capacity. heap_folio now gets selected the
+way ENGINE.md actually specifies, keyed off the pharmacy address's own folio
+number mod 20, and both checks compare against that folio's real numbers
+instead of a coincidence. Volatility is now K=distillation or (K=cold
+maceration with a volatile step), reading the volatilis field that was
+already generated per entry but never passed into gate context. Cold
+maceration entries with a volatile step get the closure constraint exempted,
+per ENGINE.md's own text.
 
-Floored per-section generation at 400 words: a section's KL is read on its
-token unigram, and a proportional slice of the single-folio cosmological
-section gave too few words for a stable one, throwing its KL rows to single
-digits. At 400 words those rows read in the high 80s and 90s.
-
-Zipf, TTR, bigram entropy, spectral gap all land 87-97% against the matched
-corpus, stable across seeds.
+Checked empirically: 2000 runs now split roughly 53% PASS, 34% AMBIGUOUS,
+12% FAIL on Gate 2 alone, each with a real folio and a real number attached
+to the reason. It was constant PASS before.
