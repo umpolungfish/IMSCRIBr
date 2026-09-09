@@ -1,25 +1,24 @@
-Gate 2 was vacuous: vessel_capacity checked n_ops <= 16 against a generator
-that only ever draws n_ops from randint(3, 16), and vessel_fused/vessel_split
-were both hardcoded True with no reachable False path. Also found the
-volatile check was comparing K's distillation value against grammar['P'],
-the wrong axis entirely, so it could never fire.
+Went back over the Gate 2 fix and found two more lines with no reachable
+False path.
 
-Ran the real banked instrument on both a frame-before-deposit word and a
-deposit-before-any-frame word to confirm the underlying vessel-closure
-concept is genuinely decidable ("open the region that HOLDS the result
-before the region that COMPUTES it, and close them in that order") — the
-fix is to the implementation, not the concept.
+cold_process fired on K=cold maceration alone, no matter whether the entry's
+own recipe ever reaches a Calefac step. Checked it directly: n_ops<5 never
+produces one (Calefac is step_templates index 4), and n_ops<5 happens for
+about a seventh of all entries. Gated the check on n_ops>=5 so it only fires
+when there's an actual Calefac step in this entry's recipe to reassign.
+Left it as always-True once gated, since that part is ENGINE.md's own
+argued claim ("the only structurally consistent reading," "the grammar
+performs this reparse automatically"), not a coincidence of the generator's
+random ranges.
 
-Added the twenty balneological heap folios (f75r-f84v) from ENGINE.md, each
-carrying its own FSPLIT and FFUSE capacity. heap_folio now gets selected the
-way ENGINE.md actually specifies, keyed off the pharmacy address's own folio
-number mod 20, and both checks compare against that folio's real numbers
-instead of a coincidence. Volatility is now K=distillation or (K=cold
-maceration with a volatile step), reading the volatilis field that was
-already generated per entry but never passed into gate context. Cold
-maceration entries with a volatile step get the closure constraint exempted,
-per ENGINE.md's own text.
+vessel_split was a bare True with nothing behind it for the volatile-exempt
+branch. ENGINE.md doesn't put a numeric constraint on that branch at all,
+so there was never anything to check there. Dropped it from checks and kept
+the exemption as a plain reason string instead of dressing it up as a check
+that can't fail.
 
-Checked empirically: 2000 runs now split roughly 53% PASS, 34% AMBIGUOUS,
-12% FAIL on Gate 2 alone, each with a real folio and a real number attached
-to the reason. It was constant PASS before.
+Reran the 2000+ run distribution after both changes: vessel_capacity and
+vessel_fused both come back True and False across a real sample.
+cold_process comes back True only, which is now the accurate state to
+report: it's a claim ENGINE.md itself argues always holds once applicable,
+not a check I never wrote standing in for one.
