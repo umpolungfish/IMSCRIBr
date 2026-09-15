@@ -5,7 +5,7 @@
 Maps the **12⁸ = 429,981,696** possible arrangements of the 12 IMASM tokens
 into structural fingerprint classes: 430M arrangements → 165 family
 signatures → ~1,000–2,000 coarse structural classes → exactly 12 canonical
-archetypes. The vast token space collapses to 12 archetypes — evidence the
+archetypes. The vast token space collapses to 12 archetypes - evidence the
 12-primitive structure is the natural basis of the arrangement space.
 
 ## The 12 tokens in 4 families
