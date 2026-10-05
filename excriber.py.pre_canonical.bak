@@ -14,8 +14,8 @@ that action in the domain context. Fork/fuse pairs are identified by ancestry
 and their arms are elaborated separately.
 
 Usage:
-  python3 excriber.py "<imasm_word>" "<context_name>" [--desc "<desc>"]
-  python3 excriber.py "⊢⊙⋈∈≻⊤≺⊞⊥∋⊡⊣" "sic_povm_d2048_fiducial"
+  python3 excriber.py "<imasm_word>" "<context_name>" [--context-desc "<desc>"]
+  python3 excriber.py "⊢⊙=◇>+<●◇×<●=⊞⊙¬⊣" "sic_povm_d2048_fiducial"
 
 Author: Lando⊗⊙perator
 """
@@ -33,9 +33,9 @@ GLYPH_TO_OPCODE: Dict[str, str] = {
     "⊢": "VINIT",   "⊣": "TANCH",
     "≻": "AFWD",    "≺": "AREV",
     "⋈": "CLINK",   "⊤": "EVALT",
-    "∈": "FSPLIT", "∋": "FFUSE",
+    "∈": "FSPLIT3", "∋": "FFUSE3",
     "⊙": "IMSCRIB", "⊥": "EVALF",
-    "⊞": "ENGAGR",  "⊡": "IFIX",
+    "⊞": "ENGAGR",  "◻": "IFIX",
 }
 OPCODE_TO_GLYPH: Dict[str, str] = {v: k for k, v in GLYPH_TO_OPCODE.items()}
 
@@ -115,7 +115,7 @@ OPCODE_SEMANTICS: Dict[str, Dict[str, str]] = {
         "action": "COMMIT",
         "arity": "1→1",
         "work": "yes",
-        "structural_meaning": "Irreversible fixation — commit the result. The IFIX gate. Once fixed, cannot be undone.",
+        "structural_meaning": "Irreversible fixation — commit the result. The ¬ gate. Once fixed, cannot be undone.",
         "question": "What is committed irreversibly? What is the final fixed point?",
     },
     "TANCH": {
@@ -176,14 +176,14 @@ def parse_word(word: str) -> List[str]:
         else:
             # Try opcode name form
             for name in ["VINIT", "TANCH", "AFWD", "AREV", "CLINK", "IMSCRIB",
-                         "FSPLIT", "FFUSE",
-                         "EVALT", "EVALF", "ENGAGR", "IFIX"]:
+                         "FSPLIT3", "FFUSE3",
+                         "EVALT", "EVALF", "ENGAGR", "EVALI", "IFIX"]:
                 if word[i:].startswith(name):
                     opcodes.append(name)
                     i += len(name)
                     break
             else:
-                raise ValueError(f"excriber: non-canonical mark {ch!r} at position {i} in word {word!r}; only the twelve canonical glyphs parse: ⊢ ⊣ ≻ ≺ ⋈ ⊙ ∈ ∋ ⊤ ⊥ ⊞ ⊡")
+                i += 1
     return opcodes
 
 
@@ -197,9 +197,9 @@ def find_pairs(opcodes: List[str]) -> List[ForkFusePair]:
     fork_stack = []  # (index, arm_start_idx)
     
     for i, op in enumerate(opcodes):
-        if op == "FSPLIT":
+        if op in ("FSPLIT", "FSPLIT3"):
             fork_stack.append(i)
-        elif op == "FFUSE":
+        elif op in ("FFUSE", "FFUSE3"):
             if fork_stack:
                 fork_idx = fork_stack.pop()
                 # Arms are everything between fork_idx+1 and i-1
@@ -289,7 +289,7 @@ def elaborate_step(
         return f"HOLD PARADOX (B): The dialetheia gate. Both arms have been worked and fused separately — the T-arm (template transfers) and the F-arm (direct transfer fails) both hold. The contradiction is not resolved; it is CARRIED. The Zauner embedding is the obstruction: the structural ring R_2048 maps to the Belnap multilattice, but the Hilbert-space embedding remains open. BOTH statements are true."
 
     elif opcode == "IFIX":
-        return f"COMMIT (IFIX): Irreversible fixation. The paradox is committed — the result is branded. The d=2048 SIC-POVM existence is proved structurally (Grammar certificate μ∘δ=id) but the exact fiducial in complex 2048-space remains walled. The filled evaluator sphere with tuple <D_odot T_bowtie R_lr P_pm_sym F_hbar K_slow G_aleph Gm_broad Ph_c H2 S_hetero W_Z> at O_infinity is the fixed point."
+        return f"COMMIT (¬): Irreversible fixation. The paradox is committed — the result is branded. The d=2048 SIC-POVM existence is proved structurally (Grammar certificate μ∘δ=id) but the exact fiducial in complex 2048-space remains walled. The filled evaluator sphere with tuple <D_odot T_bowtie R_lr P_pm_sym F_hbar K_slow G_aleph Gm_broad Ph_c H2 S_hetero W_Z> at O_infinity is the fixed point."
 
     elif opcode == "TANCH":
         return f"CLOSE: Terminal anchor. The computation ends. The loop closes: the evaluator sphere is filled — the d=2048 fiducial has imprinted the sphere through the CLINK L8 catalytic pathway. The filled sphere sits at d=2.0 from the grammar (same as the SIC-POVM multilattice gap). μ∘δ = id."
@@ -352,7 +352,7 @@ def excribe(word: str, context_name: str, context_desc: str = "") -> Excription:
         exc.verdict = "B (paradox held) — closes over transformation + paradox"
     elif pairs:
         has_work = any(
-            any(opcodes[ni] not in ("VINIT", "TANCH", "IMSCRIB", "FSPLIT", "FFUSE")
+            any(opcodes[ni] not in ("VINIT", "TANCH", "IMSCRIB", "FSPLIT", "FFUSE", "FSPLIT3", "FFUSE3")
                 for ni in pair.t_arm_indices + pair.f_arm_indices)
             for pair in pairs
         )

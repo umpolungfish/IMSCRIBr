@@ -75,12 +75,12 @@ def main():
         try:
             exc = excribe_batched(word, name, f"the {name.replace('_', ' ')} system", llm)
             text = render(exc)
-            print(f"  done ({len(exc.steps)} steps, verdict={exc.verdict})", file=sys.stderr)
         except Exception as e:
             print(f"  ERROR: {e}", file=sys.stderr)
             text = f"=== {name}: ERROR ===\n{e}\n"
 
         all_text.append(text)
+        print(f"  done ({len(exc.steps)} steps, verdict={exc.verdict})", file=sys.stderr)
 
     # Write to EXCRIPTION LOG (not WORDZ library)
     header = f"""EXCRIPTIONS — {n} IMASM Catalog Entries Excribed

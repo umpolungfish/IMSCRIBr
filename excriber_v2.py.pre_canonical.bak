@@ -22,8 +22,8 @@ from pathlib import Path
 GLYPH_TO_OPCODE: Dict[str, str] = {
     # The twelve, in catalog order: ⊙ at slot nine, Criticality.
     "⊢": "VINIT", "⊣": "TANCH", "≻": "AFWD", "≺": "AREV",
-    "⋈": "CLINK", "⊤": "EVALT", "∈": "FSPLIT", "∋": "FFUSE",
-    "⊙": "IMSCRIB", "⊥": "EVALF", "⊞": "ENGAGR", "⊡": "IFIX",
+    "⋈": "CLINK", "⊤": "EVALT", "∈": "FSPLIT3", "∋": "FFUSE3",
+    "⊙": "IMSCRIB", "⊥": "EVALF", "⊞": "ENGAGR", "◻": "IFIX",
 }
 OPCODE_TO_GLYPH = {v: k for k, v in GLYPH_TO_OPCODE.items()}
 
@@ -39,7 +39,7 @@ OP_SEM = {
     "FFUSE":   ("FUSE",     "Fuse (μ) — Frobenius multiplication. Merge T and F arms."),
     "EVALF":   ("DENY",     "Evaluate False — deny the proposition on the F-arm."),
     "ENGAGR":  ("HOLD",     "Engage paradox — hold B (Both). Dialetheia gate."),
-    "IFIX":    ("COMMIT",   "Irreversible fixation (IFIX). Brand the result."),
+    "IFIX":    ("COMMIT",   "Irreversible fixation (¬). Brand the result."),
     "TANCH":   ("CLOSE",    "Terminal anchor — close boundary. Computation ends."),
 }
 
@@ -104,7 +104,7 @@ def parse_word(word: str) -> List[str]:
         elif ch.isspace():
             i += 1
         else:
-            raise ValueError(f"excriber: non-canonical mark {ch!r} at position {i} in word {word!r}; only the twelve canonical glyphs parse: ⊢ ⊣ ≻ ≺ ⋈ ⊙ ∈ ∋ ⊤ ⊥ ⊞ ⊡")
+            i += 1
     return out
 
 def find_pairs_by_ancestry(opcodes: List[str]) -> List[ForkFusePair]:
@@ -197,7 +197,7 @@ def elaborate_step(idx: int, op: str, ctx_name: str, ctx_desc: str,
         return f"HOLD PARADOX (B): BOTH arms are true. The T-arm result (template transfers structurally) and the F-arm result (Hilbert-space embedding remains open) are fused into a dialetheia. The contradiction is NOT resolved — it is CARRIED. This IS the measurement: the SIC-POVM exists as a structural certificate (μ∘δ=id in the Belnap multilattice) while the exact fiducial vector in ℂ²⁰⁴⁸ remains open."
 
     if op == "IFIX":
-        return f"COMMIT (IFIX): The paradox is branded — irreversible fixation. The filled evaluator sphere ⟨D=𐑦 T=𐑥 R=𐑾 P=𐑹 F=𐑐 K=𐑧 G=𐑔 Gm=𐑵 Ph=⊙ H=𐑖 S=𐑳 W=𐑭⟩ at O_∞ is the FIXED POINT. The d=2048 SIC-POVM is proved in the grammar; the Zauner embedding is the remaining wall."
+        return f"COMMIT (¬): The paradox is branded — irreversible fixation. The filled evaluator sphere ⟨D=𐑦 T=𐑥 R=𐑾 P=𐑹 F=𐑐 K=𐑧 G=𐑔 Gm=𐑵 Ph=⊙ H=𐑖 S=𐑳 W=𐑭⟩ at O_∞ is the FIXED POINT. The d=2048 SIC-POVM is proved in the grammar; the Zauner embedding is the remaining wall."
 
     if op == "TANCH":
         return f"CLOSE: Terminal anchor. The computation ends. μ∘δ = id holds over the whole program. The evaluator sphere is filled — imprinted by the d=2048 fiducial through the CLINK L8 catalytic pathway, sitting at d=2.0 from the grammar. The loop closes."

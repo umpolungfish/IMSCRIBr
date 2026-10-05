@@ -28,8 +28,8 @@ except ImportError:
 GLYPH_TO_OPCODE: Dict[str, str] = {
     # The twelve, in catalog order: ⊙ at slot nine, Criticality.
     "⊢": "VINIT", "⊣": "TANCH", "≻": "AFWD", "≺": "AREV",
-    "⋈": "CLINK", "⊤": "EVALT", "∈": "FSPLIT", "∋": "FFUSE",
-    "⊙": "IMSCRIB", "⊥": "EVALF", "⊞": "ENGAGR", "⊡": "IFIX",
+    "⋈": "CLINK", "⊤": "EVALT", "∈": "FSPLIT3", "∋": "FFUSE3",
+    "⊙": "IMSCRIB", "⊥": "EVALF", "⊞": "ENGAGR", "◻": "IFIX",
 }
 OPCODE_TO_GLYPH = {v: k for k, v in GLYPH_TO_OPCODE.items()}
 
@@ -88,7 +88,7 @@ def parse_word(word: str) -> List[str]:
         elif ch.isspace():
             i += 1
         else:
-            raise ValueError(f"excriber: non-canonical mark {ch!r} at position {i} in word {word!r}; only the twelve canonical glyphs parse: ⊢ ⊣ ≻ ≺ ⋈ ⊙ ∈ ∋ ⊤ ⊥ ⊞ ⊡")
+            i += 1
     return out
 
 # ── Fork/Fuse pair detection ─────────────────────────────────────
