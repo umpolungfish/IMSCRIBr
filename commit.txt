@@ -1,24 +1,9 @@
-Went back over the Gate 2 fix and found two more lines with no reachable
-False path.
+I make excribe_vox produce carrier-bound morphism plans
 
-cold_process fired on K=cold maceration alone, no matter whether the entry's
-own recipe ever reaches a Calefac step. Checked it directly: n_ops<5 never
-produces one (Calefac is step_templates index 4), and n_ops<5 happens for
-about a seventh of all entries. Gated the check on n_ops>=5 so it only fires
-when there's an actual Calefac step in this entry's recipe to reassign.
-Left it as always-True once gated, since that part is ENGINE.md's own
-argued claim ("the only structurally consistent reading," "the grammar
-performs this reparse automatically"), not a coincidence of the generator's
-random ranges.
+I normalize opcode names before Vox, retain its pairing context, and carry
+operation inputs, outputs, and return checks through the report. I ground
+translation prompts in addressed local passages and correct the anyonic,
+FOUR, SIC, numeral, executable, and IMASM carrier definitions.
 
-vessel_split was a bare True with nothing behind it for the volatile-exempt
-branch. ENGINE.md doesn't put a numeric constraint on that branch at all,
-so there was never anything to check there. Dropped it from checks and kept
-the exemption as a plain reason string instead of dressing it up as a check
-that can't fail.
-
-Reran the 2000+ run distribution after both changes: vessel_capacity and
-vessel_fused both come back True and False across a real sample.
-cold_process comes back True only, which is now the accurate state to
-report: it's a claim ENGINE.md itself argues always holds once applicable,
-not a check I never wrote standing in for one.
+I add offline planning, network-free prompt inspection, strict provider and
+response handling, runnable inspection commands, and regression controls.

@@ -1,0 +1,312 @@
+\documentclass[12pt,a4paper]{article}
+
+% Encoding and fonts
+\usepackage{fontspec}
+\usepackage{textcomp}
+
+% Page layout
+\usepackage[top=1in, bottom=1in, left=1in, right=1in]{geometry}
+
+% Typography
+\usepackage{microtype}
+\usepackage{parskip}
+
+% Language
+\usepackage[english]{babel}
+
+% Headers and footers
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\leftmark}
+\fancyhead[R]{\thepage}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0pt}
+
+% Section styling
+\usepackage{titlesec}
+\titleformat{\section}{\Large\bfseries}{\thesection}{1em}{}
+\titleformat{\subsection}{\large\bfseries}{\thesubsection}{1em}{}
+\titleformat{\subsubsection}{\normalsize\bfseries}{\thesubsubsection}{1em}{}
+\titlespacing*{\section}{0pt}{2.5ex plus 1ex minus .2ex}{1.5ex plus .2ex}
+\titlespacing*{\subsection}{0pt}{2ex plus 1ex minus .2ex}{1ex plus .2ex}
+\titlespacing*{\subsubsection}{0pt}{1.5ex plus 1ex minus .2ex}{0.8ex plus .2ex}
+
+% List formatting
+\usepackage{enumitem}
+\setlist[itemize]{topsep=0.5ex, itemsep=0.25ex, parsep=0pt}
+\setlist[enumerate]{topsep=0.5ex, itemsep=0.25ex, parsep=0pt}
+
+% Essential packages
+\usepackage{graphicx}
+\usepackage[table]{xcolor}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{amsmath}
+\usepackage{mathtools}
+\usepackage{amssymb}
+\usepackage[normalem]{ulem}
+\rowcolors{2}{gray!10}{white}
+\renewcommand{\arraystretch}{1.3}
+
+% Cross-references
+\usepackage{hyperref}
+\usepackage{cleveref}
+
+% Custom commands
+\newcommand{\pilcrow}{\S}
+
+% Hyperref setup
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,
+    urlcolor=cyan,
+}
+
+% Code listings
+\usepackage{listings}
+\definecolor{codebg}{RGB}{248,248,248}
+\definecolor{codeframe}{RGB}{200,200,200}
+\definecolor{codekeyword}{RGB}{0,0,180}
+\definecolor{codecomment}{RGB}{0,128,0}
+\definecolor{codestring}{RGB}{163,21,21}
+\lstset{
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    breakatwhitespace=false,
+    frame=single,
+    framerule=0.5pt,
+    rulecolor=\color{codeframe},
+    backgroundcolor=\color{codebg},
+    keepspaces=true,
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    numbersep=8pt,
+    showstringspaces=false,
+    tabsize=4,
+    xleftmargin=1em,
+    xrightmargin=1em,
+    aboveskip=1em,
+    belowskip=1em,
+    keywordstyle=\color{codekeyword}\bfseries,
+    commentstyle=\color{codecomment}\itshape,
+    stringstyle=\color{codestring},
+    literate={_}{{\textunderscore}}1
+             {-}{{\textminus}}1
+             {<}{{\textless}}1
+             {>}{{\textgreater}}1
+             {~}{{\textasciitilde}}1
+             {^}{{\textasciicircum}}1
+}
+
+% YAML language definition for listings
+\lstdefinelanguage{YAML}{
+    keywords={true,false,null,y,n},
+    keywordstyle=\color{blue}\bfseries,
+    sensitive=false,
+    comment=[l]{\#},
+    morecomment=[s]{/*}{*/},
+    commentstyle=\color{gray}\ttfamily,
+    stringstyle=\color{red}\ttfamily,
+    morestring=[b]',
+    morestring=[b]",
+}
+
+% TOML language definition for listings
+\lstdefinelanguage{TOML}{
+    keywords={true,false},
+    keywordstyle=\color{blue}\bfseries,
+    sensitive=true,
+    comment=[l]{\#},
+    commentstyle=\color{gray}\ttfamily,
+    stringstyle=\color{red}\ttfamily,
+    morestring=[b]',
+    morestring=[b]",
+}
+
+% Dockerfile language definition for listings
+\lstdefinelanguage{Dockerfile}{
+    keywords={FROM,RUN,CMD,LABEL,EXPOSE,ENV,ADD,COPY,ENTRYPOINT,VOLUME,USER,WORKDIR,ARG,ONBUILD,STOPSIGNAL,HEALTHCHECK,SHELL},
+    keywordstyle=\color{blue}\bfseries,
+    sensitive=false,
+    comment=[l]{\#},
+    commentstyle=\color{gray}\ttfamily,
+    stringstyle=\color{red}\ttfamily,
+    morestring=[b]',
+    morestring=[b]",
+}
+
+% JSON language definition for listings
+\lstdefinelanguage{JSON}{
+    keywords={true,false,null},
+    keywordstyle=\color{blue}\bfseries,
+    sensitive=true,
+    commentstyle=\color{gray}\ttfamily,
+    stringstyle=\color{red}\ttfamily,
+    morestring=[b]",
+}
+
+% Code listing float environment
+\usepackage{float}
+\floatplacement{table}{H}
+\setlength{\aboverulesep}{0pt}
+\setlength{\belowrulesep}{0pt}
+\setlength{\extrarowheight}{0pt}
+\renewcommand{\arraystretch}{1.1}
+\setlength{\LTpre}{4pt}
+\setlength{\LTpost}{4pt}
+\newfloat{listing}{htbp}{lol}[section]
+\floatname{listing}{Listing}
+
+% Admonition boxes
+\usepackage{tcolorbox}
+\tcbuselibrary{skins,breakable}
+
+% Admonition style definitions
+\newtcolorbox{admonitionbox}[2][]{
+    enhanced,
+    breakable,
+    colback=#2!5,
+    colframe=#2!80!black,
+    fonttitle=\bfseries,
+    title=#1,
+    left=2mm,
+    right=2mm,
+}
+
+% Synthon tuple boxes
+\newtcolorbox{synthonbox}{
+    enhanced,
+    colback=blue!5,
+    colframe=blue!75!black,
+    fontupper=\large,
+    center upper,
+    boxrule=1pt,
+    arc=4pt,
+}
+
+\newfontfamily\shavfont[Scale=1.0]{Trabajo}
+\newfontface\igprimfont{Everson Mono}
+\usepackage{newunicodechar}
+\AtBeginDocument{
+\newunicodechar{𐑐}{\ifmmode\text{{\shavfont 𐑐}}\else{{\shavfont 𐑐}}\fi}
+\newunicodechar{𐑑}{\ifmmode\text{{\shavfont 𐑑}}\else{{\shavfont 𐑑}}\fi}
+\newunicodechar{𐑒}{\ifmmode\text{{\shavfont 𐑒}}\else{{\shavfont 𐑒}}\fi}
+\newunicodechar{𐑓}{\ifmmode\text{{\shavfont 𐑓}}\else{{\shavfont 𐑓}}\fi}
+\newunicodechar{𐑔}{\ifmmode\text{{\shavfont 𐑔}}\else{{\shavfont 𐑔}}\fi}
+\newunicodechar{𐑕}{\ifmmode\text{{\shavfont 𐑕}}\else{{\shavfont 𐑕}}\fi}
+\newunicodechar{𐑖}{\ifmmode\text{{\shavfont 𐑖}}\else{{\shavfont 𐑖}}\fi}
+\newunicodechar{𐑗}{\ifmmode\text{{\shavfont 𐑗}}\else{{\shavfont 𐑗}}\fi}
+\newunicodechar{𐑘}{\ifmmode\text{{\shavfont 𐑘}}\else{{\shavfont 𐑘}}\fi}
+\newunicodechar{𐑙}{\ifmmode\text{{\shavfont 𐑙}}\else{{\shavfont 𐑙}}\fi}
+\newunicodechar{𐑚}{\ifmmode\text{{\shavfont 𐑚}}\else{{\shavfont 𐑚}}\fi}
+\newunicodechar{𐑛}{\ifmmode\text{{\shavfont 𐑛}}\else{{\shavfont 𐑛}}\fi}
+\newunicodechar{𐑜}{\ifmmode\text{{\shavfont 𐑜}}\else{{\shavfont 𐑜}}\fi}
+\newunicodechar{𐑝}{\ifmmode\text{{\shavfont 𐑝}}\else{{\shavfont 𐑝}}\fi}
+\newunicodechar{𐑞}{\ifmmode\text{{\shavfont 𐑞}}\else{{\shavfont 𐑞}}\fi}
+\newunicodechar{𐑟}{\ifmmode\text{{\shavfont 𐑟}}\else{{\shavfont 𐑟}}\fi}
+\newunicodechar{𐑠}{\ifmmode\text{{\shavfont 𐑠}}\else{{\shavfont 𐑠}}\fi}
+\newunicodechar{𐑡}{\ifmmode\text{{\shavfont 𐑡}}\else{{\shavfont 𐑡}}\fi}
+\newunicodechar{𐑢}{\ifmmode\text{{\shavfont 𐑢}}\else{{\shavfont 𐑢}}\fi}
+\newunicodechar{𐑣}{\ifmmode\text{{\shavfont 𐑣}}\else{{\shavfont 𐑣}}\fi}
+\newunicodechar{𐑤}{\ifmmode\text{{\shavfont 𐑤}}\else{{\shavfont 𐑤}}\fi}
+\newunicodechar{𐑥}{\ifmmode\text{{\shavfont 𐑥}}\else{{\shavfont 𐑥}}\fi}
+\newunicodechar{𐑦}{\ifmmode\text{{\shavfont 𐑦}}\else{{\shavfont 𐑦}}\fi}
+\newunicodechar{𐑧}{\ifmmode\text{{\shavfont 𐑧}}\else{{\shavfont 𐑧}}\fi}
+\newunicodechar{𐑨}{\ifmmode\text{{\shavfont 𐑨}}\else{{\shavfont 𐑨}}\fi}
+\newunicodechar{𐑩}{\ifmmode\text{{\shavfont 𐑩}}\else{{\shavfont 𐑩}}\fi}
+\newunicodechar{𐑪}{\ifmmode\text{{\shavfont 𐑪}}\else{{\shavfont 𐑪}}\fi}
+\newunicodechar{𐑫}{\ifmmode\text{{\shavfont 𐑫}}\else{{\shavfont 𐑫}}\fi}
+\newunicodechar{𐑬}{\ifmmode\text{{\shavfont 𐑬}}\else{{\shavfont 𐑬}}\fi}
+\newunicodechar{𐑭}{\ifmmode\text{{\shavfont 𐑭}}\else{{\shavfont 𐑭}}\fi}
+\newunicodechar{𐑮}{\ifmmode\text{{\shavfont 𐑮}}\else{{\shavfont 𐑮}}\fi}
+\newunicodechar{𐑯}{\ifmmode\text{{\shavfont 𐑯}}\else{{\shavfont 𐑯}}\fi}
+\newunicodechar{𐑰}{\ifmmode\text{{\shavfont 𐑰}}\else{{\shavfont 𐑰}}\fi}
+\newunicodechar{𐑱}{\ifmmode\text{{\shavfont 𐑱}}\else{{\shavfont 𐑱}}\fi}
+\newunicodechar{𐑲}{\ifmmode\text{{\shavfont 𐑲}}\else{{\shavfont 𐑲}}\fi}
+\newunicodechar{𐑳}{\ifmmode\text{{\shavfont 𐑳}}\else{{\shavfont 𐑳}}\fi}
+\newunicodechar{𐑴}{\ifmmode\text{{\shavfont 𐑴}}\else{{\shavfont 𐑴}}\fi}
+\newunicodechar{𐑵}{\ifmmode\text{{\shavfont 𐑵}}\else{{\shavfont 𐑵}}\fi}
+\newunicodechar{𐑶}{\ifmmode\text{{\shavfont 𐑶}}\else{{\shavfont 𐑶}}\fi}
+\newunicodechar{𐑷}{\ifmmode\text{{\shavfont 𐑷}}\else{{\shavfont 𐑷}}\fi}
+\newunicodechar{𐑸}{\ifmmode\text{{\shavfont 𐑸}}\else{{\shavfont 𐑸}}\fi}
+\newunicodechar{𐑹}{\ifmmode\text{{\shavfont 𐑹}}\else{{\shavfont 𐑹}}\fi}
+\newunicodechar{𐑺}{\ifmmode\text{{\shavfont 𐑺}}\else{{\shavfont 𐑺}}\fi}
+\newunicodechar{𐑻}{\ifmmode\text{{\shavfont 𐑻}}\else{{\shavfont 𐑻}}\fi}
+\newunicodechar{𐑼}{\ifmmode\text{{\shavfont 𐑼}}\else{{\shavfont 𐑼}}\fi}
+\newunicodechar{𐑽}{\ifmmode\text{{\shavfont 𐑽}}\else{{\shavfont 𐑽}}\fi}
+\newunicodechar{𐑾}{\ifmmode\text{{\shavfont 𐑾}}\else{{\shavfont 𐑾}}\fi}
+\newunicodechar{𐑿}{\ifmmode\text{{\shavfont 𐑿}}\else{{\shavfont 𐑿}}\fi}
+\newunicodechar{Ř}{{\igprimfont \char"0158}}
+\newunicodechar{Ħ}{{\igprimfont \char"0126}}
+\newunicodechar{Ω}{\ifmmode\Omega\else{{\igprimfont \char"03A9}}\fi}
+\newunicodechar{Ð}{{\igprimfont \char"00D0}}
+\newunicodechar{Σ}{\ifmmode\Sigma\else{{\igprimfont \char"03A3}}\fi}
+\newunicodechar{Φ}{\ifmmode\Phi\else{{\igprimfont \char"03A6}}\fi}
+\newunicodechar{Ç}{{\igprimfont \char"00C7}}
+\newunicodechar{ƒ}{{\igprimfont \char"0192}}
+\newunicodechar{ɢ}{{\igprimfont \char"0262}}
+\newunicodechar{Γ}{\ifmmode\Gamma\else{{\igprimfont \char"0393}}\fi}
+\newunicodechar{Þ}{{\igprimfont \char"00DE}}
+\newunicodechar{⊙}{{\igprimfont \char"2299}}
+}
+\begin{document}
+
+\title{Excribe Vox}
+\date{\today}
+
+\maketitle
+
+Excribe Vox turns an IMASM word and a target-register description into a concrete morphism plan. It retains the carrier, its frame, the input and output of each operation, and the check that returns the transformed carrier to its source. Vox supplies the word's control-flow verdict and paired-region positions. The plan attaches those positions to the corresponding morphisms.
+
+The tool accepts the twelve canonical marks or their opcode names. It normalizes both forms to the same glyph word before calling Vox. Reports retain the original input beside that normalized word. Each inspection command therefore acts on the word actually described by the report.
+
+\subsection{Use}
+
+Run from the constellation root:
+
+\begin{lstlisting}[language=bash]
+python3 IMSCRIBr/excribe_vox.py '⊢in≻\top≺∋⊡⊣' anyon --offline --emit
+python3 IMSCRIBr/excribe_vox.py 'VINIT FSPLIT AFWD FFUSE TANCH' belnap --offline --json
+python3 IMSCRIBr/excribe_vox.py '⊢in≻∋⊣' sic --dry-run --llm local
+\end{lstlisting}
+
+The local definitions cover anyonic ququarts, four-level unitary carriers, Belnap FOUR, SIC frames, native numerals, executable substrates, and the IMASM edge register. \texttt{-\allowbreak -\allowbreak list-\allowbreak registers} shows their identifiers. A natural-language description selects a definition through specific register terms. An unknown description in offline mode retains one structural row per morphism and names the carrier bindings required for concrete excription.
+
+For a model excription, use \texttt{-\allowbreak -\allowbreak llm local} or an explicitly selected configured provider. Each returned row supplies its concrete process, rationale, input, output, and check. The response must contain a named register and exactly one complete row per token in index order. Incomplete or malformed responses produce an error. A requested provider is retained throughout provider resolution.
+
+\texttt{-\allowbreak -\allowbreak dry-\allowbreak run} constructs the complete translation prompt without contacting a model provider. \texttt{-\allowbreak -\allowbreak offline} uses the local definitions and Vox without provider discovery or calls. \texttt{-\allowbreak -\allowbreak emit} prints shell-quoted inspection commands for Vox's verdict and pairing questions. Those commands can be run directly. \texttt{-\allowbreak -\allowbreak context FILE}, repeated as needed, adds passages from local source files to the model prompt.
+
+\subsection{Carrier and return}
+
+The anyonic definition retains the complete five-channel fusion carrier of two encoded Fibonacci triples: four computational channels and the leakage channel. Its bindings name the fusion basis, signed Artin generators, target operator, source state, and numerical tolerance. Its return check evaluates the computational target, retains leakage and unitarity residuals, and applies the inverse braid to the source-bound state.
+
+The SIC definition retains the frame with its coordinates. Analysis uses the effects formed by dividing each projector by the dimension. Synthesis combines those coordinates with the dual operators. The return compares the reconstructed operator with the source while retaining the frame certificate. Belnap FOUR separately carries support and refutation for a named proposition, with evidence sources attached.
+
+Every row has an operation boundary. A split names differentiated arms, a fuse names reconstruction, an identity retains its carrier, a forward operation names its transformation, and a return names source comparison. Supporting and refuting evaluations retain their proposition and measurement policy. Fixation retains the result and its witnesses at the terminal boundary.
+
+The formal generator projection retains intervening operations between forward and inverse symbols. Its strand indices are supplied through the carrier bindings. The prepared five-channel operator supplies the physical braid computation.
+
+\subsection{Source context and instrument readings}
+
+The prompt retrieves bounded passages from the local Imscriber's Guide, Shavian specification, horn-torus context, anyonic membrane note, Universal Semiotics, Fibonacci Codex, and ququart membrane manuscript. Each passage carries its path, starting line, and text digest. Reports retain those source addresses. Additional context files use the same passage mechanism.
+
+Vox answers the supplied word's control-flow question. Its paired-region positions are parsed from its actual report, and their interiors are checked against the normalized input. Each target carrier has its own return check. The report carries that check beside the instrument reading, together with the concrete data needed to execute it.
+
+Failures of Vox, provider resolution, or model response validation return a nonzero process status with the available report. JSON reports support unknown registers. Opcode names and glyphs produce identical instrument input.
+
+\subsection{Verification}
+
+The regression suite exercises the actual Vox binary with transformed closure, identity, open-fork, and unpaired-fuse controls. It executes emitted inspection commands, checks opcode-name normalization, and exercises the unknown-register JSON path. Provider isolation and complete model-response validation use local fixtures. The offline and dry-run cases require no model service.
+
+\begin{lstlisting}[language=bash]
+cd IMSCRIBr
+python3 -m unittest -v test_excribe_vox
+\end{lstlisting}
+
+
+\end{document}
