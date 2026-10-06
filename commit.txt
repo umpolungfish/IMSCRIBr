@@ -1,4 +1,4 @@
-I use canonical symbols throughout the usage examples
+I retain executable repository paths in the symbol examples
 
-I replace opcode-name words with canonical symbol words and make the input
-guidance symbol-only while retaining the configured provider and model.
+I restore the IMSCRIBr directory spelling in command paths while retaining
+canonical symbol words throughout the usage examples.
