@@ -1,9 +1,5 @@
-I bind model morphism sequences to executable local adapters
+I add the Excribe Vox usage guide
 
-I require typed carrier bindings and exact token coverage, retry invalid
-bindings once, and derive executable descriptions from the validated adapter.
-I retain model explanations separately and reject invented execution commands.
-
-I add attributed FOUR evidence execution, resident native anyonic sequences,
-offline plan replay, source-return witnesses, and a runnable example.
-I verify eighteen controls and execute a live local-model evidence plan.
+I document local inspection, executable model plans, saved-plan replay,
+adapter bindings and limits, report witnesses, provider controls, and errors.
+I include copyable evidence and native anyonic examples.
