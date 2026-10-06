@@ -1,0 +1,86 @@
+{
+  "register": {
+    "name": "braid word to factor pair register",
+    "dim": "braid word tape and two factor slots"
+  },
+  "tokens": [
+    {
+      "i": 0,
+      "process": "create empty braid word",
+      "concrete": "allocate an empty braid-word tape and two empty factor slots",
+      "rationale": "VINIT is the 0→1 source boundary, so it creates the initial braid-word/factor-pair object."
+    },
+    {
+      "i": 1,
+      "process": "stamp identity braid e",
+      "concrete": "write the identity braid letter e into the current word slot",
+      "rationale": "IMSCRIB is the identity generator, so it stamps the neutral braid element without changing the word."
+    },
+    {
+      "i": 2,
+      "process": "append σ to braid word",
+      "concrete": "append the forward braid generator σ to the braid-word tape",
+      "rationale": "AFWD is the forward morphism, so it appends the forward braid generator σ."
+    },
+    {
+      "i": 3,
+      "process": "link σ into word chain",
+      "concrete": "concatenate the σ letter to the current braid-word chain",
+      "rationale": "CLINK composes/link, so it links the just-appended σ into the braid-word chain."
+    },
+    {
+      "i": 4,
+      "process": "commit σ as left factor",
+      "concrete": "write σ into the left factor slot and set a lock bit",
+      "rationale": "IFIX is irreversible commit, so it freezes the forward σ as the left factor."
+    },
+    {
+      "i": 5,
+      "process": "fork word into factor pair",
+      "concrete": "fork the current braid word into left and right factor branches",
+      "rationale": "FSPLIT is the only brancher, so it forks the current word into the two factor branches."
+    },
+    {
+      "i": 6,
+      "process": "deposit TRUE in left factor",
+      "concrete": "write a TRUE bit into the left factor slot",
+      "rationale": "EVALT deposits TRUE, so it writes the T bit into the left factor slot."
+    },
+    {
+      "i": 7,
+      "process": "deposit FALSE in right factor",
+      "concrete": "write a FALSE bit into the right factor slot",
+      "rationale": "EVALF deposits FALSE, so it writes the F bit into the right factor slot."
+    },
+    {
+      "i": 8,
+      "process": "store T/F in paradox slot",
+      "concrete": "write both T and F into a four-valued paradox slot",
+      "rationale": "ENGAGR holds a paradox, so it stores the T/F pair without resolving it."
+    },
+    {
+      "i": 9,
+      "process": "fuse factors into braid word",
+      "concrete": "merge the paradox slot and factor bits into the braid-word tape",
+      "rationale": "FFUSE is the only merger, so it fuses the held factor pair back into the braid word."
+    },
+    {
+      "i": 10,
+      "process": "append σ⁻¹ and flip truth",
+      "concrete": "append inverse braid generator σ⁻¹ and swap the T/F bits in the factor slots",
+      "rationale": "AREV is self-inverse reverse, so it appends σ⁻¹ and swaps the T/F truth bits."
+    },
+    {
+      "i": 11,
+      "process": "compose σσ⁻¹ into identity",
+      "concrete": "reduce the adjacent σ and σ⁻¹ letters to identity e in the braid-word tape",
+      "rationale": "CLINK composes/link, so it composes σ and σ⁻¹ into the identity braid."
+    },
+    {
+      "i": 12,
+      "process": "anchor identity T factor pair",
+      "concrete": "anchor the identity braid word and T verdict in the factor-pair sink",
+      "rationale": "TANCH is the terminal anchor, so it anchors the final identity/T state as the register sink."
+    }
+  ]
+}

@@ -1,0 +1,86 @@
+{
+  "register": {
+    "name": "semiprime braid-to-factor-pair register",
+    "dim": "braid word sigma*sigma^-1 to ordered semiprime factor pair (p,q)"
+  },
+  "tokens": [
+    {
+      "i": 0,
+      "process": "initialize source boundary",
+      "concrete": "set source bit S=1 and load semiprime N=pq plus braid word sigma*sigma^-1 into input register",
+      "rationale": "VINIT creates the 0-to-1 source boundary, here creating the semiprime braid input state."
+    },
+    {
+      "i": 1,
+      "process": "identity self-reference",
+      "concrete": "copy the input register through a 1:1 gate into the identity lane unchanged",
+      "rationale": "IMSCRIB is the neutral generator, so it performs no transformation on the braid/factor state."
+    },
+    {
+      "i": 2,
+      "process": "apply forward braid sigma",
+      "concrete": "route N through the sigma crossing multiplexer, setting the forward prefix and writing prime p into the first factor lane",
+      "rationale": "AFWD is the forward morphism, here realizing the forward braid generator sigma as the first factor."
+    },
+    {
+      "i": 3,
+      "process": "compose sigma with inverse",
+      "concrete": "link the first factor lane p to the pending inverse lane in the link register",
+      "rationale": "CLINK composes, here linking the forward braid letter to the inverse letter."
+    },
+    {
+      "i": 4,
+      "process": "irreversibly commit state",
+      "concrete": "latch the current p prefix into a nonvolatile commit register",
+      "rationale": "IFIX is irreversible commit, here fixing the forward braid prefix before branching."
+    },
+    {
+      "i": 5,
+      "process": "fork into truth branches",
+      "concrete": "duplicate the committed p state into two branch registers delta0 and delta1",
+      "rationale": "FSPLIT is the only brancher, here forking the state into evaluation branches."
+    },
+    {
+      "i": 6,
+      "process": "deposit TRUE",
+      "concrete": "write binary 1 into the true branch register for the sigma/p side",
+      "rationale": "EVALT deposits TRUE, here recording the forward branch as true."
+    },
+    {
+      "i": 7,
+      "process": "deposit FALSE",
+      "concrete": "write binary 0 into the false branch register for the sigma^-1/q side",
+      "rationale": "EVALF deposits FALSE, here recording the reverse branch as false."
+    },
+    {
+      "i": 8,
+      "process": "hold paradox",
+      "concrete": "hold both 1 and 0 in a dual-rail paradox register without resolving",
+      "rationale": "ENGAGR holds a Belnap diagonal, here suspending the true/false conflict."
+    },
+    {
+      "i": 9,
+      "process": "fuse branches",
+      "concrete": "merge the true, false, and paradox branch registers into one mu factor-pair register",
+      "rationale": "FFUSE is the only merger, here reuniting the forked branches."
+    },
+    {
+      "i": 10,
+      "process": "apply reverse braid sigma^-1",
+      "concrete": "route the committed state through the sigma^-1 inverse crossing multiplexer, clearing the forward prefix and writing prime q into the second factor lane",
+      "rationale": "AREV is the self-inverse clearing reverse, here realizing the inverse braid generator sigma^-1 as the second factor."
+    },
+    {
+      "i": 11,
+      "process": "compose sigma^-1 with terminal",
+      "concrete": "link the second factor lane q to the terminal anchor lane, completing the ordered pair (p,q)",
+      "rationale": "CLINK composes, here linking the inverse braid letter to the terminal output."
+    },
+    {
+      "i": 12,
+      "process": "terminal anchor",
+      "concrete": "anchor the ordered factor pair (p,q) and verdict bit T in the sink register, leaving the out-port enabled",
+      "rationale": "TANCH is the terminal anchor, here fixing the true factor-pair output as the living end."
+    }
+  ]
+}

@@ -21,9 +21,9 @@ Usage:
 
   python3 excribe_vox.py '⊢∈⊞⊙≻≺⋈⊤⊥∋⊡⊣' 'a 4-level anyonic ququart with Fibonacci anyon braiding'
 """
-import sys, os, json, re, hashlib, argparse, subprocess
+import sys, os, json, re, hashlib, argparse, subprocess, threading, time, itertools
 from dataclasses import dataclass
-from typing import List, Dict, Optional, Tuple
+from typing import List, Dict, Optional, Tuple, Callable
 
 HERE = "/home/mrnob0dy666/imsgct/IMSCRIBr"
 VOX_BIN = "/home/mrnob0dy666/imsgct/Vox/target/release/vox"
@@ -62,6 +62,96 @@ GLYPHS = {v: k for k, v in {
     "⊤": "EVALT", "∈": "FSPLIT", "∋": "FFUSE", "⊙": "IMSCRIB", "⊥": "EVALF",
     "⊞": "ENGAGR", "⊡": "IFIX"}.items()}
 
+# ── spinner ────────────────────────────────────────────────────────
+class Spinner:
+    """Threaded terminal spinner. Writes an animated status line to stderr
+    with a running elapsed-time counter. Auto-disables when stderr is not a
+    TTY (pipes, redirections, CI). Safe to nest; each instance owns its own
+    thread and clears its own line on stop."""
+    FRAMES = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
+    FRAME_INTERVAL = 0.08
+    CLEAR_WIDTH = 100
+    FINAL_MIN_SECS = 0.5
+
+    def __init__(self, label: str = "working", stream=None, enabled: Optional[bool] = None):
+        self.label = label
+        self.stream = stream if stream is not None else sys.stderr
+        if enabled is None:
+            try:
+                enabled = self.stream.isatty()
+            except Exception:
+                enabled = False
+        self.enabled = enabled
+        self._stop = threading.Event()
+        self._thread: Optional[threading.Thread] = None
+        self._start_t: Optional[float] = None
+        self._lock = threading.Lock()
+
+    def _render(self, frame: str) -> None:
+        elapsed = time.monotonic() - self._start_t if self._start_t else 0.0
+        line = f"\r  {frame} {self.label} ({elapsed:.1f}s)"
+        with self._lock:
+            try:
+                self.stream.write(line)
+                self.stream.flush()
+            except Exception:
+                pass
+
+    def _spin(self) -> None:
+        for frame in itertools.cycle(self.FRAMES):
+            if self._stop.is_set():
+                return
+            self._render(frame)
+            self._stop.wait(self.FRAME_INTERVAL)
+
+    def start(self) -> "Spinner":
+        if not self.enabled:
+            return self
+        self._start_t = time.monotonic()
+        self._stop.clear()
+        self._thread = threading.Thread(target=self._spin, daemon=True)
+        self._thread.start()
+        return self
+
+    def _clear_line(self) -> None:
+        with self._lock:
+            try:
+                self.stream.write("\r" + " " * self.CLEAR_WIDTH + "\r")
+                self.stream.flush()
+            except Exception:
+                pass
+
+    def stop(self, final: Optional[str] = None) -> None:
+        if not self.enabled:
+            return
+        self._stop.set()
+        if self._thread is not None:
+            self._thread.join(timeout=0.5)
+            self._thread = None
+        elapsed = time.monotonic() - self._start_t if self._start_t else 0.0
+        self._clear_line()
+        if final and elapsed >= self.FINAL_MIN_SECS:
+            with self._lock:
+                try:
+                    self.stream.write(f"  {final} ({elapsed:.1f}s)\n")
+                    self.stream.flush()
+                except Exception:
+                    pass
+
+    def __enter__(self) -> "Spinner":
+        return self.start()
+
+    def __exit__(self, *exc) -> bool:
+        self.stop()
+        return False
+
+
+def _short_model(name: str) -> str:
+    if not name:
+        return ""
+    return name.rsplit("/", 1)[-1] if "/" in name else name
+
+
 # ── the real judge (Vox) ──────────────────────────────────────────
 def judge(word: str) -> Tuple[Optional[str], str]:
     """Call Vox — the substrate judge. Returns (verdict_letter, raw)."""
@@ -84,14 +174,13 @@ def pair_report(word: str) -> str:
     except Exception:
         return ""
 
-# ── runtime catalog: the project architectures (real command surfaces) ──
-# ── LLM Provider Backend (mirrors excriber_v3; local llama.cpp first) ──
+# ── LLM Provider Backend ──────────────────────────────────────────
 
 try:
-    import requests as _requests
-    _HAVE_REQUESTS = True
+    import httpx
+    _HAVE_HTTPX = True
 except ImportError:
-    _HAVE_REQUESTS = False
+    _HAVE_HTTPX = False
 
 LLM_CACHE_DIR = HERE + "/.exv_cache"
 
@@ -120,25 +209,61 @@ PROVIDER_CONFIG = {
     },
 }
 
-_PROVIDER_CHAIN = ["local", "openrouter", "deepseek"]   # local first, like the operator itself
+_PROVIDER_CHAIN = ["local", "openrouter", "deepseek"]
+
+# Reasoning / thinking blocks we strip from every model response.
+_THINK_RE = re.compile(
+    r"<(?:think|thinking|reasoning)>.*?</(?:think|thinking|reasoning)>",
+    re.DOTALL | re.IGNORECASE,
+)
+
+# Qwen3.8 chat-template controls.
+QWEN_ENABLE_THINKING = True
+QWEN_REASONING_EFFORT = "low"
+
+
+def _strip_thinking(text: str) -> str:
+    if not text:
+        return text
+    return _THINK_RE.sub("", text).strip()
+
+
+def _http_get_json(url: str, timeout: float = 3.0) -> Optional[dict]:
+    if not _HAVE_HTTPX:
+        return None
+    try:
+        with httpx.Client(timeout=httpx.Timeout(timeout, connect=min(timeout, 3.0))) as client:
+            r = client.get(url)
+            if r.status_code == 200:
+                return r.json()
+    except Exception:
+        return None
+    return None
 
 
 def local_server_up(cfg) -> bool:
-    if not _HAVE_REQUESTS:
-        return False
-    try:
-        r = _requests.get(cfg["models_url"], timeout=2)
-        return r.status_code == 200
-    except Exception:
-        return False
+    return _http_get_json(cfg["models_url"], timeout=2.0) is not None
+
+
+def _list_local_models(models_url: str) -> List[str]:
+    data = _http_get_json(models_url, timeout=2.0)
+    if not isinstance(data, dict):
+        return []
+    items = data.get("data") or data.get("models") or []
+    names: List[str] = []
+    for it in items:
+        if isinstance(it, dict):
+            name = it.get("id") or it.get("name")
+            if name:
+                names.append(name)
+        elif isinstance(it, str):
+            names.append(it)
+    return names
 
 
 def resolve_provider_model(provider_arg=None, model_arg=None, api_key_arg=None):
-    """Resolution chain (same shape as excriber_v3):
-    provider: explicit arg > IG_PROVIDER env > first available in chain (local needs no key, only a live server)
-    model:    explicit --model > IG_MODEL env > provider default (local: live model name from /v1/models)"""
     ig_provider = os.environ.get("IG_PROVIDER", "").strip().lower()
-    candidates = []
+    candidates: List[str] = []
     if provider_arg:
         candidates.append(provider_arg)
     if ig_provider and ig_provider != provider_arg:
@@ -146,6 +271,7 @@ def resolve_provider_model(provider_arg=None, model_arg=None, api_key_arg=None):
     candidates.extend(_PROVIDER_CHAIN)
     seen = set()
     candidates = [c for c in candidates if not (c in seen or seen.add(c))]
+
     provider = None
     for c in candidates:
         cfg = PROVIDER_CONFIG.get(c)
@@ -163,6 +289,7 @@ def resolve_provider_model(provider_arg=None, model_arg=None, api_key_arg=None):
         raise ValueError(
             f"No working provider. Tried: {candidates}. "
             f"Start llama-server (llama.cpp) on :8000 or set OPENROUTER_API_KEY / DEEPSEEK_API_KEY.")
+
     cfg = PROVIDER_CONFIG[provider]
     if model_arg:
         model = model_arg
@@ -170,29 +297,26 @@ def resolve_provider_model(provider_arg=None, model_arg=None, api_key_arg=None):
         model = os.environ["IG_MODEL"].strip()
     else:
         model = cfg["default_model"]
-        if provider == "local" and _HAVE_REQUESTS:
-            try:
-                names = _requests.get(cfg["models_url"], timeout=2).json().get("models") or []
-                if names and names[0].get("name"):
-                    model = names[0]["name"]
-            except Exception:
-                pass
+        if provider == "local":
+            names = _list_local_models(cfg["models_url"])
+            if names:
+                model = names[0]
     api_key = api_key_arg or os.environ.get(cfg["env_key"])
     return provider, model, api_key
 
 
 class LlmBackend:
-    """Synchronous LLM backend — same shape as excriber_v3's: sha256 cache,
-    single-turn chat completion, thinking stripping, error → marker string.
-    Supports streaming via optional on_token callback."""
+    """Synchronous LLM backend — sha256 cache, single-turn chat completion,
+    thinking stripping, error → marker string. Supports streaming via an
+    optional on_token callback. Sends Qwen3.8 chat_template_kwargs."""
 
     def __init__(self, provider: str = "local", model: Optional[str] = None,
                  api_key: Optional[str] = None):
         cfg = PROVIDER_CONFIG.get(provider)
         if not cfg:
             raise ValueError(f"Unknown provider: {provider}. Use local, deepseek or openrouter.")
-        if not _HAVE_REQUESTS:
-            raise ValueError("requests library required for LLM backend. pip install requests")
+        if not _HAVE_HTTPX:
+            raise ValueError("httpx library required for LLM backend. pip install httpx")
         self.provider = provider
         self.base_url = cfg["base_url"]
         self.model = model or cfg["default_model"]
@@ -207,71 +331,117 @@ class LlmBackend:
 
     def query(self, system: str, prompt: str, stream: bool = False,
               on_token: Optional[Callable[[str], None]] = None) -> str:
+        if not _HAVE_HTTPX:
+            raise ValueError("httpx library required for LLM backend. pip install httpx")
         os.makedirs(LLM_CACHE_DIR, exist_ok=True)
         cache_path = self.cache_path_for(system, prompt)
+
         if os.path.exists(cache_path):
-            return open(cache_path).read()
+            try:
+                cached = open(cache_path, encoding="utf-8").read()
+            except Exception:
+                cached = ""
+            if cached:
+                if stream and on_token:
+                    on_token(cached)
+                return cached
+
         headers = {"Content-Type": "application/json"}
         if self.api_key:
             headers["Authorization"] = f"Bearer {self.api_key}"
+        if stream:
+            headers["Accept"] = "text/event-stream"
+
         messages = []
         if system:
             messages.append({"role": "system", "content": system})
         messages.append({"role": "user", "content": prompt})
-        data = {"model": self.model, "messages": messages,
-                "temperature": self.temperature, "max_tokens": self.max_tokens,
-                "stream": stream}
+
+        data = {
+            "model": self.model,
+            "messages": messages,
+            "temperature": self.temperature,
+            "max_tokens": self.max_tokens,
+            "chat_template_kwargs": {
+                "enable_thinking": QWEN_ENABLE_THINKING,
+                "reasoning_effort": QWEN_REASONING_EFFORT,
+            },
+        }
+        if stream:
+            data["stream"] = True
+
+        content = ""
         try:
-            resp = _requests.post(self.base_url, headers=headers, json=data,
-                                  timeout=300, stream=stream)
-            resp.raise_for_status()
-            if stream:
-                content_parts = []
-                for line in resp.iter_lines():
-                    if not line:
-                        continue
-                    line = line.decode("utf-8") if isinstance(line, bytes) else line
-                    if line.startswith("data: "):
-                        line = line[6:]
-                    if line.strip() == "[DONE]":
-                        break
+            with httpx.Client(timeout=httpx.Timeout(600.0, connect=15.0)) as client:
+                if stream:
+                    content_parts: List[str] = []
+                    with client.stream("POST", self.base_url,
+                                       headers=headers, json=data) as resp:
+                        resp.raise_for_status()
+                        for raw_line in resp.iter_lines():
+                            if raw_line is None:
+                                continue
+                            line = raw_line.strip()
+                            if not line:
+                                continue
+                            if line.startswith("data:"):
+                                payload = line[5:].strip()
+                            elif line.startswith("{"):
+                                payload = line
+                            else:
+                                continue
+                            if payload == "[DONE]":
+                                break
+                            try:
+                                evt = json.loads(payload)
+                            except json.JSONDecodeError:
+                                continue
+                            if isinstance(evt, dict) and evt.get("error"):
+                                raise ValueError(f"stream error: {evt['error']}")
+                            for choice in (evt.get("choices") or []):
+                                delta = choice.get("delta") or {}
+                                reasoning = delta.get("reasoning_content")
+                                if reasoning and on_token:
+                                    on_token(reasoning)
+                                piece = delta.get("content")
+                                if not piece:
+                                    piece = (choice.get("message") or {}).get("content")
+                                if piece:
+                                    content_parts.append(piece)
+                                    if on_token:
+                                        on_token(piece)
+                    content = "".join(content_parts)
+                    if not content:
+                        raise ValueError("stream produced no content")
+                else:
+                    resp = client.post(self.base_url, headers=headers, json=data)
+                    resp.raise_for_status()
+                    full = resp.json()
                     try:
-                        chunk = json.loads(line)
-                        delta = chunk.get("choices", [{}])[0].get("delta", {})
-                        token = delta.get("content", "")
-                        if token:
-                            content_parts.append(token)
-                            if on_token:
-                                on_token(token)
-                    except json.JSONDecodeError:
-                        continue
-                content = "".join(content_parts)
-            else:
-                content = resp.json()["choices"][0]["message"]["content"]
-            if content is None:
-                finish = resp.json()["choices"][0].get("finish_reason", "unknown") if not stream else "unknown"
-                raise ValueError(f"API returned null content (finish={finish})")
-            content = re.sub(r"thinking.*?/thinking", "", content, flags=re.DOTALL).strip()
-            open(cache_path, "w").write(content)
-            return content
+                        content = full["choices"][0]["message"]["content"]
+                    except (KeyError, IndexError, TypeError):
+                        raise ValueError(f"malformed response: {str(full)[:200]!r}")
+                    if content is None:
+                        finish = full["choices"][0].get("finish_reason", "unknown")
+                        raise ValueError(f"API returned null content (finish_reason={finish!r})")
         except Exception as e:
             return f"[LLM ERROR: {e}]"
 
+        content = _strip_thinking(content)
+        if content and not content.startswith("[LLM ERROR"):
+            try:
+                with open(cache_path, "w", encoding="utf-8") as fh:
+                    fh.write(content)
+            except Exception:
+                pass
+        return content
 
-def extract_json_object(text):
-    """Robust JSON object recovery: direct parse, fence strip, then a
-    string-aware balanced-bracket scan; returns the last object that has a
-    'tokens' key, else the last parseable object, else None."""
-    if not text:
-        return None
-    text = text.strip()
-    if text.startswith("```"):
-        text = re.sub(r"^```[a-zA-Z]*\s*|\s*```$", "", text, flags=re.MULTILINE).strip()
-    try:
-        return json.loads(text)
-    except Exception:
-        pass
-    found = []
+
+# ── JSON extraction with repair ────────────────────────────────────
+
+def _scan_complete_objects(text: str) -> List[dict]:
+    """Return every complete JSON object found by a string-aware balanced scan."""
+    found: List[dict] = []
     n = len(text)
     i = 0
     while True:
@@ -297,6 +467,82 @@ def extract_json_object(text):
                             pass
                         break
         i += 1
+    return found
+
+
+def _repair_truncated_json(text: str) -> Optional[dict]:
+    """If the text starts with `{` but the brackets are unbalanced (typical
+    of a stream that ended one or two tokens early), close the open string,
+    array, and object brackets and try to parse the result."""
+    start = text.find("{")
+    if start < 0:
+        return None
+    s = text[start:]
+    depth_obj = 0
+    depth_arr = 0
+    in_str = False
+    esc = False
+    for c in s:
+        if in_str:
+            if esc:
+                esc = False
+            elif c == "\\":
+                esc = True
+            elif c == '"':
+                in_str = False
+        else:
+            if c == '"':
+                in_str = True
+            elif c == "{":
+                depth_obj += 1
+            elif c == "}":
+                depth_obj -= 1
+            elif c == "[":
+                depth_arr += 1
+            elif c == "]":
+                depth_arr -= 1
+    if depth_obj <= 0 and depth_arr <= 0 and not in_str:
+        # Nothing to repair — the text was already balanced but not parseable.
+        return None
+    repaired = s
+    if in_str:
+        repaired += '"'
+    repaired += "]" * max(0, depth_arr)
+    repaired += "}" * max(0, depth_obj)
+    try:
+        parsed = json.loads(repaired)
+    except Exception:
+        return None
+    if isinstance(parsed, dict):
+        return parsed
+    return None
+
+
+def extract_json_object(text):
+    """Robust JSON object recovery:
+       1. direct parse,
+       2. markdown fence strip,
+       3. string-aware balanced-bracket scan,
+       4. truncation repair (close unbalanced brackets + open string).
+    Returns the last object that has a 'tokens' key, else the last parseable
+    object, else None."""
+    if not text:
+        return None
+    text = text.strip()
+    if text.startswith("```"):
+        text = re.sub(r"^```[a-zA-Z]*\s*|\s*```$", "", text, flags=re.MULTILINE).strip()
+    try:
+        obj = json.loads(text)
+        if isinstance(obj, dict):
+            return obj
+    except Exception:
+        pass
+
+    found = _scan_complete_objects(text)
+    if not found:
+        repaired = _repair_truncated_json(text)
+        if repaired is not None:
+            found.append(repaired)
     if not found:
         return None
     for o in reversed(found):
@@ -330,50 +576,81 @@ LLM_SYSTEM = ("You are the IMASM→register morphism translator. An IMASM word i
 '"concrete": string (the concrete operation in the register), "rationale": string (one sentence: why this '
 'process is the isomorphic image of that opcode)}]}. tokens must cover every token index in order. '
 "Be concrete to the substrate: name the actual physical/computational operation, not abstractions. "
-"The register name/dim must be synthesized from the natural-language description, not from a catalog.")
+"The register name/dim must be synthesized from the natural-language description, not from a catalog. "
+"Output the complete JSON object and close every brace before stopping.")
 
 
 def llm_translate(ops, glyphs, word, verdict, register_text, reg, generic, braidword,
-                  provider, model, dry_run=False, stream=False):
+                  braid_writhe,
+                  provider, model, dry_run=False, stream=False, api_key=None):
     """Query the LLM for per-token isomorphic processes and register synthesis.
-    Returns (rows_or_None, meta). rows is None on LLM failure → caller keeps the canonical table."""
+    Returns (rows_or_None, meta)."""
     lines = [f"IMASM word: {word}  ({len(ops)} tokens)",
-             f"Judge (vox verdict): {verdict or 'UNJUDGED'}",
-             f"Braid word assembled from AFWD/AREV/CLINK: {braidword}",
-             f"Target register (natural language description): {register_text}"]
+             f"Judge (vox verdict): {verdict or 'UNJUDGED'}"]
+    if braidword and braidword != "∅":
+        if braidword == "e":
+            lines.append("Braid word (reduced, AFWD=σ AREV=σ⁻¹): e  "
+                         "(the braid generators cancel to the identity; writhe = 0)")
+        else:
+            wstr = f"{braid_writhe:+d}" if braid_writhe is not None else "?"
+            lines.append(f"Braid word (reduced, AFWD=σ AREV=σ⁻¹): {braidword}  (writhe = {wstr})")
+    lines.append(f"Target register (natural language description): {register_text}")
     if not generic:
         lines.append(f"Matched built-in register: {reg.name} — {reg.dim}")
     lines.append("Tokens (index: mark opcode — structural action):")
     for i, (g, op) in enumerate(zip(glyphs, ops)):
         lines.append(f"  {i}: {g} {op} — {STRUCT_ACTIONS.get(op, '')}")
     prompt = "\n".join(lines) + "\nProduce the JSON."
+
     if dry_run:
         return None, {"provider": provider, "model": model, "dry_run": True,
                       "prompt": prompt, "system": LLM_SYSTEM}
-    be = LlmBackend(provider, model)
+
+    be = LlmBackend(provider, model, api_key)
+    mshort = _short_model(model)
+
     if stream:
+        spinner = Spinner(f"waiting for {provider}/{mshort} first token").start()
+        first = [True]
+
         def _emit(piece: str) -> None:
+            if first[0]:
+                spinner.stop(final=f"streaming from {provider}/{mshort}")
+                first[0] = False
             sys.stderr.write(piece)
             sys.stderr.flush()
-        print(f"── streaming from {provider} ({model}) ──", file=sys.stderr, flush=True)
+
         raw = be.query(LLM_SYSTEM, prompt, stream=True, on_token=_emit)
-        print("\n── stream complete ──", file=sys.stderr, flush=True)
+        if first[0]:
+            spinner.stop(final=f"{provider}/{mshort} produced no tokens")
+        else:
+            sys.stderr.write("\n── stream complete ──\n")
+            sys.stderr.flush()
     else:
+        spinner = Spinner(f"querying {provider}/{mshort} (prefill + decode)").start()
         raw = be.query(LLM_SYSTEM, prompt)
+        if raw.startswith("[LLM ERROR"):
+            spinner.stop(final=f"{provider}/{mshort} returned an error")
+        else:
+            spinner.stop(final=f"{provider}/{mshort} responded")
+
     if raw.startswith("[LLM ERROR"):
         return None, {"provider": provider, "model": model, "error": raw}
-    import re as _re
-    _topen, _tclose = "\u003Cthink", "\u003C/think\u003E"
-    stripped = _re.sub(_topen + r".*" + _tclose, "", raw, flags=_re.DOTALL).strip()
+
+    stripped = _strip_thinking(raw)
     obj = extract_json_object(stripped) or (extract_json_object(raw) if raw.strip() else None)
+
     if obj is None or not isinstance(obj, dict) or "tokens" not in obj:
         try:
             os.remove(be.cache_path_for(LLM_SYSTEM, prompt))
         except Exception:
             pass
         head = (stripped or raw)[:120].replace("\n", " ")
+        tail = (stripped or raw)[-80:].replace("\n", " ")
         return None, {"provider": provider, "model": model,
-                      "error": f"no usable JSON in LLM response (head: {head!r})"}
+                      "error": f"no usable JSON in LLM response "
+                               f"(head: {head!r} … tail: {tail!r})"}
+
     toks = obj.get("tokens", [])
     rows = []
     for i, (g, op) in enumerate(zip(glyphs, ops)):
@@ -390,11 +667,13 @@ def llm_translate(ops, glyphs, word, verdict, register_text, reg, generic, braid
                      "concrete": str(t["concrete"]).strip(),
                      "rationale": str(t.get("rationale", "")).strip(),
                      "command": "—", "exact": False, "source": "llm"})
+
     meta = {"provider": provider, "model": model}
     if generic or "register" in obj:
         meta["register"] = {"name": str(obj.get("register", {}).get("name", register_text)),
                             "dim": str(obj.get("register", {}).get("dim", "synthesized by LLM"))}
     return rows, meta
+
 
 RUNTIMES = {
     "gmonados": {
@@ -432,8 +711,9 @@ class Register:
     dim: str
     desc: str
     keywords: List[str]
-    runtime: str                     # default runtime id
-    ops: Dict[str, Tuple]             # opcode -> (process, concrete, rationale, command, exact)
+    runtime: str
+    ops: Dict[str, Tuple]
+
 # ── the register catalog ───────────────────────────────────────────
 
 ANYONIC = Register(
@@ -499,8 +779,7 @@ ANYONIC = Register(
 BELNAP = Register(
     rid="belnap", name="Belnap FOUR register",
     dim="B4 = {T, F, t, f} with the B and N diagonals",
-    desc="Paraconsistent 4-valued register; the contradiction is held, not "
-         "resolved. Lane: ParaVM.",
+    desc="Paraconsistent 4-valued register; the contradiction is held, not resolved. Lane: ParaVM.",
     keywords=["belnap", "four", "dialethe", "paraconsistent", "contradiction",
               "b4", "multilattice", "4-valued", "belief", "truth",
               "register", "four-valued"],
@@ -531,11 +810,11 @@ BELNAP = Register(
         "TANCH": ("lattice dump", "release the register; the out-port may stay open",
                   "TANCH anchors", "para lattice dump", False),
     })
+
 QUQUART = Register(
     rid="ququart", name="ququart (d=4 unitary)",
     dim="a 4-level unitary system",
-    desc="Generic 4-level computation without anyonic statistics. "
-         "Lane: G-mOMonadOS Quantum / qft.",
+    desc="Generic 4-level computation without anyonic statistics. Lane: G-mOMonadOS Quantum / qft.",
     keywords=["ququart", "qudit", "d=4", "quaternary", "4-level", "unitary",
               "unitary-system", "d=4-system", "system"],
     runtime="gmonados",
@@ -569,8 +848,8 @@ QUQUART = Register(
 SIC = Register(
     rid="sic", name="SIC-POVM frame register",
     dim="SIC-POVM in the frame's dimension",
-    desc="Measurement-frame computation: fiducial rays, dual frames, "
-         "DST walks. Lane: G-mOMonadOS Quantum / sic · d12 · d2048 · dqi.",
+    desc="Measurement-frame computation: fiducial rays, dual frames, DST walks. "
+         "Lane: G-mOMonadOS Quantum / sic · d12 · d2048 · dqi.",
     keywords=["sic", "povm", "fiducial", "frame", "measurement",
               "symmetric", "informationally", "complete", "povm-frame"],
     runtime="gmonados",
@@ -604,8 +883,7 @@ SIC = Register(
 NUMERAL = Register(
     rid="numeral", name="native numeral register",
     dim="the number as its own word ⊢(≻⋈∈bit∋)*⊙⊡⊣",
-    desc="Arithmetic on the word's own bits — no decimal string kept alongside. "
-         "Lane: native numeral.",
+    desc="Arithmetic on the word's own bits — no decimal string kept alongside. Lane: native numeral.",
     keywords=["numeral", "number", "arithmetic", "integer", "factor", "prime",
               "encode", "decode", "bits", "gcd", "native", "register"],
     runtime="native",
@@ -635,11 +913,11 @@ NUMERAL = Register(
         "TANCH": ("close ⊙⊡⊣", "close the word with ⊙⊡⊣",
                   "TANCH anchors", "native_numeral decode <word>", True),
     })
+
 SUBSTRATE = Register(
     rid="substrate", name="real substrate (binary / EVM / WASM / .pyc)",
     dim="compiled code as a word",
-    desc="The control-flow shape of real code, lifted by Vox. "
-         "Lane: Vox.",
+    desc="The control-flow shape of real code, lifted by Vox. Lane: Vox.",
     keywords=["binary", "substrate", "evm", "wasm", "pyc", "x86", "lift",
               "code", "machine", "function", "compiled", "bytecode", "control-flow",
               "real", "binary-code", "evm-bytecode"],
@@ -709,12 +987,8 @@ IMAS = Register(
 
 REGISTERS = [ANYONIC, QUQUART, BELNAP, SIC, NUMERAL, SUBSTRATE, IMAS]
 
+
 def match_register(text: str) -> Tuple[Optional[Register], int]:
-    """Match the register string against the catalog by keyword score.
-    Requires strong match (>= 6 points = 3+ specific keywords) for built-in catalog.
-    Uses word-boundary matching to avoid substring false positives.
-    Lower scores fall through to LLM synthesis."""
-    import re
     t = text.lower()
     words = set(re.findall(r'\b\w+\b', t))
     best, score = None, 0
@@ -722,52 +996,89 @@ def match_register(text: str) -> Tuple[Optional[Register], int]:
         s = sum(2 for k in reg.keywords if k in words)
         if s > score:
             best, score = reg, s
-    if score >= 6:  # require strong match (3+ specific keywords) for built-in
+    if score >= 6:
         return best, score
     return None, 0
-# ── translation engine ─────────────────────────────────────────────
+
+# ── braid assembly (reduced) ──────────────────────────────────────
+
+BRAID_KEYWORDS = ("braid", "anyon", "anyonic", "fibonacci", "nonabelian",
+                  "non-abelian", "fusion", "ττ")
+
+def _register_has_braid(reg, use_builtin: bool, register_text: str) -> bool:
+    if use_builtin and reg is not None and getattr(reg, "rid", None) == "anyon":
+        return True
+    t = (register_text or "").lower()
+    return any(k in t for k in BRAID_KEYWORDS)
 
 def assemble_braid(ops: List[str]) -> str:
-    """Braid word from the braid tokens: AFWD → σ, AREV → σ⁻¹; CLINK composes
-    the parts into one word. ∅ when no braid tokens are present."""
-    parts, composed = [], False
+    """Reduced braid word. AFWD → σ, AREV → σ⁻¹; adjacent inverse pairs cancel
+    (σᵢ σᵢ⁻¹ = σᵢ⁻¹ σᵢ = e). Returns:
+      "∅"  when the word contains no AFWD/AREV tokens at all
+      "e"  when those tokens reduce to the identity braid
+      otherwise the reduced generator sequence joined with "·"."""
+    had = False
+    stack: List[str] = []
     for op in ops:
         if op == "AFWD":
-            parts.append("σ")
+            tok = "σ"; had = True
         elif op == "AREV":
-            parts.append("σ⁻¹")
-        elif op == "CLINK":
-            composed = True
-    if not parts:
+            tok = "σ⁻¹"; had = True
+        else:
+            continue
+        if stack and ((stack[-1] == "σ" and tok == "σ⁻¹")
+                      or (stack[-1] == "σ⁻¹" and tok == "σ")):
+            stack.pop()
+        else:
+            stack.append(tok)
+    if not had:
         return "∅"
-    return "·".join(parts) if composed else "".join(parts)
+    if not stack:
+        return "e"
+    return "·".join(stack)
+
+def braid_writhe(braidword: str) -> Optional[int]:
+    if not braidword or braidword == "∅":
+        return None
+    if braidword == "e":
+        return 0
+    w = 0
+    for tok in braidword.split("·"):
+        if tok == "σ":
+            w += 1
+        elif tok == "σ⁻¹":
+            w -= 1
+    return w
+
+# ── translation engine ─────────────────────────────────────────────
 
 def translate(word: str, register_text: str, runtime_arg: str = "auto",
               llm_arg: Optional[str] = None, model_arg: Optional[str] = None,
-              dry_run: bool = False) -> dict:
-    """Full translation: parse → judge (real judge) → NLP register →
-    per-token isomorphic processes → runtime plan. The LLM synthesizes the
-    register and exact isomorphic computations for each morphism from the
-    natural-language register description."""
+              api_key_arg: Optional[str] = None,
+              dry_run: bool = False, stream: bool = False) -> dict:
     ops = parse_word(word)
     glyphs = [GLYPHS[op] for op in ops]
-    
-    # Try built-in catalog first
+
     reg, score = match_register(register_text)
     use_builtin = reg is not None and score > 0
-    
+
     if use_builtin:
         generic = False
         runtime = reg.runtime if runtime_arg == "auto" else runtime_arg
     else:
         generic = True
         runtime = runtime_arg if runtime_arg != "auto" else "gmonados"
-        reg = QUQUART  # placeholder for type consistency
-    
-    v, raw = judge(word)
-    pr = pair_report(word)
-    braidword = assemble_braid(ops)
-    
+        reg = QUQUART
+
+    with Spinner("judging word with vox (verdict + pairs)"):
+        v, raw = judge(word)
+        pr = pair_report(word)
+
+    _braid_full = assemble_braid(ops)
+    braid_meaningful = _register_has_braid(reg, use_builtin, register_text)
+    braidword = _braid_full if braid_meaningful else "∅"
+    bw = braid_writhe(braidword)
+
     rows = []
     if use_builtin:
         for i, (glyph, op) in enumerate(zip(glyphs, ops)):
@@ -778,40 +1089,49 @@ def translate(word: str, register_text: str, runtime_arg: str = "auto",
                              "rationale": "", "command": "—", "exact": False, "source": "table"})
                 continue
             process, concrete, rationale, cmd, exact = p
-            cmd = cmd.replace("<braidword>", braidword).replace("<composed>", braidword)
+            if braid_meaningful:
+                cmd = cmd.replace("<braidword>", braidword).replace("<composed>", braidword)
+            else:
+                cmd = cmd.replace("<braidword>", "∅").replace("<composed>", "∅")
             rows.append({"i": i, "glyph": glyph, "opcode": op, "process": process,
                          "concrete": concrete, "rationale": rationale, "command": cmd,
                          "exact": exact, "source": "table"})
-    
-    result = {"word": word, "ops": ops, "glyphs": glyphs, "reg": reg if use_builtin else None,
+
+    result = {"word": word, "ops": ops, "glyphs": glyphs,
+              "reg": reg if use_builtin else None,
               "generic": not use_builtin, "register_text": register_text, "runtime": runtime,
-              "verdict": v, "judge_raw": raw, "pairs": pr, "braidword": braidword,
+              "verdict": v, "judge_raw": raw, "pairs": pr,
+              "braidword": braidword, "braid_writhe": bw,
+              "braid_meaningful": braid_meaningful,
               "rows": rows, "llm_meta": None, "llm_register": None}
-    
-    # Always use LLM for NLP register synthesis (or when --llm flag set)
+
     should_llm = (llm_arg is not None) or (os.environ.get("IG_LLM", "").strip() == "1") or (not use_builtin)
-    
+
     if should_llm:
         prov = None if llm_arg in (None, "auto") else llm_arg
         try:
-            provider, model, api_key = resolve_provider_model(prov, model_arg, None)
+            with Spinner("resolving LLM provider"):
+                provider, model, api_key = resolve_provider_model(prov, model_arg, api_key_arg)
         except ValueError as e:
             result["llm_meta"] = {"provider": None, "model": None, "error": str(e)}
             return result
-        
+
         if dry_run:
             _rows, meta = llm_translate(ops, glyphs, word, v, register_text, reg,
-                                        not use_builtin, braidword, provider, model, dry_run=True)
+                                        not use_builtin, braidword, bw,
+                                        provider, model,
+                                        dry_run=True, api_key=api_key)
             result["llm_meta"] = meta
         else:
             _rows, meta = llm_translate(ops, glyphs, word, v, register_text, reg,
-                                        not use_builtin, braidword, provider, model)
+                                        not use_builtin, braidword, bw,
+                                        provider, model,
+                                        stream=stream, api_key=api_key)
             result["llm_meta"] = meta
             if _rows is not None:
                 result["rows"] = _rows
                 if meta.get("register"):
                     result["llm_register"] = meta["register"]
-                    # Use LLM-synthesized register info
                     result["reg"] = type('Register', (), {
                         'rid': 'synthesized', 'name': meta["register"]["name"],
                         'dim': meta["register"]["dim"], 'runtime': runtime
@@ -840,7 +1160,7 @@ def render(r: dict, emit: bool = False) -> str:
         L.append(f"Register:  {reg.rid} — {reg.name}")
         L.append(f"            {reg.dim}")
     else:
-        L.append(f"Register:  synthesized (from NLP description)")
+        L.append(f"Register:  unsynthesized (from NLP description)")
         L.append(f"            {r['register_text']}")
     L.append(f"Runtime:   {rt['name']}")
     lm = r.get("llm_meta")
@@ -848,7 +1168,7 @@ def render(r: dict, emit: bool = False) -> str:
         if lm.get("dry_run"):
             L.append(f"Translator: DRY-RUN — {lm.get('provider')}/{lm.get('model')} (prompt shown, nothing called)")
         elif lm.get("error"):
-            L.append(f"Translator: LLM unavailable ({lm['error']}) — canonical table used")
+            L.append(f"Translator: LLM FAILED ({lm['error']})")
         else:
             L.append(f"Translator: LLM {lm.get('provider')}/{lm.get('model')}   [local model when provider=local]")
     v = r["verdict"]
@@ -856,13 +1176,23 @@ def render(r: dict, emit: bool = False) -> str:
     if r["generic"]:
         if r.get("llm_register"):
             L.append(f"NOTE:      no built-in match for {r['register_text']!r} — register synthesized by the LLM")
+        elif lm and lm.get("error"):
+            L.append(f"NOTE:      no built-in match for {r['register_text']!r} — "
+                     f"LLM synthesis failed; no per-token realization produced")
         elif reg:
             L.append(f"NOTE:      no registered match for {r['register_text']!r} — "
                      f"using the {reg.rid} template; the register text is carried as-is")
         else:
             L.append(f"NOTE:      no built-in match for {r['register_text']!r} — LLM will synthesize register")
-    if r["braidword"] != "∅":
-        L.append(f"Braid:     {r['braidword']}   (assembled from AFWD / AREV / CLINK)")
+    if r.get("braid_meaningful") and r["braidword"] != "∅":
+        bw = r["braidword"]
+        w = r.get("braid_writhe")
+        if bw == "e":
+            L.append("Braid:     e   (reduced AFWD/AREV generators cancel; writhe = 0)")
+        elif w is not None:
+            L.append(f"Braid:     {bw}   (reduced; writhe = {w:+d})")
+        else:
+            L.append(f"Braid:     {bw}")
     if r["pairs"]:
         L.append("Pairs:     " + " / ".join(r["pairs"].splitlines()[:6]))
     L.append("─" * 78)
@@ -873,15 +1203,21 @@ def render(r: dict, emit: bool = False) -> str:
                  f"{row['process']:<26} {row['concrete']}{srcmark}")
     L.append("─" * 78)
     L.append("ISOMORPHISM RATIONALE (token → register)")
+    any_rationale = False
     for row in r["rows"]:
         if row["rationale"]:
             L.append(f"  {row['i']:>2}  {row['glyph']} {row['opcode']:<7} {row['rationale']}")
+            any_rationale = True
+    if not any_rationale:
+        L.append("  (none — no per-token realization available)")
     L.append("─" * 78)
     L.append("REALIZATION PLAN (ordered operations)")
     short = rt["name"].split(" (")[0]
     for n, row in enumerate(r["rows"], 1):
         mark = "✓ exact" if row["exact"] else "lane"
         L.append(f"  {n:2}. [{row['glyph']} {row['opcode']:<7}] {short}: {row['command']}   ({mark})")
+    if not r["rows"]:
+        L.append("  (none — no per-token realization available)")
     if emit:
         L.append("─" * 78)
         L.append(f"EMIT — runtime script ({r['runtime']})")
@@ -926,7 +1262,32 @@ def main():
     ap.add_argument("--api-key", help="API key override (the local server needs none)")
     ap.add_argument("--dry-run", action="store_true",
                     help="print the exact LLM system+prompt without calling the model")
+    ap.add_argument("--stream", action="store_true",
+                    help="stream LLM output to stderr as it generates (tokens arrive incrementally)")
+    ap.add_argument("--no-spinner", action="store_true",
+                    help="disable the terminal spinner (it is auto-disabled when stderr is not a TTY)")
+    ap.add_argument("--think", choices=["off", "low", "medium", "high", "xhigh"], default=None,
+                    help="override Qwen3.8 reasoning effort. 'off' disables thinking entirely; "
+                         "otherwise it sets reasoning_effort. Defaults to 'low'.")
     args = ap.parse_args()
+
+    if args.no_spinner:
+        Spinner.__init__ = lambda self, *a, **kw: (
+            setattr(self, "enabled", False),
+            setattr(self, "label", kw.get("label", "working")),
+            setattr(self, "_stop", threading.Event()),
+            setattr(self, "_thread", None),
+            setattr(self, "_start_t", None),
+            setattr(self, "_lock", threading.Lock()),
+        )[-1]
+
+    if args.think is not None:
+        global QWEN_ENABLE_THINKING, QWEN_REASONING_EFFORT
+        if args.think == "off":
+            QWEN_ENABLE_THINKING = False
+        else:
+            QWEN_ENABLE_THINKING = True
+            QWEN_REASONING_EFFORT = args.think
 
     if args.list_registers:
         for reg in REGISTERS:
@@ -939,8 +1300,13 @@ def main():
         ap.error("word and register are required (or --list-registers)")
 
     try:
-        r = translate(args.word, args.register, args.runtime,
-                            args.llm, args.model, args.dry_run)
+        r = translate(args.word, args.register,
+                      runtime_arg=args.runtime,
+                      llm_arg=args.llm,
+                      model_arg=args.model,
+                      api_key_arg=args.api_key,
+                      dry_run=args.dry_run,
+                      stream=args.stream)
     except ValueError as e:
         print(f"PARSE ERROR: {e}", file=sys.stderr)
         sys.exit(2)
