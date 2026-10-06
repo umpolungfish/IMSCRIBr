@@ -1,4 +1,6 @@
-I remove token names from the usage document
+I add verified complex-word examples to the usage guide
 
-I make examples relative to the tool directory, retain symbol-only words,
-and replace named source paths so no token name occurs in the guide.
+I bind nested evidence splits, ordered returns, attributed deposits, and
+intermediate latches to concrete source states and expected results.
+I exercise resident native exchange sequences and check each word with Vox.
+I keep the guide symbol-only and add regression controls for its examples.

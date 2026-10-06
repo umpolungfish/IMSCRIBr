@@ -261,6 +261,114 @@ python3 "$EXV" --run-plan anyon_review.plan.json
 
 Keep `--offline` separate from `--llm`, `--stream`, and `--dry-run`. Use `--run-plan` as a standalone replay command, without a word, register, `--llm`, `--execute`, or `--save-plan`. Offline table reports provide descriptive plans; `--save-plan` and `--execute` require a validated executable realization from model translation.
 
+## Complex words with concrete bindings
+
+These examples use the existing `IG_PROVIDER` and `IG_MODEL` settings. Each word supplies a different operation sequence. The descriptions bind the seed, each permutation, each evidence deposit, and its source. The evidence results below are checked against the local executable adapter using those exact bindings. Model translation must supply the same bindings to produce those results; inspect the returned `binding` fields when reviewing a saved plan.
+
+### Every symbol on one evidence carrier
+
+```bash
+python3 excribe_vox.py '⊢⊙∈≻⊤⋈≺∈⊥⊞⊙∋∋⊡⊣' \
+  'FOUR evidence carrier with frame ordered p, q, r; seed p neither, q supported, r refuted. Retain identity, open the outer evidence split, and apply the forward relabeling p to q, q to r, r to p. Deposit support for q from sensor-A. Link the actions and apply the retained inverse relabeling. Open an inner evidence split; deposit refutation for q from sensor-B, and support from sensor-C plus refutation from sensor-D for r. Retain identity, rejoin the inner split, rejoin the outer split, latch, and release.' \
+  --llm --execute --json --think off --no-spinner
+```
+
+The returned evidence is p supported, q both supported and refuted, and r both supported and refuted. Both rejoin events reconstruct their current coordinates. Neither returns its original split source, because evidence was added. Vox reads this supplied word as T.
+
+### Nested splits with two retained returns
+
+```bash
+python3 excribe_vox.py '⊢∈≻∈≻∈⊤⊥∋≺∋≺∋⊡⊣' \
+  'FOUR evidence carrier with frame ordered p, q, r; seed p neither, q supported, r refuted. Open the outer split and swap p with q, retaining r. Open the middle split and swap q with r, retaining p. Open the inner split; deposit support for r from inner-support and refutation for p from inner-refutation. Rejoin the inner split. Undo the most recent swap, rejoin the middle split, undo the first swap, rejoin the outer split, latch, and release.' \
+  --llm --save-plan nested_evidence.plan.json --execute --emit
+
+python3 excribe_vox.py --run-plan nested_evidence.plan.json
+```
+
+The final evidence is p supported, q both supported and refuted, and r refuted. Each return undoes the last unreversed coordinate swap. The deposited evidence travels with those coordinates. All rejoin events reconstruct the current coordinates; source equality changes at each split. Vox reads T.
+
+### Separate rounds of support and refutation
+
+```bash
+python3 excribe_vox.py '⊢∈⊤∋⋈∈⊥⊞∋⊡⊣' \
+  'FOUR evidence carrier with propositions alarm and backup, both seeded neither supported nor refuted. In the first split deposit support for alarm from detector-A and rejoin. Link into a second split; deposit refutation for alarm from detector-B, then deposit support from backup-A and refutation from backup-B for backup. Rejoin, latch the completed state, and release.' \
+  --llm --stream --execute --json --no-spinner
+```
+
+Both alarm and backup finish with support and refutation. The first split's source snapshot precedes the support deposit; the second snapshot already contains it. Both source-return witnesses are false. Vox reads T.
+
+### Two forward operations returned in reverse order
+
+```bash
+python3 excribe_vox.py '⊢∈≻≻⊙≺≺∋⊡⊣' \
+  'FOUR evidence carrier with frame ordered p, q, r; seed p supported, q refuted, r neither. Split the evidence axes. First relabel p to q, q to r, r to p. Then swap p with q while retaining r. Retain identity. Undo the second relabeling, then undo the first relabeling. Rejoin, latch, and release without depositing evidence.' \
+  --llm --execute --json --think high
+```
+
+The final seed is recovered exactly: p supported, q refuted, r neither. The rejoin witness reports `coordinate_return: true` and `source_return: true`. Overall source equality is also true. Vox reads T.
+
+### Intermediate latches preserve distinct states
+
+```bash
+python3 excribe_vox.py '⊢∈⊞⊡⊤⊥⊡∋⊡⊣' \
+  'FOUR evidence carrier with p and q both seeded neither. Split, then deposit support from p-support and refutation from p-refutation for p. Latch that intermediate state. Deposit support for q from q-support, then refutation for q from q-refutation. Latch again, rejoin, latch the terminal state, and release. Preserve every copied latch in the execution events.' \
+  --llm --save-plan latched_evidence.plan.json --execute --json
+```
+
+The first latch contains both evidence coordinates for p and neither for q. The second and final latches contain both coordinates for both propositions. The earlier latch remains unchanged. Vox reads T.
+
+### Repeated deposits retain their separate witnesses
+
+```bash
+python3 excribe_vox.py '⊢∈⊤⊤⋈⊥⊥⊙∋⊡⊣' \
+  'FOUR evidence carrier with proposition p seeded neither. Split. Deposit support for p from support-A, then support for p from support-B. Link the ordered operations. Deposit refutation for p from refutation-A, then refutation for p from refutation-B. Retain identity, rejoin, latch, and release. Keep each deposit source in its own event.' \
+  --llm --execute --json --emit
+```
+
+The final coordinates for p are both true. Repeated deposits leave an already-set coordinate true, while their operation events retain distinct source identifiers. Vox reads T.
+
+### Nested native exchange returns
+
+```bash
+python3 excribe_vox.py '⊢⊙≻≻⊙≺≺⊙⊣' \
+  'An anyonic ququart with decimal source 340282366920938463463374607431768211507, initialized in T. Retain identity. The first forward operation applies signed Artin generators 1, 2, -3 in order. The second applies 4, -5, 2 in order. Retain identity. Return by undoing the second forward operation, then undoing the first forward operation. Retain identity and perform terminal native SIC measurement with outside-carrier mass retained.' \
+  --llm --save-plan nested_anyonic.plan.json --execute --emit
+
+python3 excribe_vox.py --run-plan nested_anyonic.plan.json
+```
+
+The native exchange order is `1, 2, -3, 4, -5, 2, -2, 5, -4, 3, -2, -1`. All exchanges act in one resident carrier. Identity symbols add no exchanges. Vox reads N because this word contains no split/rejoin region. Native execution still runs and produces its SIC/leakage witness. The destructive outcome is sampled; the adapter does not certify an inverse residual.
+
+### Two independent native exchange-and-return rounds
+
+```bash
+python3 excribe_vox.py '⊢≻⊙≺≻⊙≺⊣' \
+  'An anyonic ququart with decimal source 340282366920938463463374607431768211507, initialized in T. Apply signed Artin generators 2, 3, 2 as the first forward operation; retain identity and undo that operation. Apply 5, -4, 1, -2 as the second forward operation; retain identity and undo that operation. End with native SIC measurement and retain the outside-carrier mass.' \
+  --llm --execute --json --think off
+```
+
+The native order is `2, 3, 2, -2, -3, -2, 5, -4, 1, -2, 2, -1, 4, -5`. The rounds share the same resident carrier. Vox reads N; the native terminal witness is reported separately.
+
+### Inspect the same complex word in other registers
+
+These commands inspect descriptive carrier plans without requesting execution. Native split/rejoin, general SIC synthesis, and arbitrary target execution require adapters beyond the current native exchange path.
+
+```bash
+python3 excribe_vox.py '⊢⊙∈≻⊤⋈≺∈⊥⊞⊙∋∋⊡⊣' \
+  anyon --offline --runtime gmonados --emit
+
+python3 excribe_vox.py '⊢∈≻∈⊙≻≺∋⋈≺∋⊡⊣' \
+  sic --offline --json
+
+python3 excribe_vox.py '⊢∈≻⊤∋⋈∈≺⊥∋⊡⊣' \
+  'a membrane reactor retaining source composition and reaction witnesses' \
+  --offline --emit
+
+python3 excribe_vox.py '⊢∈≻∈⊙≻≺∋⋈≺∋⊡⊣' \
+  'a SIC carrier with a retained analysis frame and source operator' \
+  --llm --dry-run --context ../ig-docs/ququart_membranes.tex --json
+```
+
 ## Requirements and errors
 
 Use Python 3 with the existing constellation layout. Vox is expected at `Vox/target/release/vox`; `EXCRIBE_VOX_BIN` overrides that path. Model calls use `httpx`. Native anyonic execution requires `G-mOMonadOS/target/release/sic-tool`. Offline definitions and evidence-plan replay need no model server.

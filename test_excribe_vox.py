@@ -194,6 +194,80 @@ class ExcriptionTests(unittest.TestCase):
         self.assertEqual(proc.returncode, 0, proc.stderr)
         self.assertEqual(json.loads(proc.stdout)["final"], {"p": [True, True], "q": [False, True]})
 
+    def test_documented_complex_evidence_words(self):
+        seed = {"p": [False, False], "q": [True, False], "r": [False, True]}
+        cases = [
+            ("⊢⊙∈≻⊤⋈≺∈⊥⊞⊙∋∋⊡⊣", seed,
+             {3: {"permutation": ["q", "r", "p"]},
+              4: {"proposition": "q", "witness": "sensor-A"},
+              8: {"proposition": "q", "witness": "sensor-B"},
+              9: {"proposition": "r", "support": "sensor-C", "refutation": "sensor-D"}},
+             {"p": [True, False], "q": [True, True], "r": [True, True]}),
+            ("⊢∈≻∈≻∈⊤⊥∋≺∋≺∋⊡⊣", seed,
+             {2: {"permutation": ["q", "p", "r"]},
+              4: {"permutation": ["p", "r", "q"]},
+              6: {"proposition": "r", "witness": "inner-support"},
+              7: {"proposition": "p", "witness": "inner-refutation"}},
+             {"p": [True, False], "q": [True, True], "r": [False, True]}),
+            ("⊢∈⊤∋⋈∈⊥⊞∋⊡⊣", {"alarm": [False, False], "backup": [False, False]},
+             {2: {"proposition": "alarm", "witness": "detector-A"},
+              6: {"proposition": "alarm", "witness": "detector-B"},
+              7: {"proposition": "backup", "support": "backup-A", "refutation": "backup-B"}},
+             {"alarm": [True, True], "backup": [True, True]}),
+            ("⊢∈≻≻⊙≺≺∋⊡⊣", {"p": [True, False], "q": [False, True], "r": [False, False]},
+             {2: {"permutation": ["q", "r", "p"]}, 3: {"permutation": ["q", "p", "r"]}},
+             {"p": [True, False], "q": [False, True], "r": [False, False]}),
+            ("⊢∈⊞⊡⊤⊥⊡∋⊡⊣", {"p": [False, False], "q": [False, False]},
+             {2: {"proposition": "p", "support": "p-support", "refutation": "p-refutation"},
+              4: {"proposition": "q", "witness": "q-support"},
+              5: {"proposition": "q", "witness": "q-refutation"}},
+             {"p": [True, True], "q": [True, True]}),
+            ("⊢∈⊤⊤⋈⊥⊥⊙∋⊡⊣", {"p": [False, False]},
+             {2: {"proposition": "p", "witness": "support-A"},
+              3: {"proposition": "p", "witness": "support-B"},
+              5: {"proposition": "p", "witness": "refutation-A"},
+              6: {"proposition": "p", "witness": "refutation-B"}}, {"p": [True, True]}),
+        ]
+        for word, initial, bindings, expected in cases:
+            with self.subTest(word=word):
+                ops = exv.parse_word(word)
+                steps = [{"i": i, "op": op, **bindings.get(i, {})} for i, op in enumerate(ops)]
+                compiled = exv.compile_plan({"backend": "evidence", "frame": list(initial),
+                                            "seed": initial, "steps": steps}, ops)
+                actual = exv.execute_plan(compiled)
+                self.assertEqual(actual["final"], expected)
+                self.assertEqual(actual["source_return"], initial == expected)
+                fuses = [e for e in actual["events"] if e["op"] == "FFUSE"]
+                self.assertTrue(all(e["coordinate_return"] for e in fuses))
+                self.assertTrue(all(e["source_return"] == (initial == expected) for e in fuses))
+                self.assertEqual(exv.judge(word)[0], "T")
+                if word == "⊢∈⊞⊡⊤⊥⊡∋⊡⊣":
+                    self.assertEqual(actual["events"][3]["latched"], {"p": [True, True], "q": [False, False]})
+                    self.assertEqual(actual["events"][6]["latched"], expected)
+
+    def test_documented_complex_native_sequences(self):
+        cases = [
+            ("⊢⊙≻≻⊙≺≺⊙⊣", {2: [1, 2, -3], 3: [4, -5, 2]},
+             [1, 2, -3, 4, -5, 2, -2, 5, -4, 3, -2, -1]),
+            ("⊢≻⊙≺≻⊙≺⊣", {1: [2, 3, 2], 4: [5, -4, 1, -2]},
+             [2, 3, 2, -2, -3, -2, 5, -4, 1, -2, 2, -1, 4, -5]),
+        ]
+        for word, bindings, expected in cases:
+            with self.subTest(word=word):
+                ops = exv.parse_word(word)
+                steps = [{"i": i, "op": op, **({"generators": bindings[i]} if i in bindings else {})}
+                         for i, op in enumerate(ops)]
+                compiled = exv.compile_plan({"backend": "anyon-ququart", "source": str(2**128 + 51),
+                                            "steps": steps}, ops)
+                self.assertEqual(compiled["argv"][3:], list(map(str, expected)))
+                self.assertEqual(exv.execute_plan(compiled)["returncode"], 0)
+                self.assertEqual(exv.judge(word)[0], "N")
+
+    def test_usage_document_has_no_token_names(self):
+        doc = (exv.Path(exv.HERE) / "USAGE.md").read_text()
+        for name in exv._GL.values():
+            self.assertNotIn(name, doc)
+
 
 if __name__ == "__main__":
     unittest.main()
