@@ -1,4 +1,4 @@
-I use the configured IG provider and model in usage examples
+I use canonical symbols throughout the usage examples
 
-I make model commands inherit IG_PROVIDER and IG_MODEL and document their
-setup, precedence, provider fallback, and strict environment-bound selection.
+I replace opcode-name words with canonical symbol words and make the input
+guidance symbol-only while retaining the configured provider and model.
