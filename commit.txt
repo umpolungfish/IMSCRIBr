@@ -1,5 +1,5 @@
-I add the Excribe Vox usage guide
+I expand the Excribe Vox command examples
 
-I document local inspection, executable model plans, saved-plan replay,
-adapter bindings and limits, report witnesses, provider controls, and errors.
-I include copyable evidence and native anyonic examples.
+I add copyable flag combinations for offline inspection, prompt inspection,
+model translation, streaming, source context, execution, saving, and replay.
+I explain setup variables, provider selection, and incompatible options.
