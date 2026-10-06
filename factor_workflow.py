@@ -137,14 +137,14 @@ def compile_factor(plan, ops, symbols):
             "transport": "source-baked-workflow"}
 
 
-def logged(argv, destination, name, seconds):
+def logged(argv, destination, name, seconds, *, cwd=None, env=None):
     """Capture real instrument output; terminate the owned group on timeout."""
     stdout = destination / f"{name}.stdout"
     stderr = destination / f"{name}.stderr"
     started = time.monotonic()
     with stdout.open("x") as out, stderr.open("x") as err:
-        proc = subprocess.Popen(argv, cwd=KERNEL, stdout=out, stderr=err,
-                                env=dict(os.environ, CARGO_NET_OFFLINE="true"), start_new_session=True)
+        proc = subprocess.Popen(argv, cwd=cwd or KERNEL, stdout=out, stderr=err,
+                                env=env or dict(os.environ, CARGO_NET_OFFLINE="true"), start_new_session=True)
         try:
             returncode = proc.wait(timeout=seconds)
             timed_out = False

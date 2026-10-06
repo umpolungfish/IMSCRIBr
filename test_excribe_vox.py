@@ -9,6 +9,34 @@ import excribe_vox as exv
 
 
 class ExcriptionTests(unittest.TestCase):
+    def test_numeral_factor_binds_cells_without_quantum_evidence(self):
+        saved = json.loads((exv.Path(exv.HERE) / "numeral_semiprime.plan.json").read_text())
+        compiled = exv.compile_plan(saved["plan"], exv.parse_word(saved["word"]))
+        steps = compiled["plan"]["steps"]
+        self.assertEqual(steps[2]["actions"], [{"kind": "bit", "value": 1}])
+        self.assertEqual(steps[3]["actions"], [{"kind": "clear"}])
+        self.assertEqual(steps[-2]["actions"], [{"kind": "factor_latch"}])
+        self.assertEqual(steps[-1]["actions"], [{"kind": "release"}])
+        for left, right in zip(compiled["boundaries"], compiled["boundaries"][1:]):
+            self.assertEqual(left["codomain"], right["domain"])
+        self.assertNotIn("evidence", json.dumps(steps))
+        self.assertNotIn("exchange", json.dumps(steps))
+        self.assertEqual(compiled["symbol_word"], saved["word"])
+
+    def test_numeral_factor_rejects_invented_evidence_and_cell_values(self):
+        import copy
+        saved = json.loads((exv.Path(exv.HERE) / "numeral_semiprime.plan.json").read_text())
+        ops = exv.parse_word(saved["word"])
+        plan = exv.compile_plan(saved["plan"], ops)["plan"]
+        bad = copy.deepcopy(plan)
+        bad["steps"][2]["actions"] = [{"kind": "evidence", "axis": "refutation"}]
+        with self.assertRaisesRegex(ValueError, "numeral carrier"):
+            exv.compile_plan(bad, ops)
+        bad = copy.deepcopy(plan)
+        bad["steps"][2]["actions"][0]["value"] = 0
+        with self.assertRaisesRegex(ValueError, "zero/one"):
+            exv.compile_plan(bad, ops)
+
     def test_factor_workflow_binds_large_source_without_known_factors(self):
         saved = json.loads((exv.Path(exv.HERE) / "rsa100_factor.plan.json").read_text())
         compiled = exv.compile_plan(saved["plan"], saved["word_ops"])

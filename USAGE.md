@@ -387,6 +387,18 @@ Before execution, row checks describe pending procedures. After `--execute`, row
 
 ## Large semiprime factor extraction
 
+For a numeral word, use the native numeral carrier. The same symbols bind zero/one cell operations rather than SIC evidence policies. This saved request retains the supplied word and independently named source:
+
+```bash
+python3 excribe_vox.py --run-plan numeral_semiprime.plan.json
+```
+
+The source is `271690685666312585018220346622515128917`. The saved plan uses `backend: "numeral-factor"` and `steps: "register-bound"`. The compiler expands that shorthand into an indexed native morphism at every symbol. Split retains the cell frame, ⊤ deposits zero, ⊥ deposits one, return clears transient cursor state while preserving banked cells, and rejoin carries the deposited tape. Fixation compares the reconstructed tape to the independently named source before invoking Vox's existing tape factor extraction. Terminal release verifies the factor product and screens each factor with native Miller-Rabin.
+
+The preparation-only native binding check reports `source_binding_failed` if the word reconstructs a different number. It prints the reconstructed value in the diagnostic. No extraction runs in that case, and neither source nor word is silently changed. Successful source binding bakes both into the executable; extraction takes no arguments. A separate native verifier then replays the source operators and checks the released factor multiset. Primality screening is reported separately from a primality proof.
+
+To synthesize bindings for your own numeral word with `IG_PROVIDER` and `IG_MODEL`, pass its actual symbols as the first argument and a description such as `native numeral source 271690685666312585018220346622515128917 to prime factors through internal Gödel relations`, with `--llm --save-plan your_numeral.plan.json`. Add `--execute` to perform extraction. A factor request cannot fall back to anyonic threshold observations.
+
 Request a source-baked RSA-100 extraction using the configured `IG_PROVIDER` and `IG_MODEL`:
 
 ```bash

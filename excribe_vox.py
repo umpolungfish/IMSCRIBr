@@ -688,9 +688,16 @@ def llm_translate(ops, glyphs, word, verdict, register_text, reg, generic, braid
         lines.append(f"Matched built-in register: {reg.name} - {reg.dim}")
     lines.append("Positions (index: symbol - structural action):")
     for i, (g, op) in enumerate(zip(glyphs, ops)):
-        lines.append(f"  {i}: {g} - {STRUCT_ACTIONS.get(op, '')}")
+        action = (reg.ops[op][1] if reg is not None and reg.rid == "numeral" and op in reg.ops
+                  else STRUCT_ACTIONS.get(op, ''))
+        lines.append(f"  {i}: {g} - {action}")
     lines.append("Vox pairing report: " + json.dumps(pairing, ensure_ascii=False))
     lines.append("Executable adapter catalog:\n" + CATALOG)
+    if reg is not None and reg.rid == "numeral":
+        lines.append("This is the native numeral register. Bind its zero/one cell operators with numeral-factor. "
+                     "Use steps:\"register-bound\" to request exact indexed native lowering. "
+                     "Do not reinterpret cell glyphs as factor-verification evidence or SIC measurements. "
+                     "Keep the independently named decimal source unchanged; native source binding will check the word.")
     lines.append("Local source excerpts:")
     for item in context:
         lines.append(f"{item['path']}:{item['line']}\n{item['text']}")
@@ -768,11 +775,17 @@ def llm_translate(ops, glyphs, word, verdict, register_text, reg, generic, braid
         return None, {"provider": provider, "model": model,
                       "error": "translation requires a named carrier, frame, return check, and exactly one ordered row per token"}
     try:
+        proposed = obj.get("realization")
+        if reg is not None and reg.rid == "numeral" and isinstance(proposed, dict) and proposed.get("backend") not in {"numeral-factor", "unsupported"}:
+            raise ValueError("native numeral request requires numeral-factor cell morphisms; quantum/evidence workflow substitution is not a realization")
+        if (re.search(r"\bfactor(?:s|ing|ization|isation)?\b", register_text, re.I) and
+                isinstance(proposed, dict) and proposed.get("backend") not in {"numeral-factor", "ququart-factor", "unsupported"}):
+            raise ValueError("factor extraction requires an arithmetic factor producer and product verifier; SIC threshold evidence cannot realize it")
         realization = compile_plan(obj.get("realization"), ops)
         if realization["status"] == "ready" and reg is not None:
             allowed = {"belnap": {"evidence"}, "anyon": {"anyon-ququart", "anyon-composition", "ququart-factor"},
                        "ququart": {"anyon-ququart", "anyon-composition", "ququart-factor"},
-                       "numeral": {"ququart-factor"}, "substrate": {"ququart-factor"}}.get(reg.rid, set())
+                       "numeral": {"numeral-factor"}, "substrate": {"ququart-factor"}}.get(reg.rid, set())
             if realization["plan"]["backend"] not in allowed:
                 raise ValueError(f"adapter does not realize requested {reg.rid} carrier")
     except (ValueError, TypeError, KeyError) as exc:
@@ -821,6 +834,11 @@ def llm_translate(ops, glyphs, word, verdict, register_text, reg, generic, braid
             "Validate the source-bound prepared case and execute its baked membrane without runtime inputs. "
             "Release factors only after the independent terminal verifier accepts the producing arm and "
             "exact source product. An unfinished extraction is unclosed, not a verified factorization.")
+    if realization["status"] == "ready" and realization["plan"]["backend"] == "numeral-factor":
+        definition["return_check"] = (
+            "Reconstruct the native numeral tape from the bound cell morphisms and compare it to the independently "
+            "named source. Execute baked native tape factor extraction; verify the nontrivial factor multiset's "
+            "exact tape product and report native Miller-Rabin screening separately from primality proof.")
     meta = {"provider": provider, "model": model,
             "binding_repair_attempted": _repair is not None,
             "realization": realization,
@@ -1488,11 +1506,11 @@ def main():
             ap.error("--run-plan is a standalone offline replay command")
         try:
             saved = json.loads(Path(args.run_plan).read_text())
-            compiled = compile_plan(saved["plan"], saved["word_ops"])
+            compiled = compile_plan(saved["plan"], parse_word(saved["word"]) if "word" in saved else saved["word_ops"])
             witness = execute_plan(compiled)
             witness["sources"] = saved.get("sources", [])
             print(json.dumps(witness, indent=2, ensure_ascii=False))
-            if witness.get("backend") == "ququart-factor" and witness.get("status") != "verified":
+            if witness.get("backend") in {"ququart-factor", "numeral-factor"} and witness.get("status") != "verified":
                 sys.exit(1)
         except (OSError, ValueError, TypeError, KeyError, subprocess.TimeoutExpired) as exc:
             print(f"REALIZATION ERROR: {exc}", file=sys.stderr)
@@ -1526,7 +1544,7 @@ def main():
             if args.save_plan:
                 with open(args.save_plan, "x", encoding="utf-8") as f:
                     json.dump({"plan": realization["plan"], "word_ops": realization["word_ops"],
-                               "sources": r.get("sources", [])}, f, indent=2, ensure_ascii=False)
+                               "word": r["word"], "sources": r.get("sources", [])}, f, indent=2, ensure_ascii=False)
                     f.write("\n")
             if args.execute:
                 attach_execution(r, execute_plan(realization))
@@ -1546,7 +1564,7 @@ def main():
         print(render(r, emit=args.emit))
     if r["verdict"] is None or r["pairing"].get("error") or (r.get("llm_meta") or {}).get("error"):
         sys.exit(1)
-    if r.get("execution", {}).get("backend") == "ququart-factor" and r["execution"].get("status") != "verified":
+    if r.get("execution", {}).get("backend") in {"ququart-factor", "numeral-factor"} and r["execution"].get("status") != "verified":
         sys.exit(1)
 
 if __name__ == "__main__":

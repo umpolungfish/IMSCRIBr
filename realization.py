@@ -3,6 +3,7 @@ import copy
 import subprocess
 from pathlib import Path
 from factor_workflow import compile_factor, execute_factor
+from numeral_workflow import compile_numeral, execute_numeral
 
 SYMBOLS = dict(zip(("VINIT", "TANCH", "AFWD", "AREV", "CLINK", "IMSCRIB", "FSPLIT", "FFUSE", "EVALT", "EVALF", "ENGAGR", "IFIX"), "⊢⊣≻≺⋈⊙∈∋⊤⊥⊞⊡"))
 
@@ -102,6 +103,33 @@ realization must use one of these schemas:
    preparation if no actual compatible retained artifact was supplied. Bind
    stage budgets explicitly (e.g. prepare_seconds=1800,execute_seconds=120).
    An execution without a verified terminal pair is unclosed, never success.
+4. numeral-factor: {backend:"numeral-factor",source:decimal_string,
+   prepare_seconds:positive_integer,execute_seconds:positive_integer,
+   steps:"register-bound"|[{i:position,symbol:canonical_symbol,actions:[operation]}]}.
+   Use for factor extraction from a numeral word in the native numeral register.
+   Every operator acts on a least-significant-cell-first native numeral tape:
+   ⊢ {kind:"open"}; ∈ {kind:"split",id:string};
+   ⊤ {kind:"bit",value:0}; ⊥ {kind:"bit",value:1};
+   ≺ {kind:"clear"} clears the transient cursor while retaining deposited
+      cells banked inside their open frame. It needs no Artin exchange batch.
+   ∋ {kind:"rejoin",id:string}; ≻ {kind:"advance"};
+   ⋈ {kind:"compose"}; ⊙ {kind:"retain"};
+   ⊡ {kind:"factor_latch"} seals the reconstructed source and invokes existing
+      Vox native tape factor extraction; ⊣ {kind:"release"} checks the tape
+      product and native primality screening before releasing the factor multiset.
+   steps:"register-bound" asks the compiler to supply these indexed morphisms
+   deterministically, including paired frame identifiers. It does not skip them.
+   The input word is the operator composition to execute, not a list of claimed
+   support/refutation observations. The source is independently bound from the
+   request. Native preparation must reconstruct exactly that source from the
+   deposited cells, then bake word and source into the executable. A mismatch is
+   source_binding_failed, never repaired by altering the word or named source.
+   ⊤/⊥ here deposit zero/one cells; they do not choose SIC outcomes or evidence
+   thresholds. No prepare/extract ≻ symbols need to be inserted into a numeral.
+   Use the existing Vox folded tape arithmetic and factor relation; source-baked
+   runtime takes no input. Release only after a separate native tape verification.
+   Native Miller-Rabin screening is identified as screening, not a primality proof.
+   Never replace this request with anyon-composition or unrelated measurements.
 Use anyon-composition for synthesized anyonic words, including split/rejoin,
 evaluation, linking, engagement, and fixation. Do not infer that its symbols
 are forbidden because a whole-word template has not been registered.
@@ -129,6 +157,11 @@ EVIDENCE_ACTIONS = {
 
 def bound_description(compiled, i):
     """Executable boundaries take precedence over model prose."""
+    if compiled["plan"]["backend"] == "numeral-factor":
+        step, boundary = compiled["plan"]["steps"][i], compiled["boundaries"][i]
+        return {"process": step["symbol"], "concrete": "Native numeral morphism: " + json_text(step["actions"]),
+                "input": json_text(boundary["domain"]), "output": json_text(boundary["codomain"]),
+                "check": "Execution pending: native tape reconstruction, sealed-source equality and verified factor-product release. No SIC policy is implied."}
     if compiled["plan"]["backend"] == "ququart-factor":
         step = compiled["plan"]["steps"][i]
         boundary = compiled["boundaries"][i]
@@ -176,6 +209,8 @@ def compile_plan(plan, ops):
         return compile_composition(plan, ops)
     if backend == "ququart-factor":
         return compile_factor(copy.deepcopy(plan), list(ops), SYMBOLS)
+    if backend == "numeral-factor":
+        return compile_numeral(copy.deepcopy(plan), list(ops), SYMBOLS)
     keys = {"backend", "steps", "frame", "seed"} if backend == "evidence" else {"backend", "steps", "source"}
     if backend not in {"evidence", "anyon-ququart"} or set(plan) != keys:
         raise ValueError("unknown adapter or unexpected realization fields")
@@ -359,6 +394,8 @@ def compile_composition(plan, ops):
 def execute_plan(compiled):
     # Recompile the source object: never trust stored/generated argv or witnesses.
     checked = compile_plan(compiled["plan"], compiled["word_ops"])
+    if checked["plan"]["backend"] == "numeral-factor":
+        return execute_numeral(checked)
     if checked["plan"]["backend"] == "ququart-factor":
         return execute_factor(checked)
     if checked["plan"]["backend"] == "anyon-composition":
