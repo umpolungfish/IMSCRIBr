@@ -1,6 +1,9 @@
-I add verified complex-word examples to the usage guide
+I synthesize native compositions across the complete symbol word
 
-I bind nested evidence splits, ordered returns, attributed deposits, and
-intermediate latches to concrete source states and expected results.
-I exercise resident native exchange sequences and check each word with Vox.
-I keep the guide symbol-only and add regression controls for its examples.
+I bind ordered native operations at every position without a whole-word
+allowlist. I retain frames, phase, leakage, measured evidence, and latches.
+I attach actual execution events and source-return ratios to completed rows
+and distinguish them from model checks and recorded preparation residuals.
+
+I verify native composition, rejection policies, emitted stdin commands,
+model bindings, and replay of the saved live-model plan. I update usage.

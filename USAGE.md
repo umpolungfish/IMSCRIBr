@@ -66,7 +66,7 @@ Supporting and refuting evaluations deposit attributed evidence. Engagement depo
 
 ### Native anyonic ququart
 
-The `anyon-ququart` adapter starts in the native T basis state. Bind a decimal source of at least 128 bits and signed Artin generator indices from 1 through 5:
+The `anyon-composition` path synthesizes an ordered composition on one resident native carrier. Bind a decimal source of at least 128 bits, a source basis, signed Artin generators, and any evidence policies:
 
 ```bash
 python3 excribe_vox.py '⊢≻≺⊣' \
@@ -74,9 +74,11 @@ python3 excribe_vox.py '⊢≻≺⊣' \
   --llm --execute
 ```
 
-The whole exchange sequence runs in one native `sic-tool` invocation, retaining the five-channel carrier. Return actions reverse the forward generator list and negate each sign. The terminal action performs destructive SIC measurement and reports outside-carrier mass. This output does not certify an inverse amplitude residual.
+The whole composition runs in one native `sic-tool anyon-program` invocation, retaining all five channels. Return actions reverse retained exchange batches and measure their actual source-return residuals. The report gives the maximum absolute real or imaginary component difference as an integer numerator over the native fixed-point scale. Terminal analysis retains sixteen SIC masses and outside-carrier mass without collapsing the carrier.
 
-This adapter supports source, terminal, identity, forward, and return operations. Native split/fuse and the other morphisms are currently unsupported. General SIC, arbitrary unitary, numeral, executable-substrate, and IMASM-register definitions remain descriptive unless a matching execution adapter is added. An unsupported realization includes its reason and cannot be saved or executed.
+Each symbol can bind an ordered composition of native primitives. Split retains a named source frame, phase, and leakage. Rejoin checks native SIC dual reconstruction of current computational populations and compares all five amplitudes with the retained source. Coherent phase is retained separately throughout; probabilities alone do not reconstruct it. Evaluations apply explicitly bound rational thresholds to current native SIC masses and retain accepted or rejected observations with their sources. Engagement retains both previously evaluated evidence coordinates. Fixation copies the state and evidence. Linking can apply an ordered exchange composition.
+
+Motifs guide synthesis without limiting it to registered whole words. An unresolved result must identify a genuinely missing primitive or material binding. Missing whole-word templates do not require a bare sequence. Old saved `anyon-ququart` plans remain replayable through their narrower legacy exchange interface, whose terminal measurement is destructive.
 
 ## Read the report
 
@@ -217,7 +219,7 @@ IG_PROVIDER=local python3 "$EXV" "$WORD" "$REGISTER" \
 
 ### Execution and saving
 
-Each save command requires a fresh destination filename. The anyonic examples perform destructive terminal SIC measurement.
+Each save command requires a fresh destination filename. Newly synthesized anyonic compositions retain coherent state and report non-destructive terminal SIC analysis.
 
 ```bash
 # Generate and execute evidence operations
@@ -337,7 +339,7 @@ python3 excribe_vox.py '⊢⊙≻≻⊙≺≺⊙⊣' \
 python3 excribe_vox.py --run-plan nested_anyonic.plan.json
 ```
 
-The native exchange order is `1, 2, -3, 4, -5, 2, -2, 5, -4, 3, -2, -1`. All exchanges act in one resident carrier. Identity symbols add no exchanges. Vox reads N because this word contains no split/rejoin region. Native execution still runs and produces its SIC/leakage witness. The destructive outcome is sampled; the adapter does not certify an inverse residual.
+The native exchange order is `1, 2, -3, 4, -5, 2, -2, 5, -4, 3, -2, -1`. All exchanges act in one resident carrier. Identity symbols add no exchanges. Vox reads N because this word contains no split/rejoin region. Native composition still runs and produces its SIC/leakage witness and measured return residuals.
 
 ### Two independent native exchange-and-return rounds
 
@@ -351,7 +353,7 @@ The native order is `2, 3, 2, -2, -3, -2, 5, -4, 1, -2, 2, -1, 4, -5`. The round
 
 ### Inspect the same complex word in other registers
 
-These commands inspect descriptive carrier plans without requesting execution. Native split/rejoin, general SIC synthesis, and arbitrary target execution require adapters beyond the current native exchange path.
+These commands inspect descriptive carrier plans without requesting execution. Use model synthesis to bind a native composition; offline definitions alone supply no executable bindings.
 
 ```bash
 python3 excribe_vox.py '⊢⊙∈≻⊤⋈≺∈⊥⊞⊙∋∋⊡⊣' \
@@ -368,6 +370,20 @@ python3 excribe_vox.py '⊢∈≻∈⊙≻≺∋⋈≺∋⊡⊣' \
   'a SIC carrier with a retained analysis frame and source operator' \
   --llm --dry-run --context ../ig-docs/ququart_membranes.tex --json
 ```
+
+### A full native synthesis with measured evidence
+
+```bash
+python3 excribe_vox.py '⊢⊙∈≻⊤⋈≺∈⊥⊞⊙∋∋⊡⊣' \
+  'An anyonic ququart with decimal source 340282366920938463463374607431768211507, initialized in T. Retain identity and split into a named outer retained SIC frame. Apply exchange batch 1, 2. For proposition p evaluate support from policy-A by testing SIC outcome 0 mass divided by total mass against threshold 1/32. Link by applying exchange batch 3, -4. At the return symbol undo both retained batches, most recent first. Split into an inner retained frame. Evaluate refutation for p from policy-B using outcome 1 mass divided by total mass against threshold 1/32. Engage the two measured evidence coordinates without manufacturing acceptance. Retain identity; rejoin inner then outer, checking native population synthesis and source return. Latch final coherent state and evidence. Release non-destructive SIC analysis. Use native composition throughout and supply measured residuals only after execution.' \
+  --llm --save-plan synthetic_anyonic.plan.json --execute --json --no-spinner
+
+python3 excribe_vox.py --run-plan synthetic_anyonic.plan.json
+```
+
+The local native control for these bindings executes both returns, verifies both population reconstructions, retains both attributed policy observations, and copies a final latch. It measures the all-five-channel source residual in the current run. A residual quoted in a source manuscript belongs to that manuscript's preparation and is never substituted for this execution witness.
+
+Before execution, row checks describe pending procedures. After `--execute`, rows are marked completed and their `execution_events` refer to the actual native events. Return rows display measured ratios, rejoin rows carry population certificates, and evaluation rows carry the accepted or rejected observation. `source_equal: false` means the integer amplitudes differ exactly; inspect the measured ratio to determine the size of that difference.
 
 ## Requirements and errors
 

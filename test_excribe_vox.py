@@ -9,6 +9,103 @@ import excribe_vox as exv
 
 
 class ExcriptionTests(unittest.TestCase):
+    def native_composition(self):
+        word = "⊢⊙∈≻⊤⋈≺∈⊥⊞⊙∋∋⊡⊣"
+        actions = [
+            [{"kind": "retain"}], [{"kind": "retain"}], [{"kind": "split", "id": "outer"}],
+            [{"kind": "exchange", "generators": [1, 2]}],
+            [{"kind": "evidence", "proposition": "p", "axis": "support", "outcome": 0,
+              "numerator": "1", "denominator": "32", "witness": "policy-A"}],
+            [{"kind": "exchange", "generators": [3, -4]}],
+            [{"kind": "inverse"}, {"kind": "inverse"}],
+            [{"kind": "split", "id": "inner"}],
+            [{"kind": "evidence", "proposition": "p", "axis": "refutation", "outcome": 1,
+              "numerator": "1", "denominator": "32", "witness": "policy-B"}],
+            [{"kind": "engage", "proposition": "p"}], [{"kind": "retain"}],
+            [{"kind": "rejoin", "id": "inner"}], [{"kind": "rejoin", "id": "outer"}],
+            [{"kind": "latch", "id": "final"}], [{"kind": "sic"}],
+        ]
+        plan = {"backend": "anyon-composition", "source": str(2**128 + 51), "digit": 0,
+                "steps": [{"i": i, "symbol": symbol, "actions": actions[i]} for i, symbol in enumerate(word)]}
+        return word, plan
+
+    def test_synthetic_native_composition_realizes_every_symbol(self):
+        word, plan = self.native_composition()
+        compiled = exv.compile_plan(plan, exv.parse_word(word))
+        result = exv.execute_plan(compiled)
+        self.assertEqual(exv.judge(word)[0], "T")
+        self.assertEqual(len(result["final_state"]), 5)
+        self.assertEqual(len(result["sic_masses"]), 17)
+        inverses = [e for e in result["events"] if e["kind"] == "inverse"]
+        self.assertEqual([e["generators"] for e in inverses], [[4, -3], [-2, -1]])
+        for event in inverses:
+            numerator = int(event["return"]["numerator"])
+            denominator = int(event["return"]["denominator"])
+            self.assertLess(numerator * 2**100, denominator)
+        rejoins = [e for e in result["events"] if e["kind"] == "rejoin"]
+        self.assertTrue(all(e["population_dual_verified"] for e in rejoins))
+        observations = [e for e in result["events"] if e["kind"] == "evidence"]
+        self.assertEqual([e["observation"]["witness"] for e in observations], ["policy-A", "policy-B"])
+        self.assertEqual(result["latches"]["final"]["state"], result["final_state"])
+        # The current run supplies its own fixed-point return, never a source-paper number.
+        self.assertNotIn("3.79160691e-77", json.dumps(result))
+
+    def test_emitted_native_composition_includes_bound_stdin(self):
+        word, plan = self.native_composition()
+        report = exv.translate(word, "anyon", offline=True)
+        report["realization"] = exv.compile_plan(plan, exv.parse_word(word))
+        command = next(line.strip() for line in exv.render(report, emit=True).splitlines()
+                       if line.strip().startswith("printf '%s'"))
+        proc = subprocess.run(["bash", "-c", command], capture_output=True, text=True)
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertEqual(json.loads(proc.stdout)["backend"], "anyon-composition")
+
+    def test_native_composition_controls_reject_invalid_bindings(self):
+        word, plan = self.native_composition()
+        plan["steps"][11]["actions"][0]["id"] = "outer"
+        with self.assertRaisesRegex(ValueError, "inner frame"):
+            exv.compile_plan(plan, exv.parse_word(word))
+        word, plan = self.native_composition()
+        plan["steps"][4]["actions"][0]["denominator"] = "0"
+        with self.assertRaisesRegex(ValueError, "threshold"):
+            exv.compile_plan(plan, exv.parse_word(word))
+        word, plan = self.native_composition()
+        plan["steps"][0]["actions"] = [{"kind": "shell", "command": "invented"}]
+        with self.assertRaisesRegex(ValueError, "primitive"):
+            exv.compile_plan(plan, exv.parse_word(word))
+
+    def test_native_evidence_rejection_does_not_manufacture_acceptance(self):
+        word, plan = self.native_composition()
+        for i in (4, 8):
+            plan["steps"][i]["actions"][0]["numerator"] = "32"
+        result = exv.execute_plan(exv.compile_plan(plan, exv.parse_word(word)))
+        policies = [e for e in result["events"] if e["kind"] == "evidence"]
+        self.assertTrue(all(not e["observation"]["accepted"] for e in policies))
+        engagement = next(e for e in result["events"] if e["kind"] == "engage")
+        self.assertFalse(engagement["evidence"]["support"][0]["accepted"])
+        self.assertFalse(engagement["evidence"]["refutation"][0]["accepted"])
+
+    def test_model_synthesizes_native_composition_for_complex_word(self):
+        word, plan = self.native_composition()
+        ops = exv.parse_word(word)
+        response = {"register": {k: "native five-channel carrier" for k in ("name", "dim", "frame", "return_check")},
+                    "tokens": [{"i": i, **{k: "proposed procedure" for k in
+                                ("process", "concrete", "rationale", "input", "output", "check")}} for i in range(len(word))],
+                    "realization": plan}
+        with patch.object(exv.LlmBackend, "query", return_value=json.dumps(response)):
+            rows, meta = exv.llm_translate(ops, list(word), word, "T", "anyon", exv.match_register("anyon")[0],
+                                          False, "∅", None, "local", "test")
+        self.assertNotIn("error", meta)
+        self.assertEqual(len(rows), len(word))
+        self.assertIn("Execution pending", rows[6]["check"])
+        self.assertEqual(rows[6]["binding"]["actions"], [{"kind": "inverse"}, {"kind": "inverse"}])
+        result = {"rows": rows}
+        exv.attach_execution(result, exv.execute_plan(meta["realization"]))
+        self.assertTrue(all(r["execution_status"] == "completed" for r in rows))
+        self.assertNotIn("Execution pending", rows[6]["check"])
+        self.assertEqual(len(rows[6]["execution_events"]), 2)
+        self.assertIn('"numerator"', rows[6]["check"])
+
     def test_names_and_glyphs_have_identical_instrument_input(self):
         glyphs = exv.translate("⊢∈≻∋⊣", "belnap", offline=True)
         names = exv.translate("VINIT FSPLIT AFWD FFUSE TANCH", "belnap", offline=True)
