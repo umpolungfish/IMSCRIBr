@@ -1,9 +1,9 @@
-I make excribe_vox produce carrier-bound morphism plans
+I bind model morphism sequences to executable local adapters
 
-I normalize opcode names before Vox, retain its pairing context, and carry
-operation inputs, outputs, and return checks through the report. I ground
-translation prompts in addressed local passages and correct the anyonic,
-FOUR, SIC, numeral, executable, and IMASM carrier definitions.
+I require typed carrier bindings and exact token coverage, retry invalid
+bindings once, and derive executable descriptions from the validated adapter.
+I retain model explanations separately and reject invented execution commands.
 
-I add offline planning, network-free prompt inspection, strict provider and
-response handling, runnable inspection commands, and regression controls.
+I add attributed FOUR evidence execution, resident native anyonic sequences,
+offline plan replay, source-return witnesses, and a runnable example.
+I verify eighteen controls and execute a live local-model evidence plan.

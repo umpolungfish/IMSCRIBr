@@ -1,0 +1,18 @@
+{
+  "word_ops": ["VINIT", "FSPLIT", "AFWD", "AREV", "ENGAGR", "FFUSE", "IFIX", "TANCH"],
+  "plan": {
+    "backend": "evidence",
+    "frame": ["p", "q"],
+    "seed": {"p": [true, false], "q": [false, true]},
+    "steps": [
+      {"i": 0, "op": "VINIT"},
+      {"i": 1, "op": "FSPLIT"},
+      {"i": 2, "op": "AFWD", "permutation": ["q", "p"]},
+      {"i": 3, "op": "AREV"},
+      {"i": 4, "op": "ENGAGR", "proposition": "p", "support": "sensor-A", "refutation": "sensor-B"},
+      {"i": 5, "op": "FFUSE"},
+      {"i": 6, "op": "IFIX"},
+      {"i": 7, "op": "TANCH"}
+    ]
+  }
+}

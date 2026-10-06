@@ -82,7 +82,8 @@ class ExcriptionTests(unittest.TestCase):
                 "tokens": [{"i": i, "process": "carry", "concrete": "retain species",
                             "rationale": "identity on the carrier", "input": "species",
                             "output": "species", "check": "compare retained species"}
-                           for i in range(2)]}
+                           for i in range(2)],
+                "realization": {"backend": "unsupported", "reason": "No chemical carrier adapter is installed."}}
         args = (["VINIT", "TANCH"], ["⊢", "⊣"], "⊢⊣", "N", "reaction vessel",
                 None, True, "∅", None, "local", "test")
         with patch.object(exv.LlmBackend, "query", return_value=json.dumps(good)):
@@ -104,6 +105,94 @@ class ExcriptionTests(unittest.TestCase):
         self.assertIn("Σ_i tr(X E_i) D_i", sic["carrier"]["return_check"])
         self.assertTrue(sic["rows"][1]["check"])
         self.assertNotEqual(sic["rows"][1]["input"], sic["rows"][1]["output"])
+
+    def test_executable_evidence_forward_inverse_and_fuse(self):
+        ops = exv.parse_word("⊢∈≻≺∋⊣")
+        steps = [{"i": i, "op": op} for i, op in enumerate(ops)]
+        steps[2]["permutation"] = ["q", "p"]
+        plan = {"backend": "evidence", "frame": ["p", "q"],
+                "seed": {"p": [True, False], "q": [False, True]}, "steps": steps}
+        compiled = exv.compile_plan(plan, ops)
+        witness = exv.execute_plan(compiled)
+        self.assertTrue(witness["source_return"])
+        self.assertTrue(witness["events"][4]["coordinate_return"])
+        self.assertEqual(witness["events"][2]["after"]["q"], [True, False])
+        # Same-sized non-bijections and invented shell fields must be rejected.
+        for permutation in (["p", "p"], ["p", "missing"]):
+            steps[2]["permutation"] = permutation
+            with self.assertRaises(ValueError):
+                exv.compile_plan(plan, ops)
+        steps[2]["permutation"] = ["q", "p"]
+        plan["shell"] = "anything"
+        with self.assertRaises(ValueError):
+            exv.compile_plan(plan, ops)
+
+    def test_evidence_changes_keep_source_attribution_and_honest_return(self):
+        ops = exv.parse_word("⊢∈⊞∋⊡⊣")
+        steps = [{"i": i, "op": op} for i, op in enumerate(ops)]
+        steps[2].update(proposition="p", support="sensor-A", refutation="sensor-B")
+        compiled = exv.compile_plan({"backend": "evidence", "frame": ["p"],
+                                    "seed": {"p": [False, False]}, "steps": steps}, ops)
+        witness = exv.execute_plan(compiled)
+        self.assertEqual(witness["final"], {"p": [True, True]})
+        self.assertFalse(witness["source_return"])
+        self.assertTrue(witness["events"][3]["coordinate_return"])
+        self.assertEqual(witness["events"][2]["bindings"]["support"], "sensor-A")
+        # Saved derived witnesses/commands cannot override adapter execution.
+        compiled["argv"] = ["invented"]
+        compiled["final"] = {"p": [False, False]}
+        self.assertEqual(exv.execute_plan(compiled)["final"], {"p": [True, True]})
+
+    def test_native_anyonic_sequence_uses_one_resident_carrier(self):
+        ops = exv.parse_word("⊢≻≺⊣")
+        steps = [{"i": i, "op": op} for i, op in enumerate(ops)]
+        steps[1]["generators"] = [1, 2, -3]
+        compiled = exv.compile_plan({"backend": "anyon-ququart",
+                                    "source": str(2**128 + 51), "steps": steps}, ops)
+        self.assertEqual(compiled["argv"][-6:], ["1", "2", "-3", "3", "-2", "-1"])
+        witness = exv.execute_plan(compiled)
+        self.assertEqual(witness["returncode"], 0)
+        self.assertIn("outside-carrier mass", witness["stdout"])
+        self.assertFalse(witness["inverse_residual_verified"])
+        steps[1]["generators"] = [0]
+        with self.assertRaises(ValueError):
+            exv.compile_plan(compiled["plan"] | {"steps": steps}, ops)
+
+    def test_missing_and_fabricated_model_realization_rejected(self):
+        good = {"register": {k: "evidence" for k in ("name", "dim", "frame", "return_check")},
+                "tokens": [{"i": i, **{k: "bound" for k in ("process", "concrete", "rationale", "input", "output", "check")}}
+                           for i in range(2)]}
+        args = (["VINIT", "TANCH"], ["⊢", "⊣"], "⊢⊣", "N", "evidence",
+                None, True, "∅", None, "local", "test")
+        for plan in (None, {"backend": "shell", "command": "invented"}):
+            with patch.object(exv.LlmBackend, "query", return_value=json.dumps(good | {"realization": plan})):
+                rows, meta = exv.llm_translate(*args)
+                self.assertIsNone(rows)
+                self.assertIn("unrealizable", meta["error"])
+
+    def test_model_binding_repair_and_adapter_bound_explanation(self):
+        ops = exv.parse_word("⊢∈⊙∋⊣")
+        obj = {"register": {k: "FOUR" for k in ("name", "dim", "frame", "return_check")},
+               "tokens": [{"i": i, **{k: "incorrect model explanation" for k in
+                           ("process", "concrete", "rationale", "input", "output", "check")}} for i in range(len(ops))],
+               "realization": {"backend": "evidence", "frame": ["p"], "seed": {"p": [True, False]},
+                               "steps": [{"i": i, "op": op} for i, op in enumerate(ops)]}}
+        args = (ops, list("⊢∈⊙∋⊣"), "⊢∈⊙∋⊣", "N", "FOUR evidence",
+                None, True, "∅", None, "local", "test")
+        broken = obj | {"realization": {"backend": "invented"}}
+        with patch.object(exv.LlmBackend, "query", side_effect=[json.dumps(broken), json.dumps(obj)]) as query:
+            rows, meta = exv.llm_translate(*args)
+        self.assertEqual(query.call_count, 2)
+        self.assertTrue(meta["binding_repair_attempted"])
+        self.assertIn("support and refutation axes", rows[1]["concrete"])
+        self.assertEqual(rows[1]["model_explanation"]["concrete"], "incorrect model explanation")
+        self.assertTrue(exv.execute_plan(meta["realization"])["source_return"])
+
+    def test_saved_example_replays_through_cli(self):
+        proc = subprocess.run([sys.executable, exv.__file__, "--run-plan",
+                               str(exv.Path(exv.HERE) / "evidence_return.plan.json")], capture_output=True, text=True)
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertEqual(json.loads(proc.stdout)["final"], {"p": [True, True], "q": [False, True]})
 
 
 if __name__ == "__main__":
