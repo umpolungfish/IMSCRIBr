@@ -2,6 +2,7 @@
 import copy
 import subprocess
 from pathlib import Path
+from factor_workflow import compile_factor, execute_factor
 
 SYMBOLS = dict(zip(("VINIT", "TANCH", "AFWD", "AREV", "CLINK", "IMSCRIB", "FSPLIT", "FFUSE", "EVALT", "EVALF", "ENGAGR", "IFIX"), "⊢⊣≻≺⋈⊙∈∋⊤⊥⊞⊡"))
 
@@ -9,6 +10,10 @@ CATALOG = """Synthesize a bound executable composition. Recognized motifs guide
 lowering; a word is never required to stay bare because a whole-word adapter
 is absent. Bind its positions to compositions of available carrier operations.
 Keep phase, leakage, source snapshots, and attributed evidence distinct.
+Every symbol is an operator morphism. Its executable lowering must preserve
+that operator's role and have a bound domain and codomain that compose with
+its neighbors. A motif abbreviates such a composition; it never replaces
+per-symbol operations or licenses identity at a working symbol.
 realization must use one of these schemas:
 1. evidence: {backend:"evidence", frame:[unique proposition names],
    seed:{every frame name:[support_boolean,refutation_boolean]},
@@ -53,6 +58,50 @@ realization must use one of these schemas:
    one resident carrier. Bind evaluation policies from the user's description;
    missing material policies are unresolved bindings, not unsupported words.
    Terminal readout returns actual native witnesses without stochastic collapse.
+3. ququart-factor: {backend:"ququart-factor",source:decimal_string,base:decimal_string,
+   radix:decimal_power_of_two_string,seed:decimal_string,
+   preparation:{mode:"fresh"}|{mode:"compiled",path:existing_compiler_report_path}|
+               {mode:"retained",path:existing_case_directory},
+   prepare_seconds:positive_integer,execute_seconds:positive_integer,
+   steps:[{i:position,symbol:canonical_symbol,actions:[operation,...]}]}.
+   Use this for actual factor extraction, not an exchange/evidence approximation.
+   Exactly one bound step per symbol. This carrier consists of source-bound
+   preparation artifacts, retained cursors/frames and attributed terminal evidence.
+   Its operations are actual workflow morphisms, not coherent Artin gates:
+   ⊢ {kind:"bind"} initializes the source/base/radix/seed carrier.
+   ≻ {kind:"prepare"} consumes bound source and produces a validated baked case;
+      or {kind:"extract"} consumes prepared case and produces actual native readout.
+   ⊙ {kind:"retain"} is identity on the entire carrier.
+   ∈ {kind:"split",id:string} retains a source/active/evidence frame.
+   ∋ {kind:"rejoin",id:string} consumes the retained inner frame, checks source
+      binding and carries the transformed active state and attributed evidence.
+   ⋈ {kind:"link"} binds the baked Fourier/modular-work composition certificate.
+   ⊤ {kind:"evidence",axis:"support",proposition:string,witness:string} evaluates
+      the independent terminal producer/product verifier on the actual readout.
+   ⊥ same evidence schema with axis:"refutation" evaluates failed verification.
+   ≺ {kind:"return"} restores the retained forward preparation cursor, preserving
+      terminal evidence. This is a workflow cursor return, NOT coherent inversion.
+      A requested coherent inverse needs anyon-composition instead.
+   ⊞ {kind:"engage",proposition:string} holds both already evaluated coordinates.
+   ⊡ {kind:"latch",id:string} copies fixed carrier/evidence after all frames rejoin.
+   ⊣ {kind:"release"} releases the latch and verified factors at the terminal end.
+   Each operation is restricted to its indicated symbol. Typed carrier phases
+   compose as unit -> bound -> prepared -> readout; return restores the last
+   forward domain; fixation -> latched and terminal release -> released.
+   Bind actual frame ids, evidence proposition and witness ids. No stage labels
+   or narrative-only position coverage can substitute for these morphisms.
+   The native preparation script emits canonical numeral words and bakes the
+   source, radix-scaled modular base, physical Fourier operator and shared-work
+   schedule into a new executable. The extraction binary has NO runtime source
+   arguments. The independent verifier checks the actual producing arm, measured
+   evidence, source binding and Gödel factor product. Current source has removed
+   the classical native producer, so fresh preparations disable that arm and
+   execute the ququart phase/SIC route. Never restore it or invent a period.
+   No factor values or known order may enter this schema or preparation.
+   Bind base=2,radix=4,seed=1729 unless the request chooses otherwise. Use fresh
+   preparation if no actual compatible retained artifact was supplied. Bind
+   stage budgets explicitly (e.g. prepare_seconds=1800,execute_seconds=120).
+   An execution without a verified terminal pair is unclosed, never success.
 Use anyon-composition for synthesized anyonic words, including split/rejoin,
 evaluation, linking, engagement, and fixation. Do not infer that its symbols
 are forbidden because a whole-word template has not been registered.
@@ -80,6 +129,12 @@ EVIDENCE_ACTIONS = {
 
 def bound_description(compiled, i):
     """Executable boundaries take precedence over model prose."""
+    if compiled["plan"]["backend"] == "ququart-factor":
+        step = compiled["plan"]["steps"][i]
+        boundary = compiled["boundaries"][i]
+        return {"process": step["symbol"], "concrete": "Bound factor-carrier morphism: " + json_text(step["actions"]),
+                "input": boundary["domain"], "output": boundary["codomain"],
+                "check": "Execution pending: retain actual before/after carrier, source frames and attributed instrument evidence at this symbol."}
     step = compiled["plan"]["steps"][i]
     if compiled["plan"]["backend"] == "anyon-composition":
         return {"process": step["symbol"], "concrete": "Native ordered composition: " + json_text(step["actions"]),
@@ -119,6 +174,8 @@ def compile_plan(plan, ops):
         return {"status": "unsupported", **plan}
     if backend == "anyon-composition":
         return compile_composition(plan, ops)
+    if backend == "ququart-factor":
+        return compile_factor(copy.deepcopy(plan), list(ops), SYMBOLS)
     keys = {"backend", "steps", "frame", "seed"} if backend == "evidence" else {"backend", "steps", "source"}
     if backend not in {"evidence", "anyon-ququart"} or set(plan) != keys:
         raise ValueError("unknown adapter or unexpected realization fields")
@@ -235,11 +292,22 @@ def compile_composition(plan, ops):
               "split": {"id"}, "rejoin": {"id"}, "latch": {"id"}, "engage": {"proposition"},
               "evidence": {"proposition", "axis", "outcome", "numerator", "denominator", "witness"}}
     splits, returns, latches, evidence = [], 0, set(), set()
+    roles = {"⊢": "retain", "⊣": "sic", "⊙": "retain", "≻": "exchange",
+             "≺": "inverse", "⋈": "exchange", "∈": "split", "∋": "rejoin",
+             "⊤": "evidence", "⊥": "evidence", "⊞": "engage", "⊡": "latch"}
     for i, (step, op) in enumerate(zip(plan["steps"], ops)):
-        if (not isinstance(step, dict) or set(step) != {"i", "symbol", "actions"} or
+        if (SYMBOLS.get(op) is None or not isinstance(step, dict) or set(step) != {"i", "symbol", "actions"} or
                 type(step["i"]) is not int or step["i"] != i or step["symbol"] != SYMBOLS.get(op) or
                 not isinstance(step["actions"], list) or not step["actions"]):
             raise ValueError(f"composition position {i} needs its symbol and ordered operations")
+        kinds = [a.get("kind") if isinstance(a, dict) else None for a in step["actions"]]
+        if roles[step["symbol"]] not in kinds or (step["symbol"] == "⊙" and set(kinds) != {"retain"}):
+            raise ValueError(f"{step['symbol']} requires its operator morphism with a valid primitive, not a placeholder composition")
+        if step["symbol"] in {"⊤", "⊥"} and not any(
+                isinstance(a, dict) and a.get("kind") == "evidence" and
+                a.get("axis") == ("support" if step["symbol"] == "⊤" else "refutation")
+                for a in step["actions"]):
+            raise ValueError("evaluation morphism must bind the symbol's evidence axis")
         for action in step["actions"]:
             if not isinstance(action, dict) or not isinstance(action.get("kind"), str):
                 raise ValueError("native composition operation must name a primitive")
@@ -291,6 +359,8 @@ def compile_composition(plan, ops):
 def execute_plan(compiled):
     # Recompile the source object: never trust stored/generated argv or witnesses.
     checked = compile_plan(compiled["plan"], compiled["word_ops"])
+    if checked["plan"]["backend"] == "ququart-factor":
+        return execute_factor(checked)
     if checked["plan"]["backend"] == "anyon-composition":
         proc = subprocess.run(checked["argv"], input=json_text(checked["plan"]), capture_output=True, text=True, timeout=120)
         if proc.returncode:

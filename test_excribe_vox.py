@@ -9,6 +9,79 @@ import excribe_vox as exv
 
 
 class ExcriptionTests(unittest.TestCase):
+    def test_factor_workflow_binds_large_source_without_known_factors(self):
+        saved = json.loads((exv.Path(exv.HERE) / "rsa100_factor.plan.json").read_text())
+        compiled = exv.compile_plan(saved["plan"], saved["word_ops"])
+        self.assertEqual(compiled["symbol_word"], "⊢∈≻⋈∈≻⊤⊥∋≺⊞∋⊡⊣")
+        self.assertEqual(compiled["transport"], "source-baked-workflow")
+        self.assertEqual(len(compiled["boundaries"]), len(saved["word_ops"]))
+        self.assertEqual(compiled["boundaries"][0]["domain"], "unit")
+        self.assertEqual(compiled["boundaries"][-1]["codomain"], "released")
+        for left, right in zip(compiled["boundaries"], compiled["boundaries"][1:]):
+            self.assertEqual(left["codomain"], right["domain"])
+        plan = compiled["plan"]
+        self.assertNotIn("factors", plan)
+        self.assertNotIn("order", plan)
+        self.assertEqual(plan["preparation"], {"mode": "fresh"})
+        import factor_workflow as fw
+        values = fw.native_numerals([plan["source"], plan["base"]])
+        proc = subprocess.run([str(fw.OPERATOR), "--read-numeral", values[plan["source"]]], capture_output=True, text=True)
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertEqual(proc.stdout.strip(), plan["source"])
+
+    def test_factor_workflow_rejects_missing_coverage_and_injected_factors(self):
+        saved = json.loads((exv.Path(exv.HERE) / "rsa100_factor.plan.json").read_text())
+        plan, ops = saved["plan"], saved["word_ops"]
+        with self.assertRaisesRegex(ValueError, "workflow needs"):
+            exv.compile_plan(plan | {"p": "known-factor"}, ops)
+        for invalid in ("0", "1", plan["source"]):
+            with self.assertRaises(ValueError):
+                exv.compile_plan(plan | {"base": invalid}, ops)
+        with self.assertRaisesRegex(ValueError, "power of two"):
+            exv.compile_plan(plan | {"radix": "3"}, ops)
+        with self.assertRaisesRegex(ValueError, "cover every position"):
+            exv.compile_plan(plan | {"steps": plan["steps"][:-1]}, ops)
+        with self.assertRaisesRegex(ValueError, "local constellation"):
+            exv.compile_plan(plan | {"preparation": {"mode": "retained", "path": "/etc"}}, ops)
+
+    def test_factor_morphisms_reject_stage_only_and_wrong_operator_bindings(self):
+        import copy
+        saved = json.loads((exv.Path(exv.HERE) / "rsa100_factor.plan.json").read_text())
+        for position in range(len(saved["word_ops"])):
+            plan = copy.deepcopy(saved["plan"])
+            plan["steps"][position]["actions"] = [{"kind": "retain"}]
+            with self.assertRaises(ValueError):
+                exv.compile_plan(plan, saved["word_ops"])
+        plan = copy.deepcopy(saved["plan"])
+        plan["steps"][8]["actions"][0]["id"] = "outer"
+        with self.assertRaisesRegex(ValueError, "inner frame"):
+            exv.compile_plan(plan, saved["word_ops"])
+        plan = copy.deepcopy(saved["plan"])
+        plan["steps"][6]["actions"][0]["axis"] = "refutation"
+        with self.assertRaisesRegex(ValueError, "evidence axis"):
+            exv.compile_plan(plan, saved["word_ops"])
+
+    def test_missing_execution_event_is_not_marked_completed(self):
+        report = {"rows": [{"i": 0}]}
+        exv.attach_execution(report, {"events": []})
+        self.assertEqual(report["rows"][0]["execution_status"], "not_run")
+
+    def test_native_work_symbol_cannot_lower_to_identity(self):
+        word, plan = self.native_composition()
+        plan["steps"][3]["actions"] = [{"kind": "retain"}]
+        with self.assertRaisesRegex(ValueError, "operator morphism"):
+            exv.compile_plan(plan, exv.parse_word(word))
+
+    def test_factor_execution_failure_is_not_promoted_to_completed(self):
+        report = {"rows": [{"i": 0}, {"i": 1}, {"i": 2}]}
+        witness = {"backend": "ququart-factor", "status": "unclosed", "events": [
+            {"i": 0, "stage": "prepare", "status": "completed"},
+            {"i": 1, "stage": "extract", "status": "unclosed"},
+            {"i": 2, "stage": "verify", "status": "not_run"}]}
+        exv.attach_execution(report, witness)
+        self.assertEqual([r["execution_status"] for r in report["rows"]], ["completed", "unclosed", "not_run"])
+        self.assertIn("unclosed", report["rows"][1]["check"])
+
     def native_composition(self):
         word = "⊢⊙∈≻⊤⋈≺∈⊥⊞⊙∋∋⊡⊣"
         actions = [

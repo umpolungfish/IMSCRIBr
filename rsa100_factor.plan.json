@@ -1,0 +1,29 @@
+{
+  "word_ops": ["VINIT", "FSPLIT", "AFWD", "CLINK", "FSPLIT", "AFWD", "EVALT", "EVALF", "FFUSE", "AREV", "ENGAGR", "FFUSE", "IFIX", "TANCH"],
+  "plan": {
+    "backend": "ququart-factor",
+    "source": "1522605027922533360535618378132637429718068114961380688657908494580122963258952897654000350692006139",
+    "base": "2",
+    "radix": "4",
+    "seed": "1729",
+    "preparation": {"mode": "fresh"},
+    "prepare_seconds": 1800,
+    "execute_seconds": 120,
+    "steps": [
+      {"i": 0, "symbol": "⊢", "actions": [{"kind": "bind"}]},
+      {"i": 1, "symbol": "∈", "actions": [{"kind": "split", "id": "outer"}]},
+      {"i": 2, "symbol": "≻", "actions": [{"kind": "prepare"}]},
+      {"i": 3, "symbol": "⋈", "actions": [{"kind": "link"}]},
+      {"i": 4, "symbol": "∈", "actions": [{"kind": "split", "id": "inner"}]},
+      {"i": 5, "symbol": "≻", "actions": [{"kind": "extract"}]},
+      {"i": 6, "symbol": "⊤", "actions": [{"kind": "evidence", "axis": "support", "proposition": "factor_pair", "witness": "terminal-product-verifier"}]},
+      {"i": 7, "symbol": "⊥", "actions": [{"kind": "evidence", "axis": "refutation", "proposition": "factor_pair", "witness": "terminal-product-verifier"}]},
+      {"i": 8, "symbol": "∋", "actions": [{"kind": "rejoin", "id": "inner"}]},
+      {"i": 9, "symbol": "≺", "actions": [{"kind": "return"}]},
+      {"i": 10, "symbol": "⊞", "actions": [{"kind": "engage", "proposition": "factor_pair"}]},
+      {"i": 11, "symbol": "∋", "actions": [{"kind": "rejoin", "id": "outer"}]},
+      {"i": 12, "symbol": "⊡", "actions": [{"kind": "latch", "id": "factor_latch"}]},
+      {"i": 13, "symbol": "⊣", "actions": [{"kind": "release"}]}
+    ]
+  }
+}

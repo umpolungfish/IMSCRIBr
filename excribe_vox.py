@@ -770,8 +770,9 @@ def llm_translate(ops, glyphs, word, verdict, register_text, reg, generic, braid
     try:
         realization = compile_plan(obj.get("realization"), ops)
         if realization["status"] == "ready" and reg is not None:
-            allowed = {"belnap": {"evidence"}, "anyon": {"anyon-ququart", "anyon-composition"},
-                       "ququart": {"anyon-ququart", "anyon-composition"}}.get(reg.rid, set())
+            allowed = {"belnap": {"evidence"}, "anyon": {"anyon-ququart", "anyon-composition", "ququart-factor"},
+                       "ququart": {"anyon-ququart", "anyon-composition", "ququart-factor"},
+                       "numeral": {"ququart-factor"}, "substrate": {"ququart-factor"}}.get(reg.rid, set())
             if realization["plan"]["backend"] not in allowed:
                 raise ValueError(f"adapter does not realize requested {reg.rid} carrier")
     except (ValueError, TypeError, KeyError) as exc:
@@ -815,6 +816,11 @@ def llm_translate(ops, glyphs, word, verdict, register_text, reg, generic, braid
             "against each retained source, as an integer ratio over the current native fixed-point scale. "
             "Report exact equality separately. Verify SIC dual reconstruction of current computational "
             "populations while retaining coherent phase and leakage. Retain accepted and rejected policy observations.")
+    if realization["status"] == "ready" and realization["plan"]["backend"] == "ququart-factor":
+        definition["return_check"] = (
+            "Validate the source-bound prepared case and execute its baked membrane without runtime inputs. "
+            "Release factors only after the independent terminal verifier accepts the producing arm and "
+            "exact source product. An unfinished extraction is unclosed, not a verified factorization.")
     meta = {"provider": provider, "model": model,
             "binding_repair_attempted": _repair is not None,
             "realization": realization,
@@ -1278,20 +1284,21 @@ def attach_execution(result: dict, witness: dict) -> None:
     events = witness.get("events", [])
     for row in result["rows"]:
         positions = [n for n, event in enumerate(events) if event.get("i") == row["i"]]
-        row["execution_status"] = "completed"
+        statuses = [events[n].get("status", "completed") for n in positions]
+        row["execution_status"] = next((s for s in statuses if s != "completed"), "completed") if positions else "not_run"
         row["execution_events"] = positions
         checks = []
         for n in positions:
             event = events[n]
             measured = {key: event[key] for key in
-                        ("return", "source_return", "coordinate_return", "population_dual_verified")
+                        ("return", "source_return", "coordinate_return", "population_dual_verified", "domain", "codomain")
                         if key in event}
             if "observation" in event:
                 measured["observation"] = event["observation"]
             if measured:
                 checks.append({"event": n, **measured})
         row["check"] = ("Native execution witness: " + json.dumps(checks, ensure_ascii=False)
-                        if checks else "Execution completed; see the recorded operation events.")
+                        if checks else f"Execution stage {row['execution_status']}; see recorded operation events and instrument logs.")
 
 # ── rendering ──────────────────────────────────────────────────────
 
@@ -1396,7 +1403,7 @@ def render(r: dict, emit: bool = False) -> str:
             L.append("  " + realization["reason"])
         else:
             L.append("  adapter: " + realization["plan"]["backend"])
-            for step in realization["plan"]["steps"]:
+            for step in realization["plan"].get("steps", realization["plan"].get("motifs", [])):
                 L.append("  " + json.dumps(step, ensure_ascii=False))
             L.append("  Use --save-plan FILE, then --run-plan FILE; --execute runs now.")
             if emit and realization.get("argv"):
@@ -1482,7 +1489,11 @@ def main():
         try:
             saved = json.loads(Path(args.run_plan).read_text())
             compiled = compile_plan(saved["plan"], saved["word_ops"])
-            print(json.dumps(execute_plan(compiled), indent=2, ensure_ascii=False))
+            witness = execute_plan(compiled)
+            witness["sources"] = saved.get("sources", [])
+            print(json.dumps(witness, indent=2, ensure_ascii=False))
+            if witness.get("backend") == "ququart-factor" and witness.get("status") != "verified":
+                sys.exit(1)
         except (OSError, ValueError, TypeError, KeyError, subprocess.TimeoutExpired) as exc:
             print(f"REALIZATION ERROR: {exc}", file=sys.stderr)
             sys.exit(1)
@@ -1514,7 +1525,8 @@ def main():
                 raise ValueError(reason or "no validated executable realization is available")
             if args.save_plan:
                 with open(args.save_plan, "x", encoding="utf-8") as f:
-                    json.dump({"plan": realization["plan"], "word_ops": realization["word_ops"]}, f, indent=2, ensure_ascii=False)
+                    json.dump({"plan": realization["plan"], "word_ops": realization["word_ops"],
+                               "sources": r.get("sources", [])}, f, indent=2, ensure_ascii=False)
                     f.write("\n")
             if args.execute:
                 attach_execution(r, execute_plan(realization))
@@ -1533,6 +1545,8 @@ def main():
     else:
         print(render(r, emit=args.emit))
     if r["verdict"] is None or r["pairing"].get("error") or (r.get("llm_meta") or {}).get("error"):
+        sys.exit(1)
+    if r.get("execution", {}).get("backend") == "ququart-factor" and r["execution"].get("status") != "verified":
         sys.exit(1)
 
 if __name__ == "__main__":

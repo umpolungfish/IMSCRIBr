@@ -1,9 +1,9 @@
-I synthesize native compositions across the complete symbol word
+I bind factor extraction to executable per-symbol carrier morphisms
 
-I bind ordered native operations at every position without a whole-word
-allowlist. I retain frames, phase, leakage, measured evidence, and latches.
-I attach actual execution events and source-return ratios to completed rows
-and distinguish them from model checks and recorded preparation residuals.
-
-I verify native composition, rejection policies, emitted stdin commands,
-model bindings, and replay of the saved live-model plan. I update usage.
+I compose typed source, preparation, readout and evidence carriers through
+every symbol. I execute frame retention, linking, evaluated evidence,
+cursor return, engagement, fixation and verified release at their positions.
+I retain each operation's before and after carrier and instrument witnesses.
+I require native compositions to preserve each symbol's operator role.
+I preserve source citations in saved plans and offline replay.
+I supply RSA-100 bindings, usage and regression controls for terminal testing.

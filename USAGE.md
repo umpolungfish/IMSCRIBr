@@ -385,6 +385,29 @@ The local native control for these bindings executes both returns, verifies both
 
 Before execution, row checks describe pending procedures. After `--execute`, rows are marked completed and their `execution_events` refer to the actual native events. Return rows display measured ratios, rejoin rows carry population certificates, and evaluation rows carry the accepted or rejected observation. `source_equal: false` means the integer amplitudes differ exactly; inspect the measured ratio to determine the size of that difference.
 
+## Large semiprime factor extraction
+
+Request a source-baked RSA-100 extraction using the configured `IG_PROVIDER` and `IG_MODEL`:
+
+```bash
+python3 excribe_vox.py '⊢∈≻⋈∈≻⊤⊥∋≺⊞∋⊡⊣' \
+  'Extract a nontrivial factor pair of decimal semiprime 1522605027922533360535618378132637429718068114961380688657908494580122963258952897654000350692006139. Use the ququart-factor preparation/readout/evidence carrier, base 2, radix 4, seed 1729, fresh preparation bounded at 1800 seconds and extraction bounded at 120 seconds. Bind the source; split outer; prepare the source-baked case at the first forward symbol; link its Fourier operator and modular work; split inner; execute the resident phase/SIC membrane at the second forward symbol. Evaluate support and refutation for factor_pair with witness terminal-product-verifier using the independent terminal producer/product check. Rejoin inner; return the retained preparation cursor while preserving terminal evidence; engage both evaluated coordinates; rejoin outer; latch factor_latch; release verified factors. Bind every symbol to its executable morphism. Supply neither known factors nor a period. Report an unfinished extraction as unclosed.' \
+  --llm --save-plan rsa100_generated.plan.json --execute --json --think off
+
+# Replay the supplied fixed bindings without a model call.
+python3 excribe_vox.py --run-plan rsa100_factor.plan.json
+```
+
+Every symbol executes a bound morphism on the preparation/readout/evidence carrier. The plan contains indexed `steps`, each with its symbol and ordered `actions`. Compilation checks adjacent carrier phases, retained frame pairing, evidence axes and fixation before release. Execution records actual `before` and `after` carriers at each operation. Working symbols cannot be replaced with identity or stage labels.
+
+Preparation compiles the source and work into a case executable; its extraction invocation receives no arguments. No factors or period are provided to preparation. The return here restores the retained preparation cursor while preserving attributed terminal evidence. Its witness concerns that workflow carrier. For a coherent five-channel inverse, use native anyonic composition and its measured amplitude residual instead.
+
+Every execution retains its request, instrument logs, case and result under `measurements/factors/`. `verified` means the independent terminal verifier accepted the factors and source product. Failed or unclosed execution exits with status 1 and releases no verified factor pair. Support records acceptance of the terminal producer/product check; refutation records its rejection. Rejection concerns that readout and does not establish that the source has no factors. The supplied RSA-100 request is an extraction experiment, not a claim of successful factorization or a runtime guarantee.
+
+New saved plans retain the translation's `sources` array, and replay emits it alongside the execution witness. Older plans without that array emit an empty array; replay does not invent provenance.
+
+Saved factor bindings also support `preparation: {"mode": "compiled", "path": "..."}` for a source-matching compiler report, or `{"mode": "retained", "path": "..."}` for an existing case. Paths must remain inside the constellation. Retained cases must match the requested source, base, radix and seed, pass artifact checks, and pass native preparation validation.
+
 ## Requirements and errors
 
 Use Python 3 with the existing constellation layout. Vox is expected at `Vox/target/release/vox`; `EXCRIBE_VOX_BIN` overrides that path. Model calls use `httpx`. Native anyonic execution requires `G-mOMonadOS/target/release/sic-tool`. Offline definitions and evidence-plan replay need no model server.
