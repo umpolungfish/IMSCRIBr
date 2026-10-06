@@ -2,7 +2,7 @@
 
 `excribe_vox.py` turns an IMASM word and a register description into a carrier-bound morphism plan. Vox reads the normalized word and supplies its verdict and paired regions. Model translation can add validated executable bindings for the supported adapters.
 
-Run the examples below from `~/imsgct`.
+Run the examples below from the directory containing `excribe_vox.py` and this guide.
 
 Model examples use your exported `IG_PROVIDER` and `IG_MODEL` settings. Keep your existing values if they are already configured. Otherwise set them before running model commands, replacing the model placeholder with your provider's model identifier:
 
@@ -18,7 +18,7 @@ Bare `--llm` requests translation using those settings. Offline inspection and s
 Execute the supplied evidence plan without contacting a model:
 
 ```bash
-python3 IMSCRIBr/excribe_vox.py --run-plan IMSCRIBr/evidence_return.plan.json
+python3 excribe_vox.py --run-plan evidence_return.plan.json
 ```
 
 The example prepares propositions p and q, separates their evidence axes, swaps their coordinates, returns through the retained inverse, deposits support and refutation for p, rejoins the axes, and latches the result. The final state has both evidence coordinates for p and refutation for q. Its fuse witness reports successful coordinate reconstruction and a changed source state.
@@ -26,7 +26,7 @@ The example prepares propositions p and q, separates their evidence axes, swaps 
 Inspect a word using the local register definitions:
 
 ```bash
-python3 IMSCRIBr/excribe_vox.py \
+python3 excribe_vox.py \
   '⊢∈≻∋⊣' belnap --offline --emit
 ```
 
@@ -40,8 +40,8 @@ Give the register description concrete source values, an operation, and any evid
 word='⊢∈≻≺⊞∋⊣'
 register='FOUR evidence carrier with propositions p and q, seed p supported and q refuted; swap p and q then reverse that swap, deposit support from sensor-A and refutation from sensor-B for p'
 
-python3 IMSCRIBr/excribe_vox.py "$word" "$register" \
-  --llm --save-plan IMSCRIBr/my_evidence.plan.json --execute
+python3 excribe_vox.py "$word" "$register" \
+  --llm --save-plan my_evidence.plan.json --execute
 ```
 
 `--llm` requests model translation using `IG_PROVIDER` and `IG_MODEL`. `--save-plan` creates a new plan file and refuses to overwrite an existing file. `--execute` runs the validated realization and includes its witnesses in the report. Omit `--execute` to inspect and save the plan before running it.
@@ -49,7 +49,7 @@ python3 IMSCRIBr/excribe_vox.py "$word" "$register" \
 Replay the saved plan without another model call:
 
 ```bash
-python3 IMSCRIBr/excribe_vox.py --run-plan IMSCRIBr/my_evidence.plan.json
+python3 excribe_vox.py --run-plan my_evidence.plan.json
 ```
 
 Replay revalidates the source bindings and ordered operations. It regenerates native arguments and evidence witnesses. The standalone replay command accepts no word or register arguments.
@@ -69,7 +69,7 @@ Supporting and refuting evaluations deposit attributed evidence. Engagement depo
 The `anyon-ququart` adapter starts in the native T basis state. Bind a decimal source of at least 128 bits and signed Artin generator indices from 1 through 5:
 
 ```bash
-python3 IMSCRIBr/excribe_vox.py '⊢≻≺⊣' \
+python3 excribe_vox.py '⊢≻≺⊣' \
   'An anyonic ququart with source 340282366920938463463374607431768211507; start in T, apply signed Artin generators 1, 2, -3 in order, then their retained inverse' \
   --llm --execute
 ```
@@ -95,20 +95,20 @@ Known register descriptions use local definitions unless model translation is re
 Inspect the complete model prompt without contacting a server:
 
 ```bash
-python3 IMSCRIBr/excribe_vox.py '⊢≻≺⊣' anyon \
+python3 excribe_vox.py '⊢≻≺⊣' anyon \
   --llm --dry-run
 ```
 
 The prompt includes addressed local source excerpts and the executable adapter catalog. Add `--context PATH` for another local source file; the option is repeatable. `--stream` writes generated model output to stderr. `--think off` disables local-model thinking; other supported effort values appear in `--help`. `--no-spinner` disables progress animation.
 
-Model bindings must cover every token in order. Invalid executable bindings receive one correction attempt. Persistently invalid bindings produce an error. Model-supplied shell commands and code are rejected by the closed adapter schema.
+Model bindings must cover every symbol in order. Invalid executable bindings receive one correction attempt. Persistently invalid bindings produce an error. Model-supplied shell commands and code are rejected by the closed adapter schema.
 
 ## Command combinations
 
-Run this setup once in your shell from `~/imsgct`. The following examples reuse these variables:
+Run this setup once in your shell from the tool's directory. The following examples reuse these variables:
 
 ```bash
-EXV=IMSCRIBr/excribe_vox.py
+EXV=excribe_vox.py
 WORD='⊢∈≻≺⊞∋⊣'
 REGISTER='FOUR evidence carrier with propositions p and q, seed p supported and q refuted; swap p and q then reverse that swap, deposit support from sensor-A and refutation from sensor-B for p'
 ANYON_WORD='⊢≻≺⊣'
@@ -162,13 +162,13 @@ python3 "$EXV" "$WORD" "$REGISTER" \
 
 # One additional source
 python3 "$EXV" "$ANYON_WORD" "$ANYON_REGISTER" \
-  --llm --dry-run --context HORN_TORUS_GEOMETRY_CONTEXT.md
+  --llm --dry-run --context ../HORN_TORUS_GEOMETRY_CONTEXT.md
 
 # Multiple additional sources
 python3 "$EXV" "$ANYON_WORD" "$ANYON_REGISTER" \
   --llm --dry-run \
-  --context ⊙ERS_GUIDE_TO_IMASM.md \
-  --context ig-docs/ANYONIC_QUQUART_MEMBRANES.md --json
+  --context ../SNS_PRIME.md \
+  --context ../ig-docs/ANYONIC_QUQUART_MEMBRANES.md --json
 ```
 
 ### Model translation
@@ -194,7 +194,7 @@ python3 "$EXV" "$WORD" "$REGISTER" --llm --think high --emit
 
 # Source-grounded anyonic translation
 python3 "$EXV" "$ANYON_WORD" "$ANYON_REGISTER" \
-  --llm --context ig-docs/THE_CODEX_FIBONACCI.md --emit
+  --llm --context ../ig-docs/THE_CODEX_FIBONACCI.md --emit
 
 # A different local server address
 IG_PROVIDER=local IG_LOCAL_URL=http://127.0.0.1:8080 \
@@ -229,11 +229,11 @@ python3 "$EXV" "$WORD" "$REGISTER" \
 
 # Save a plan for review without executing
 python3 "$EXV" "$WORD" "$REGISTER" \
-  --llm --save-plan IMSCRIBr/evidence_review.plan.json --emit
+  --llm --save-plan evidence_review.plan.json --emit
 
 # Save and execute together
 python3 "$EXV" "$WORD" "$REGISTER" \
-  --llm --save-plan IMSCRIBr/evidence_run.plan.json --execute --json
+  --llm --save-plan evidence_run.plan.json --execute --json
 
 # Execute native exchanges and show their command
 python3 "$EXV" "$ANYON_WORD" "$ANYON_REGISTER" \
@@ -241,7 +241,7 @@ python3 "$EXV" "$ANYON_WORD" "$ANYON_REGISTER" \
 
 # Save native exchanges for later execution
 python3 "$EXV" "$ANYON_WORD" "$ANYON_REGISTER" \
-  --llm --save-plan IMSCRIBr/anyon_review.plan.json --json --think off
+  --llm --save-plan anyon_review.plan.json --json --think off
 ```
 
 ### Standalone replay
@@ -250,13 +250,13 @@ Replay always prints a JSON execution witness and contacts no model. The saved-p
 
 ```bash
 # Supplied example
-python3 "$EXV" --run-plan IMSCRIBr/evidence_return.plan.json
+python3 "$EXV" --run-plan evidence_return.plan.json
 
 # Previously reviewed evidence operations
-python3 "$EXV" --run-plan IMSCRIBr/evidence_review.plan.json
+python3 "$EXV" --run-plan evidence_review.plan.json
 
 # Previously reviewed native exchanges
-python3 "$EXV" --run-plan IMSCRIBr/anyon_review.plan.json
+python3 "$EXV" --run-plan anyon_review.plan.json
 ```
 
 Keep `--offline` separate from `--llm`, `--stream`, and `--dry-run`. Use `--run-plan` as a standalone replay command, without a word, register, `--llm`, `--execute`, or `--save-plan`. Offline table reports provide descriptive plans; `--save-plan` and `--execute` require a validated executable realization from model translation.
@@ -270,13 +270,12 @@ A parse or argument error exits with status 2. Instrument failures, provider fai
 See the built-in descriptions and full CLI options:
 
 ```bash
-python3 IMSCRIBr/excribe_vox.py --list-registers
-python3 IMSCRIBr/excribe_vox.py --help
+python3 excribe_vox.py --list-registers
+python3 excribe_vox.py --help
 ```
 
 Run the regression controls:
 
 ```bash
-cd IMSCRIBr
 python3 -m unittest -v test_excribe_vox.py
 ```

@@ -1,4 +1,4 @@
-I retain executable repository paths in the symbol examples
+I remove token names from the usage document
 
-I restore the IMSCRIBr directory spelling in command paths while retaining
-canonical symbol words throughout the usage examples.
+I make examples relative to the tool directory, retain symbol-only words,
+and replace named source paths so no token name occurs in the guide.
