@@ -4,6 +4,15 @@
 
 Run the examples below from `~/imsgct`.
 
+Model examples use your exported `IG_PROVIDER` and `IG_MODEL` settings. Keep your existing values if they are already configured. Otherwise set them before running model commands, replacing the model placeholder with your provider's model identifier:
+
+```bash
+export IG_PROVIDER=local
+export IG_MODEL='YOUR_SERVED_MODEL_ID'
+```
+
+Bare `--llm` requests translation using those settings. Offline inspection and saved-plan replay need neither setting.
+
 ## Start with a local example
 
 Execute the supplied evidence plan without contacting a model:
@@ -32,10 +41,10 @@ word='VINIT FSPLIT AFWD AREV ENGAGR FFUSE TANCH'
 register='FOUR evidence carrier with propositions p and q, seed p supported and q refuted; swap p and q then reverse that swap, deposit support from sensor-A and refutation from sensor-B for p'
 
 python3 IMSCRIBr/excribe_vox.py "$word" "$register" \
-  --llm local --save-plan IMSCRIBr/my_evidence.plan.json --execute
+  --llm --save-plan IMSCRIBr/my_evidence.plan.json --execute
 ```
 
-`--llm local` selects the local model server explicitly. `--save-plan` creates a new plan file and refuses to overwrite an existing file. `--execute` runs the validated realization and includes its witnesses in the report. Omit `--execute` to inspect and save the plan before running it.
+`--llm` requests model translation using `IG_PROVIDER` and `IG_MODEL`. `--save-plan` creates a new plan file and refuses to overwrite an existing file. `--execute` runs the validated realization and includes its witnesses in the report. Omit `--execute` to inspect and save the plan before running it.
 
 Replay the saved plan without another model call:
 
@@ -62,7 +71,7 @@ The `anyon-ququart` adapter starts in the native T basis state. Bind a decimal s
 ```bash
 python3 IMSCRIBr/excribe_vox.py 'VINIT AFWD AREV TANCH' \
   'An anyonic ququart with source 340282366920938463463374607431768211507; start in T, apply signed Artin generators 1, 2, -3 in order, then their retained inverse' \
-  --llm local --execute
+  --llm --execute
 ```
 
 The whole exchange sequence runs in one native `sic-tool` invocation, retaining the five-channel carrier. Return actions reverse the forward generator list and negate each sign. The terminal action performs destructive SIC measurement and reports outside-carrier mass. This output does not certify an inverse amplitude residual.
@@ -79,7 +88,7 @@ Vox's verdict answers its control-flow question. A carrier's reconstruction witn
 
 ## Model and source controls
 
-The local server defaults to `http://127.0.0.1:8000`. Set `IG_LOCAL_URL` to change its base address, and use `--model` or `IG_MODEL` to select a model. An explicitly requested unavailable provider fails instead of falling through to another provider. To stay local, specify `--llm local`.
+Provider and model selection use `IG_PROVIDER` and `IG_MODEL` in these examples. The local server defaults to `http://127.0.0.1:8000`; set `IG_LOCAL_URL` to change its base address when using the local provider. CLI provider and model overrides take precedence over environment settings.
 
 Known register descriptions use local definitions unless model translation is requested. Unknown descriptions can trigger model translation automatically. `--offline` prevents provider discovery and calls. It cannot be combined with `--llm`, `--stream`, or `--dry-run`.
 
@@ -87,7 +96,7 @@ Inspect the complete model prompt without contacting a server:
 
 ```bash
 python3 IMSCRIBr/excribe_vox.py 'VINIT AFWD AREV TANCH' anyon \
-  --llm local --dry-run
+  --llm --dry-run
 ```
 
 The prompt includes addressed local source excerpts and the executable adapter catalog. Add `--context PATH` for another local source file; the option is repeatable. `--stream` writes generated model output to stderr. `--think off` disables local-model thinking; other supported effort values appear in `--help`. `--no-spinner` disables progress animation.
@@ -145,66 +154,66 @@ Dry-run constructs the prompt without provider discovery or a model call. Source
 
 ```bash
 # Exact system instructions and prompt
-python3 "$EXV" "$WORD" "$REGISTER" --llm local --dry-run
+python3 "$EXV" "$WORD" "$REGISTER" --llm --dry-run
 
 # Prompt in JSON with thinking disabled
 python3 "$EXV" "$WORD" "$REGISTER" \
-  --llm local --dry-run --think off --json
+  --llm --dry-run --think off --json
 
 # One additional source
 python3 "$EXV" "$ANYON_WORD" "$ANYON_REGISTER" \
-  --llm local --dry-run --context HORN_TORUS_GEOMETRY_CONTEXT.md
+  --llm --dry-run --context HORN_TORUS_GEOMETRY_CONTEXT.md
 
 # Multiple additional sources
 python3 "$EXV" "$ANYON_WORD" "$ANYON_REGISTER" \
-  --llm local --dry-run \
+  --llm --dry-run \
   --context IMSCRIBERS_GUIDE_TO_IMASM.md \
   --context ig-docs/ANYONIC_QUQUART_MEMBRANES.md --json
 ```
 
 ### Model translation
 
-These commands require the local model server. Streaming writes model output to stderr, leaving stdout available for the final report.
+These commands require the provider configured through `IG_PROVIDER`, using `IG_MODEL`. Streaming writes model output to stderr, leaving stdout available for the final report.
 
 ```bash
 # Generate a bound realization for inspection
-python3 "$EXV" "$WORD" "$REGISTER" --llm local
+python3 "$EXV" "$WORD" "$REGISTER" --llm
 
 # JSON without progress animation
-python3 "$EXV" "$WORD" "$REGISTER" --llm local --json --no-spinner
+python3 "$EXV" "$WORD" "$REGISTER" --llm --json --no-spinner
 
 # Stream with thinking disabled
-python3 "$EXV" "$WORD" "$REGISTER" --llm local --stream --think off
+python3 "$EXV" "$WORD" "$REGISTER" --llm --stream --think off
 
 # Stream while keeping the final report as JSON
 python3 "$EXV" "$WORD" "$REGISTER" \
-  --llm local --stream --json --no-spinner
+  --llm --stream --json --no-spinner
 
 # Higher reasoning effort and emitted commands
-python3 "$EXV" "$WORD" "$REGISTER" --llm local --think high --emit
+python3 "$EXV" "$WORD" "$REGISTER" --llm --think high --emit
 
 # Source-grounded anyonic translation
 python3 "$EXV" "$ANYON_WORD" "$ANYON_REGISTER" \
-  --llm local --context ig-docs/THE_CODEX_FIBONACCI.md --emit
+  --llm --context ig-docs/THE_CODEX_FIBONACCI.md --emit
 
 # A different local server address
-IG_LOCAL_URL=http://127.0.0.1:8080 \
-  python3 "$EXV" "$WORD" "$REGISTER" --llm local --json
+IG_PROVIDER=local IG_LOCAL_URL=http://127.0.0.1:8080 \
+  python3 "$EXV" "$WORD" "$REGISTER" --llm --json
 ```
 
 Replace `YOUR_SERVED_MODEL_ID` with an identifier accepted by your server. The authentication example assumes its key is already stored in `IG_LOCAL_API_KEY`.
 
 ```bash
 # Explicit model selection
-python3 "$EXV" "$WORD" "$REGISTER" \
-  --llm local --model 'YOUR_SERVED_MODEL_ID' --think low
+IG_MODEL='YOUR_SERVED_MODEL_ID' \
+  python3 "$EXV" "$WORD" "$REGISTER" --llm --think low
 
 # Authenticated local server
-python3 "$EXV" "$WORD" "$REGISTER" \
-  --llm local --api-key "$IG_LOCAL_API_KEY" --json
+IG_PROVIDER=local python3 "$EXV" "$WORD" "$REGISTER" \
+  --llm --api-key "$IG_LOCAL_API_KEY" --json
 ```
 
-Explicit `--llm local` keeps provider selection local. Bare `--llm` allows the configured provider chain, which can select a remote provider. `--llm openrouter` and `--llm deepseek` explicitly select those remote providers and require their configured credentials.
+`IG_PROVIDER` is tried first; if it is unavailable, the current resolver can fall through to its configured provider chain. `IG_MODEL` is retained for the selected provider, so choose a model identifier compatible with it. For strict provider selection without fallback, explicitly pass `--llm "$IG_PROVIDER"`; the model still comes from `IG_MODEL`. An explicit unavailable provider fails. Remote providers require their configured credentials.
 
 ### Execution and saving
 
@@ -212,27 +221,27 @@ Each save command requires a fresh destination filename. The anyonic examples pe
 
 ```bash
 # Generate and execute evidence operations
-python3 "$EXV" "$WORD" "$REGISTER" --llm local --execute
+python3 "$EXV" "$WORD" "$REGISTER" --llm --execute
 
 # Execute with structured witnesses and thinking disabled
 python3 "$EXV" "$WORD" "$REGISTER" \
-  --llm local --execute --json --think off --no-spinner
+  --llm --execute --json --think off --no-spinner
 
 # Save a plan for review without executing
 python3 "$EXV" "$WORD" "$REGISTER" \
-  --llm local --save-plan IMSCRIBr/evidence_review.plan.json --emit
+  --llm --save-plan IMSCRIBr/evidence_review.plan.json --emit
 
 # Save and execute together
 python3 "$EXV" "$WORD" "$REGISTER" \
-  --llm local --save-plan IMSCRIBr/evidence_run.plan.json --execute --json
+  --llm --save-plan IMSCRIBr/evidence_run.plan.json --execute --json
 
 # Execute native exchanges and show their command
 python3 "$EXV" "$ANYON_WORD" "$ANYON_REGISTER" \
-  --llm local --execute --emit --runtime gmonados
+  --llm --execute --emit --runtime gmonados
 
 # Save native exchanges for later execution
 python3 "$EXV" "$ANYON_WORD" "$ANYON_REGISTER" \
-  --llm local --save-plan IMSCRIBr/anyon_review.plan.json --json --think off
+  --llm --save-plan IMSCRIBr/anyon_review.plan.json --json --think off
 ```
 
 ### Standalone replay

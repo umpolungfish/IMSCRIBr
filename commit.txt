@@ -1,5 +1,4 @@
-I expand the Excribe Vox command examples
+I use the configured IG provider and model in usage examples
 
-I add copyable flag combinations for offline inspection, prompt inspection,
-model translation, streaming, source context, execution, saving, and replay.
-I explain setup variables, provider selection, and incompatible options.
+I make model commands inherit IG_PROVIDER and IG_MODEL and document their
+setup, precedence, provider fallback, and strict environment-bound selection.
