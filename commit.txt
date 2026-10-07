@@ -1,5 +1,4 @@
-I execute the supplied factor word and retain its native run
+I retain stream termination diagnostics for reasoning-only responses
 
-I save the source-bound 42-position execution plan for offline replay.
-I record successful preparation and completed cursor, latch and release operations.
-I record five bounded extraction timeouts and the missing completed factor readout.
+I request token usage and report finish reasons and response channel counts.
+I test token-limit, normal-stop and connection-close diagnostics.

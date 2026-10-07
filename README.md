@@ -51,4 +51,11 @@ python run_map.py --search        # canonical arrangements + class sizes
 Outputs `imasm_summary.txt`, `imasm_space_map.json`, `imasm_checkpoint.json`.
 Full 943-line original in `README_backups/IMSCRIBr_README.md`. Unlicense.
 
+`excribe_vox --stream` requests token usage and retains the server's finish
+reasons, reasoning and answer character counts, and stream termination marker.
+A reasoning-only response reports these details in its realization error.
+`length` identifies a server-reported generation limit; `stop` identifies a
+normal generation stop. `connection_closed` means the stream ended without
+the `[DONE]` marker. Successful answer content follows the normal JSON path.
+
 $\mu\circ\delta = \mathrm{id}$

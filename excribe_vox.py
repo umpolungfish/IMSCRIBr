@@ -410,6 +410,7 @@ class LlmBackend:
         self.model = model or cfg["default_model"]
         self.temperature = cfg["temperature"]
         self.api_key = api_key or os.environ.get(cfg["env_key"])
+        self.last_response_metadata = {}
 
     def cache_path_for(self, system: str, prompt: str) -> str:
         k = hashlib.sha256(
@@ -455,8 +456,13 @@ class LlmBackend:
         }
         if stream:
             data["stream"] = True
+            data["stream_options"] = {"include_usage": True}
 
         content = ""
+        self.last_response_metadata = {
+            "finish_reasons": [], "usage": {}, "reasoning_characters": 0,
+            "content_characters": 0, "termination": "connection_closed",
+        }
         try:
             with httpx.Client(timeout=httpx.Timeout(600.0, connect=15.0)) as client:
                 if stream:
@@ -477,6 +483,7 @@ class LlmBackend:
                             else:
                                 continue
                             if payload == "[DONE]":
+                                self.last_response_metadata["termination"] = "done"
                                 break
                             try:
                                 evt = json.loads(payload)
@@ -484,21 +491,29 @@ class LlmBackend:
                                 continue
                             if isinstance(evt, dict) and evt.get("error"):
                                 raise ValueError(f"stream error: {evt['error']}")
+                            if evt.get("usage"):
+                                self.last_response_metadata["usage"] = evt["usage"]
                             for choice in (evt.get("choices") or []):
+                                if choice.get("finish_reason") is not None:
+                                    self.last_response_metadata["finish_reasons"].append(choice["finish_reason"])
                                 delta = choice.get("delta") or {}
                                 reasoning = delta.get("reasoning_content")
+                                if reasoning:
+                                    self.last_response_metadata["reasoning_characters"] += len(reasoning)
                                 if reasoning and on_token:
                                     on_token(reasoning)
                                 piece = delta.get("content")
                                 if not piece:
                                     piece = (choice.get("message") or {}).get("content")
                                 if piece:
+                                    self.last_response_metadata["content_characters"] += len(piece)
                                     content_parts.append(piece)
                                     if on_token:
                                         on_token(piece)
                     content = "".join(content_parts)
                     if not content:
-                        raise ValueError("stream produced no content")
+                        raise ValueError("stream produced no answer content; " +
+                                         json.dumps(self.last_response_metadata, ensure_ascii=False))
                 else:
                     resp = client.post(self.base_url, headers=headers, json=data)
                     resp.raise_for_status()

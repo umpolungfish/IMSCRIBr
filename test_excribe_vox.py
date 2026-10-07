@@ -3,12 +3,36 @@ import json
 import subprocess
 import sys
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 import excribe_vox as exv
 
 
 class ExcriptionTests(unittest.TestCase):
+    def test_reasoning_only_stream_reports_termination_and_usage(self):
+        for finish, done in (("length", True), ("stop", True), (None, False)):
+            events = [
+                {"choices": [{"delta": {"reasoning_content": "working"}}]},
+                {"choices": [{"delta": {}, "finish_reason": finish}]},
+                {"choices": [], "usage": {"completion_tokens": 17}},
+            ]
+            response = MagicMock()
+            response.iter_lines.return_value = ["data: " + json.dumps(e) for e in events] + (
+                ["data: [DONE]"] if done else [])
+            client = MagicMock()
+            client.stream.return_value.__enter__.return_value = response
+            with patch.object(exv.httpx, "Client") as factory, \
+                    patch.object(exv.os.path, "exists", return_value=False), \
+                    patch.object(exv.os, "makedirs"):
+                factory.return_value.__enter__.return_value = client
+                backend = exv.LlmBackend("local", "fixture")
+                result = backend.query("system", "prompt", stream=True)
+            self.assertIn("stream produced no answer content", result)
+            self.assertEqual(backend.last_response_metadata["finish_reasons"], [finish] if finish else [])
+            self.assertEqual(backend.last_response_metadata["reasoning_characters"], 7)
+            self.assertEqual(backend.last_response_metadata["usage"]["completion_tokens"], 17)
+            self.assertEqual(backend.last_response_metadata["termination"], "done" if done else "connection_closed")
+
     def test_operation_word_is_not_selected_as_numeral_by_arithmetic_keywords(self):
         description = ("IMASM operation word acting on integer source 229513619370652772473594096727489823787 "
                        "for native arithmetic prime factor extraction through Gödel-encoding relations")
