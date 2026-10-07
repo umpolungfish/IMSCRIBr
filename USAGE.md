@@ -450,6 +450,15 @@ The cyclic stage retains predecessors of a repeated recurrence image, which guar
 
 Use `semiprime descent` in a model request to select this register. Its plan contains source, seed, constant, attempt and step budgets, and indexed operations. Neither factors nor an unknown prime are supplied to the search. See the native command's `--help` for parameter controls.
 
+For complete cyclic parameter traversal, select `search_mode: "until-closed"` or use the native flag:
+
+```bash
+python3 excribe_vox.py --run-plan semiprime_until_closed.plan.json
+../Vox/target/release/semiprime_descent 271690685666312585018220346622515128917 --until-closed --steps 100000
+```
+
+This mode has no attempt, total-step or frontend time limit. Each finite attempt has at least two steps, advances the constant, and advances the seed on constant wrap. It eventually visits every residue pair. FOUR coordinates persist across attempts; complete frontend replay streams attempt traces into `measurements/descent/` instead of retaining the whole search in memory. Counters use native arbitrary-length tapes. A semiprime has a successful parameter pair in this traversal, giving eventual closure when uninterrupted with sufficient resources. This is not a practical runtime guarantee for large RSA inputs. The supplied fixture still uses 8051; no successful closure of the large source has been observed.
+
 Run the regression controls:
 
 ```bash

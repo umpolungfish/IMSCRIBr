@@ -1,5 +1,4 @@
-I bind native semiprime descent and retain measured attempt evidence
+I replay complete cyclic descent without total search caps
 
-I integrate the five-stage native descent, saved-plan replay and its register.
-I remove universal word endpoints and ground translation in the full Codex.
-I verify 41 frontend controls and preserve failed attempts across success.
+I stream attempt traces locally and preserve accumulated FOUR coordinates.
+I accept long decimal source bindings and verify 43 frontend controls.

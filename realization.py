@@ -134,6 +134,7 @@ realization must use one of these schemas:
 5. semiprime-descent: {backend:"semiprime-descent",source:decimal_string,
    seed:decimal_string,constant:decimal_string,attempts:positive_integer,
    steps_per_attempt:positive_integer,total_steps:positive_integer,
+   search_mode?:"bounded"|"until-closed",
    steps:"register-bound"|[{i:position,symbol:canonical_symbol,actions:[operation]}]}.
    This arithmetic register extracts inside ∈⊤⊥⊞∋. ∈ cyclic_split retains two
    predecessors of a repeated x²+c recurrence image. ⊤ square_congruence checks
@@ -150,6 +151,10 @@ realization must use one of these schemas:
    ⊡ latch_pair, ⊣ release_pair afterwards. These perform no extraction.
    Use steps:"register-bound" for exact lowering. Bounds are iteration budgets.
    Seed=2 and constant=1 give the default reproducible walk when unspecified.
+   until-closed ignores attempt/total budgets, requires steps_per_attempt >= 2,
+   enumerates all seed/constant residues and streams retained attempt traces.
+   It has no total runtime/attempt cap. Semiprime closure is eventual; practical
+   RSA runtime is not guaranteed. Bounded mode remains an explicit experiment.
    This register does not give these glyph meanings to numeral cells or SIC
    evidence. An unfinished descent reports budget_exhausted and no factor pair.
 Use anyon-composition for synthesized anyonic words, including split/rejoin,

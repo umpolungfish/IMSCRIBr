@@ -9,6 +9,27 @@ import excribe_vox as exv
 
 
 class ExcriptionTests(unittest.TestCase):
+    def test_complete_descent_ignores_total_caps_and_retains_stream(self):
+        saved = json.loads((exv.Path(exv.HERE) / "semiprime_descent.plan.json").read_text())
+        plan = saved["plan"] | {"search_mode": "until-closed", "attempts": 1,
+                                "total_steps": 1, "steps_per_attempt": 128}
+        compiled = exv.compile_plan(plan, exv.parse_word(saved["word"]))
+        self.assertIn("--until-closed", compiled["argv"])
+        self.assertNotIn("--total-steps", compiled["argv"])
+        report = exv.execute_plan(compiled)
+        self.assertEqual(report["status"], "verified")
+        self.assertEqual(report["evidence"], "B")
+        self.assertEqual(report["search_attempts"], "2")
+        self.assertEqual(report["search_steps"], "23")
+        events = [json.loads(line) for line in exv.Path(report["trace"]).read_text().splitlines()]
+        self.assertEqual([event["status"] for event in events], ["searching", "verified"])
+
+    def test_complete_descent_accepts_source_beyond_python_decimal_limit(self):
+        saved = json.loads((exv.Path(exv.HERE) / "semiprime_descent.plan.json").read_text())
+        plan = saved["plan"] | {"source": "1" + "0" * 5000, "search_mode": "until-closed"}
+        compiled = exv.compile_plan(plan, exv.parse_word(saved["word"]))
+        self.assertEqual(compiled["plan"]["source"], plan["source"])
+
     def test_descent_register_selection_retains_arithmetic_stage_meanings(self):
         reg, score = exv.match_register("semiprime descent factor extraction with FOUR evidence")
         self.assertEqual(reg.rid, "descent")

@@ -1,0 +1,15 @@
+{
+  "word": "⊢⊙∈⊤⊥⊞∋≻⋈≺⊡⊣",
+  "plan": {
+    "backend": "semiprime-descent",
+    "source": "8051",
+    "seed": "0",
+    "constant": "0",
+    "attempts": 1,
+    "steps_per_attempt": 128,
+    "total_steps": 1,
+    "search_mode": "until-closed",
+    "steps": "register-bound"
+  },
+  "sources": []
+}
