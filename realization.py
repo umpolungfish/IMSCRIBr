@@ -108,7 +108,7 @@ realization must use one of these schemas:
    prepare_seconds:positive_integer,execute_seconds:positive_integer,
    steps:"register-bound"|[{i:position,symbol:canonical_symbol,actions:[operation]}]}.
    Use for factor extraction from a numeral word in the native numeral register.
-   Every operator acts on a least-significant-cell-first native numeral tape:
+   Supported operators act on a least-significant-cell-first native numeral tape:
    ⊢ {kind:"open"}; ∈ {kind:"split",id:string};
    ⊤ {kind:"bit",value:0}; ⊥ {kind:"bit",value:1};
    ≺ {kind:"clear"} clears the transient cursor while retaining deposited
@@ -120,6 +120,9 @@ realization must use one of these schemas:
       product and native primality screening before releasing the factor multiset.
    steps:"register-bound" asks the compiler to supply these indexed morphisms
    deterministically, including paired frame identifiers. It does not skip them.
+   This adapter currently has no ⊞ primitive. A word containing ⊞ needs an
+   unresolved adapter binding, not an invented engagement action or a declaration
+   that the Grammar glyph is forbidden. register-bound cannot bypass that gap.
    The input word is the operator composition to execute, not a list of claimed
    support/refutation observations. The source is independently bound from the
    request. Native preparation must reconstruct exactly that source from the

@@ -30,7 +30,7 @@ def compile_numeral(plan, ops, symbols):
         for i, op in enumerate(ops):
             symbol = symbols.get(op)
             if symbol not in KINDS:
-                raise ValueError(f"no native numeral binding for position {i}")
+                raise ValueError(f"missing numeral-factor primitive for {symbol} at position {i}; register-bound cannot invent it")
             kind = KINDS[symbol]
             action = {"kind": kind}
             if kind == "split":

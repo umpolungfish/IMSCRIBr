@@ -1,4 +1,5 @@
-I route semiprime descent through my Vox carrier dispatcher
+I preserve nested register composition and imscription vocabulary
 
-I invoke vox descent from compiled plans and check the dispatcher command in regression tests.
-I update replay instructions and verify all 44 frontend controls.
+I stop keyword matching from flattening nested targets into numeral cells.
+I unify the JSON output contract and expose missing numeral primitives accurately.
+I require the Grammar's imscribe spelling and verify 48 frontend controls.

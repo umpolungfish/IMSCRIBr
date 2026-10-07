@@ -9,6 +9,41 @@ import excribe_vox as exv
 
 
 class ExcriptionTests(unittest.TestCase):
+    def test_nested_factor_relations_are_not_flattened_to_a_numeral_register(self):
+        description = ("Prime Factor - Gödel-Encoding Relationship nested in Semiprime Factor Pair - "
+                       "Gödel-Encoding Relationship nested in Fundamental Law of Prime Distribution nested in "
+                       "braid word to semiprime factor pair nested in efficient factorization with a single pure ququart")
+        self.assertEqual(exv.match_register(description), (None, 0))
+        word = "⊢≻⊙∈⊤⋈⊥⊙≻⋈⊤⊥⊞"
+        ops = exv.parse_word(word)
+        _, meta = exv.llm_translate(ops, list(word), word, "N", description, None, True,
+                                   None, None, "local", "fixture", dry_run=True)
+        prompt = meta["prompt"]
+        self.assertIn(description, prompt)
+        self.assertIn("Composite target: preserve", prompt)
+        self.assertNotIn("Matched built-in register:", prompt)
+        self.assertNotIn("This is the native numeral register.", prompt)
+        self.assertNotIn("read the numeral codec's", prompt)
+
+    def test_output_contract_includes_realization_in_the_initial_json_shape(self):
+        shape = exv.LLM_SYSTEM.split("Return one complete JSON object: ", 1)[1].split("Supply exactly", 1)[0]
+        self.assertIn('"realization":object', shape)
+        self.assertIn("Output only that JSON object", shape)
+
+    def test_agent_prompt_preserves_imscription_spelling(self):
+        self.assertIn("imscribe, imscription, imscriber and imscriptive, with m", exv.LLM_SYSTEM)
+
+    def test_numeral_adapter_does_not_advertise_an_unimplemented_engagement(self):
+        self.assertNotIn("ENGAGR", exv.NUMERAL.ops)
+        word = "⊢∈⊤⊥⊞∋⊡⊣"
+        ops = exv.parse_word(word)
+        _, meta = exv.llm_translate(ops, list(word), word, "T", "native numeral", exv.NUMERAL,
+                                   False, None, None, "local", "fixture", dry_run=True)
+        self.assertIn("Missing executable numeral bindings in this word: ⊞", meta["prompt"])
+        saved = json.loads((exv.Path(exv.HERE) / "numeral_semiprime.plan.json").read_text())
+        with self.assertRaisesRegex(ValueError, "missing numeral-factor primitive for ⊞"):
+            exv.compile_plan(saved["plan"], ops)
+
     def test_complete_descent_ignores_total_caps_and_retains_stream(self):
         saved = json.loads((exv.Path(exv.HERE) / "semiprime_descent.plan.json").read_text())
         plan = saved["plan"] | {"search_mode": "until-closed", "attempts": 1,
