@@ -50,8 +50,8 @@ def compile_factor(plan, ops, symbols):
         artifact = local_path(preparation["path"])
         if not (artifact.is_file() if preparation["mode"] == "compiled" else artifact.is_dir()):
             raise ValueError("requested retained factor artifact does not exist")
-    if not isinstance(ops, list) or not ops or ops[0] != "VINIT" or ops[-1] != "TANCH":
-        raise ValueError("factor workflow needs source and terminal boundaries")
+    if not isinstance(ops, list) or not ops:
+        raise ValueError("factor workflow needs a nonempty operator composition")
     steps = plan["steps"]
     if not isinstance(steps, list) or len(steps) != len(ops):
         raise ValueError("factor morphisms must cover every position once")
@@ -64,7 +64,10 @@ def compile_factor(plan, ops, symbols):
                  "⊤": {"evidence"}, "⊥": {"evidence"}, "⊞": {"engage"},
                  "⊡": {"latch"}, "⊣": {"release"}}
     frames, inverses, evidence, latches = [], [], set(), set()
-    phase = "unit"
+    # The adapter already has an independently bound source. An explicit source
+    # boundary creates it from unit; a fragment consumes the supplied carrier.
+    phase = "unit" if ops[0] == "VINIT" else "bound"
+    input_phase = phase
     boundaries = []
     for i, (step, op) in enumerate(zip(steps, ops)):
         symbol = symbols.get(op)
@@ -125,13 +128,12 @@ def compile_factor(plan, ops, symbols):
                 latches.add(action["id"])
                 phase = "latched"
             elif kind == "release":
-                if frames or phase != "latched" or i != len(steps) - 1:
-                    raise ValueError("factor release needs a fixed, rejoined carrier at the terminal boundary")
+                if frames or phase != "latched":
+                    raise ValueError("factor release needs a fixed, rejoined carrier")
                 phase = "released"
         boundaries.append({"i": i, "symbol": symbol, "domain": before, "codomain": phase})
-    if phase != "released":
-        raise ValueError("factor composition lacks a terminal release")
     return {"status": "ready", "plan": plan, "word_ops": ops,
+            "input_phase": input_phase, "output_phase": phase,
             "symbol_word": "".join(symbols[op] for op in ops), "boundaries": boundaries,
             "carrier_kind": "source-bound preparation/readout/evidence carrier",
             "transport": "source-baked-workflow"}
@@ -214,7 +216,9 @@ def _execute_factor(compiled):
         return report
 
     record()
-    carrier = {"phase": "unit", "source": plan["source"], "active": {}, "evidence": {},
+    input_phase = compiled["input_phase"]
+    carrier = {"phase": input_phase, "source": plan["source"],
+               "active": {k: plan[k] for k in ("source", "base", "radix", "seed")} if input_phase == "bound" else {}, "evidence": {},
                "frames": [], "returns": [], "latches": {}, "links": []}
     execution, verification, fields = None, None, None
     invocations = {}
@@ -363,4 +367,6 @@ def _execute_factor(compiled):
             report["carrier"] = snapshot()
             record()
     report.pop("active_morphism", None)
+    if carrier["phase"] != "released":
+        report.update(status="retained", product_verified=False)
     return record()

@@ -69,6 +69,9 @@ realization must use one of these schemas:
    Use this for actual factor extraction, not an exchange/evidence approximation.
    Exactly one bound step per symbol. This carrier consists of source-bound
    preparation artifacts, retained cursors/frames and attributed terminal evidence.
+   No mandatory first or last glyph: without ⊢ the composition consumes the
+   independently source-bound carrier; without ⊣ its output remains retained.
+   Neither omission manufactures preparation, extraction, evidence or release.
    Its operations are actual workflow morphisms, not coherent Artin gates:
    ⊢ {kind:"bind"} initializes the source/base/radix/seed carrier.
    ≻ {kind:"prepare"} consumes bound source and produces a validated baked case;

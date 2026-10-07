@@ -1,5 +1,5 @@
-I distinguish IMASM operation programs from numeral source encodings
+I remove forced factor workflow word endpoints
 
-I require explicit numeral-codec targets before assigning bit-cell meanings.
-I preserve separate program and source roles in the prompt and adapter catalog.
-I verify 50 frontend controls including arithmetic routing and explicit codec binding.
+I bind boundary-free fragments to the supplied source carrier.
+I retain open outputs without manufacturing extraction or verified release.
+I preserve typed preparation prerequisites and verify fragment execution controls.

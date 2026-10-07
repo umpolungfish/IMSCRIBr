@@ -226,6 +226,36 @@ class ExcriptionTests(unittest.TestCase):
         self.assertEqual(proc.returncode, 0, proc.stderr)
         self.assertEqual(proc.stdout.strip(), plan["source"])
 
+    def test_factor_workflow_accepts_fragments_without_forced_endpoints(self):
+        import copy
+        saved = json.loads((exv.Path(exv.HERE) / "rsa100_factor.plan.json").read_text())
+        for start, end in ((1, None), (0, -1), (1, -1)):
+            plan = copy.deepcopy(saved["plan"])
+            plan["steps"] = plan["steps"][start:end]
+            for i, step in enumerate(plan["steps"]):
+                step["i"] = i
+            compiled = exv.compile_plan(plan, saved["word_ops"][start:end])
+            self.assertEqual(compiled["input_phase"], "bound" if start else "unit")
+            self.assertEqual(compiled["output_phase"], "latched" if end else "released")
+
+    def test_boundary_free_factor_fragment_still_requires_preparation(self):
+        saved = json.loads((exv.Path(exv.HERE) / "rsa100_factor.plan.json").read_text())
+        plan = saved["plan"] | {"steps": [{"i": 0, "symbol": "≻", "actions": [{"kind": "extract"}]}]}
+        with self.assertRaisesRegex(ValueError, "validated prepared carrier"):
+            exv.compile_plan(plan, exv.parse_word("≻"))
+
+    def test_boundary_free_identity_retains_source_without_extracting(self):
+        import factor_workflow as fw
+        saved = json.loads((exv.Path(exv.HERE) / "rsa100_factor.plan.json").read_text())
+        plan = saved["plan"] | {"steps": [{"i": 0, "symbol": "⊙", "actions": [{"kind": "retain"}]}]}
+        compiled = exv.compile_plan(plan, exv.parse_word("⊙"))
+        with patch.object(fw, "logged", side_effect=AssertionError("identity must not invoke extraction")):
+            report = fw.execute_factor(compiled)
+        self.assertEqual(report["status"], "retained")
+        self.assertFalse(report["product_verified"])
+        self.assertEqual(report["carrier"]["active"]["source"], plan["source"])
+        self.assertEqual(report["instruments"], [])
+
     def test_factor_workflow_rejects_missing_coverage_and_injected_factors(self):
         saved = json.loads((exv.Path(exv.HERE) / "rsa100_factor.plan.json").read_text())
         plan, ops = saved["plan"], saved["word_ops"]
