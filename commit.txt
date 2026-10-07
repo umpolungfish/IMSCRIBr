@@ -1,4 +1,4 @@
-I replay complete cyclic descent without total search caps
+I bind collision-derived square witnesses to the descent register
 
-I stream attempt traces locally and preserve accumulated FOUR coordinates.
-I accept long decimal source bindings and verify 43 frontend controls.
+I expose raw collisions and constructed square witnesses separately.
+I verify the corrected counterexample and all 44 frontend controls.

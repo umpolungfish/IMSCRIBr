@@ -137,8 +137,11 @@ realization must use one of these schemas:
    search_mode?:"bounded"|"until-closed",
    steps:"register-bound"|[{i:position,symbol:canonical_symbol,actions:[operation]}]}.
    This arithmetic register extracts inside ∈⊤⊥⊞∋. ∈ cyclic_split retains two
-   predecessors of a repeated x²+c recurrence image. ⊤ square_congruence checks
-   X² and Y² modulo the retained source. ⊥ gcd_severing computes gcd(|X-Y|,N).
+   slow/fast x²+c orbit states with a measured collision GCD; a repeated-image
+   predecessor safeguard retains completeness. ⊤ square_congruence lifts a
+   strict observed divisor into X,Y and checks their squares modulo the source.
+   Odd N uses X=(g+N/g)/2,Y=|g-N/g|/2. Even N uses X=N/2+1,Y=N/2-1.
+   ⊥ gcd_severing recomputes gcd(|X-Y|,N) on this verified square witness.
    ⊞ knowledge_join retains FOUR evidence across retries. ∋ verify_and_fuse
    divides N by the selected GCD and checks its exact Gödel/support-polynomial
    product. Both factors must be strictly between one and N.
@@ -189,7 +192,7 @@ def bound_description(compiled, i):
         return {"process": step["symbol"], "concrete": "Native descent morphism: " + json_text(step["actions"]),
                 "input": "retained source and cyclic/evidence carrier",
                 "output": "carrier after this measured descent operation",
-                "check": "Execution pending: recurrence preimages, square congruence, GCD, FOUR joins and source product."}
+                "check": "Execution pending: orbit collision, measured GCD, lifted square congruence, FOUR joins and source product."}
     if compiled["plan"]["backend"] == "numeral-factor":
         step, boundary = compiled["plan"]["steps"][i], compiled["boundaries"][i]
         return {"process": step["symbol"], "concrete": "Native numeral morphism: " + json_text(step["actions"]),

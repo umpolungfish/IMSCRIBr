@@ -1075,9 +1075,9 @@ DESCENT_REGISTER = register_definition(
     ["semiprime-descent", "semiprime descent", "five-stage descent"], "native", {
         "VINIT": ("bind source", "bind the source without extracting factors"),
         "IMSCRIB": ("retain source", "retain the bound source"),
-        "FSPLIT": ("cyclic split", "retain predecessors of a repeated quadratic recurrence image modulo the source"),
-        "EVALT": ("square congruence", "measure equality of the predecessor squares modulo the source"),
-        "EVALF": ("GCD severing", "compute the predecessor difference GCD and classify the candidate"),
+        "FSPLIT": ("cyclic split", "detect and retain slow/fast quadratic orbit states with a strict collision GCD"),
+        "EVALT": ("square congruence", "lift the observed collision divisor into X,Y and verify their squares modulo the source"),
+        "EVALF": ("GCD severing", "compute the lifted square-witness difference GCD and classify the candidate"),
         "ENGAGR": ("FOUR engagement", "join attempt support and refutation coordinates while retaining failed attempts"),
         "FFUSE": ("fundamental return", "divide by the strict candidate and verify exact native and Gödel source products"),
         "AFWD": ("carry pair", "carry the verified pair forward"),
@@ -1114,7 +1114,7 @@ def carrier_plan(reg: Optional[Register], description: str) -> dict:
                     "decode with the Gödel codec, reconstruct the canonical word, and verify candidate factor multiplication against the sealed source",
                     ["source numeral word", "arithmetic operation"]),
         "descent": ("native numeral tape and attributed cycle attempts",
-                    "retain source, recurrence preimages, square residues and FOUR attempt history",
+                    "retain source, orbit collision states, lifted square residues and FOUR attempt history",
                     "verify exact cofactor division and native, Gödel and support-polynomial products against the retained source",
                     ["decimal source", "seed", "constant", "attempt and iteration budgets"]),
         "substrate": ("actual executable module and its source bytes",
@@ -1373,7 +1373,7 @@ def attach_execution(result: dict, witness: dict) -> None:
             event = events[n]
             measured = {key: event[key] for key in
                         ("return", "source_return", "coordinate_return", "population_dual_verified", "domain", "codomain",
-                         "square_congruence", "gcd", "deposit", "before", "after", "p", "q", "product",
+                         "square_congruence", "collision_gcd", "distinct_mod_source", "lifted_from_collision", "X", "Y", "gcd", "deposit", "before", "after", "p", "q", "product",
                          "godel_product_verified", "support_polynomial_product_verified", "mu_delta_source_return")
                         if key in event}
             if "observation" in event:

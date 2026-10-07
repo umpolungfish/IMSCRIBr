@@ -20,7 +20,7 @@ class ExcriptionTests(unittest.TestCase):
         self.assertEqual(report["status"], "verified")
         self.assertEqual(report["evidence"], "B")
         self.assertEqual(report["search_attempts"], "2")
-        self.assertEqual(report["search_steps"], "23")
+        self.assertEqual(report["search_steps"], "5")
         events = [json.loads(line) for line in exv.Path(report["trace"]).read_text().splitlines()]
         self.assertEqual([event["status"] for event in events], ["searching", "verified"])
 
@@ -29,6 +29,23 @@ class ExcriptionTests(unittest.TestCase):
         plan = saved["plan"] | {"source": "1" + "0" * 5000, "search_mode": "until-closed"}
         compiled = exv.compile_plan(plan, exv.parse_word(saved["word"]))
         self.assertEqual(compiled["plan"]["source"], plan["source"])
+
+    def test_collision_lift_executes_on_noncongruent_raw_squares(self):
+        saved = json.loads((exv.Path(exv.HERE) / "semiprime_descent.plan.json").read_text())
+        plan = saved["plan"] | {"source": "15", "seed": "1", "constant": "6",
+                                "attempts": 1, "steps_per_attempt": 1, "total_steps": 1}
+        report = exv.execute_plan(exv.compile_plan(plan, exv.parse_word("∈⊤⊥⊞∋")))
+        self.assertEqual(sorted(map(int, report["factors"])), [3,5])
+        split, square, sever, _, fuse = report["events"]
+        raw_x, raw_y = int(split["computational_channel"]), int(split["leakage_channel"])
+        self.assertNotEqual(raw_x*raw_x % 15, raw_y*raw_y % 15)
+        self.assertTrue(split["distinct_mod_source"])
+        self.assertEqual(split["collision_gcd"], "3")
+        self.assertEqual((square["X"], square["Y"]), ("4", "1"))
+        self.assertTrue(square["lifted_from_collision"])
+        self.assertTrue(square["square_congruence"])
+        self.assertEqual(sever["gcd"], "3")
+        self.assertTrue(fuse["mu_delta_source_return"])
 
     def test_descent_register_selection_retains_arithmetic_stage_meanings(self):
         reg, score = exv.match_register("semiprime descent factor extraction with FOUR evidence")

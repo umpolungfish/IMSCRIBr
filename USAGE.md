@@ -444,9 +444,9 @@ python3 excribe_vox.py --run-plan semiprime_descent.plan.json
 ../Vox/target/release/semiprime_descent 8051 --seed 0 --constant 0
 ```
 
-The measured pair is 83 and 97. The fixed first cycle fails; subsequent success retains both evidence coordinates at B. Each attempt records its recurrence preimages, square residues, GCD and knowledge join. `∋` checks exact division, native multiplication, canonical word multiplication and support-polynomial carry reconstruction.
+The measured pair is 83 and 97. The fixed first cycle fails; subsequent success retains both evidence coordinates at B. Each attempt records its orbit collision states, collision GCD, lifted square witness, residues and knowledge join. `∋` checks exact division, native multiplication, canonical word multiplication and support-polynomial carry reconstruction.
 
-The cyclic stage retains predecessors of a repeated recurrence image, which guarantees their square congruence. Collision search has explicit iteration budgets. An exhausted budget releases no factors and exits with status 1. Optional initialization and sealing carry the source and verified result without extracting factors. The standalone word `∈⊤⊥⊞∋` is supported.
+The cyclic stage advances slow and fast quadratic orbit channels and detects a hidden-factor collision by GCD. The next stage constructs a square witness from that measured divisor and checks both residues directly. Consecutive repeated-image predecessors preserve complete parameter traversal. Each attempt keeps a fixed number of native tapes. Bounded collision search has explicit iteration budgets. An exhausted budget releases no factors and exits with status 1. Optional initialization and sealing carry the source and verified result without extracting factors. The standalone word `∈⊤⊥⊞∋` is supported.
 
 Use `semiprime descent` in a model request to select this register. Its plan contains source, seed, constant, attempt and step budgets, and indexed operations. Neither factors nor an unknown prime are supplied to the search. See the native command's `--help` for parameter controls.
 
