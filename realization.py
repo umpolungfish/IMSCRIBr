@@ -1,5 +1,6 @@
 """Closed, local realization adapters. Model output is data, never shell/code."""
 import copy
+from descent_workflow import compile_descent, execute_descent
 import subprocess
 from pathlib import Path
 from factor_workflow import compile_factor, execute_factor
@@ -130,6 +131,27 @@ realization must use one of these schemas:
    runtime takes no input. Release only after a separate native tape verification.
    Native Miller-Rabin screening is identified as screening, not a primality proof.
    Never replace this request with anyon-composition or unrelated measurements.
+5. semiprime-descent: {backend:"semiprime-descent",source:decimal_string,
+   seed:decimal_string,constant:decimal_string,attempts:positive_integer,
+   steps_per_attempt:positive_integer,total_steps:positive_integer,
+   steps:"register-bound"|[{i:position,symbol:canonical_symbol,actions:[operation]}]}.
+   This arithmetic register extracts inside ∈⊤⊥⊞∋. ∈ cyclic_split retains two
+   predecessors of a repeated x²+c recurrence image. ⊤ square_congruence checks
+   X² and Y² modulo the retained source. ⊥ gcd_severing computes gcd(|X-Y|,N).
+   ⊞ knowledge_join retains FOUR evidence across retries. ∋ verify_and_fuse
+   divides N by the selected GCD and checks its exact Gödel/support-polynomial
+   product. Both factors must be strictly between one and N.
+   Source, seed and constant are native numeral tapes; no factors or unknown
+   prime are supplied to cycle detection. A hidden factor collision is observed
+   at the GCD stage. Failed attempts F and later success T remain joined as B;
+   budget exhaustion without a completed observation deposits N.
+   Optional surrounding operations: ⊢ bind_source, ⊙ retain_source before descent;
+   ≻ advance_verified_pair, ⋈ link_product_witness, ≺ return_source,
+   ⊡ latch_pair, ⊣ release_pair afterwards. These perform no extraction.
+   Use steps:"register-bound" for exact lowering. Bounds are iteration budgets.
+   Seed=2 and constant=1 give the default reproducible walk when unspecified.
+   This register does not give these glyph meanings to numeral cells or SIC
+   evidence. An unfinished descent reports budget_exhausted and no factor pair.
 Use anyon-composition for synthesized anyonic words, including split/rejoin,
 evaluation, linking, engagement, and fixation. Do not infer that its symbols
 are forbidden because a whole-word template has not been registered.
@@ -157,6 +179,12 @@ EVIDENCE_ACTIONS = {
 
 def bound_description(compiled, i):
     """Executable boundaries take precedence over model prose."""
+    if compiled["plan"]["backend"] == "semiprime-descent":
+        step = compiled["plan"]["steps"][i]
+        return {"process": step["symbol"], "concrete": "Native descent morphism: " + json_text(step["actions"]),
+                "input": "retained source and cyclic/evidence carrier",
+                "output": "carrier after this measured descent operation",
+                "check": "Execution pending: recurrence preimages, square congruence, GCD, FOUR joins and source product."}
     if compiled["plan"]["backend"] == "numeral-factor":
         step, boundary = compiled["plan"]["steps"][i], compiled["boundaries"][i]
         return {"process": step["symbol"], "concrete": "Native numeral morphism: " + json_text(step["actions"]),
@@ -207,6 +235,8 @@ def compile_plan(plan, ops):
         return {"status": "unsupported", **plan}
     if backend == "anyon-composition":
         return compile_composition(plan, ops)
+    if backend == "semiprime-descent":
+        return compile_descent(plan, ops, SYMBOLS)
     if backend == "ququart-factor":
         return compile_factor(copy.deepcopy(plan), list(ops), SYMBOLS)
     if backend == "numeral-factor":
@@ -215,8 +245,8 @@ def compile_plan(plan, ops):
     if backend not in {"evidence", "anyon-ququart"} or set(plan) != keys:
         raise ValueError("unknown adapter or unexpected realization fields")
     steps = plan["steps"]
-    if not isinstance(ops, list) or not ops or not isinstance(steps, list) or len(steps) != len(ops) or ops[0] != "VINIT" or ops[-1] != "TANCH":
-        raise ValueError("realization requires source/terminal boundaries and exact token coverage")
+    if not isinstance(ops, list) or not ops or not isinstance(steps, list) or len(steps) != len(ops):
+        raise ValueError("realization requires exact token coverage")
     state, frames, inverses, events, exchanges = {}, [], [], [], []
     if backend == "evidence":
         frame = plan["frame"]
@@ -241,8 +271,6 @@ def compile_plan(plan, ops):
                  else {"proposition", "support", "refutation"} if op == "ENGAGR" else set()) if backend == "evidence" else ({"generators"} if op == "AFWD" else set())
         if set(step) != {"i", "op"} | extra:
             raise ValueError(f"token {i} has missing or unexpected operation bindings")
-        if op in {"VINIT", "TANCH"} and i not in {0, len(ops)-1}:
-            raise ValueError("nested source/terminal boundary is unsupported")
         before = copy.deepcopy(state)
         if backend == "anyon-ququart":
             event = {"i": i, "op": op}
@@ -320,9 +348,8 @@ def compile_composition(plan, ops):
         raise ValueError("native source must be a decimal integer of at least 128 bits")
     if type(plan["digit"]) is not int or not 0 <= plan["digit"] <= 3:
         raise ValueError("source basis digit must be 0 through 3")
-    if (not isinstance(ops, list) or not ops or ops[0] != "VINIT" or ops[-1] != "TANCH" or
-            not isinstance(plan["steps"], list) or len(plan["steps"]) != len(ops)):
-        raise ValueError("composition needs source/terminal boundaries and exact coverage")
+    if not isinstance(ops, list) or not ops or not isinstance(plan["steps"], list) or len(plan["steps"]) != len(ops):
+        raise ValueError("composition needs exact token coverage")
     schema = {"retain": set(), "sic": set(), "inverse": set(), "exchange": {"generators"},
               "split": {"id"}, "rejoin": {"id"}, "latch": {"id"}, "engage": {"proposition"},
               "evidence": {"proposition", "axis", "outcome", "numerator", "denominator", "witness"}}
@@ -336,6 +363,8 @@ def compile_composition(plan, ops):
                 not isinstance(step["actions"], list) or not step["actions"]):
             raise ValueError(f"composition position {i} needs its symbol and ordered operations")
         kinds = [a.get("kind") if isinstance(a, dict) else None for a in step["actions"]]
+        if step["symbol"] == "≺" and "exchange" in kinds:
+            raise ValueError("return must consume a previously retained exchange, not manufacture a forward exchange at the return symbol")
         if roles[step["symbol"]] not in kinds or (step["symbol"] == "⊙" and set(kinds) != {"retain"}):
             raise ValueError(f"{step['symbol']} requires its operator morphism with a valid primitive, not a placeholder composition")
         if step["symbol"] in {"⊤", "⊥"} and not any(
@@ -394,6 +423,8 @@ def compile_composition(plan, ops):
 def execute_plan(compiled):
     # Recompile the source object: never trust stored/generated argv or witnesses.
     checked = compile_plan(compiled["plan"], compiled["word_ops"])
+    if checked["plan"]["backend"] == "semiprime-descent":
+        return execute_descent(checked)
     if checked["plan"]["backend"] == "numeral-factor":
         return execute_numeral(checked)
     if checked["plan"]["backend"] == "ququart-factor":

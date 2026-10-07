@@ -220,7 +220,7 @@ LOCAL_SOURCES = [
 
 
 def source_context(register_text: str, extra_paths=()) -> List[dict]:
-    """Retrieve bounded passages, retaining their exact file and line addresses."""
+    """Supply the complete Codex and bounded passages from other sources."""
     root = Path(HERE).parent
     paths = [root / p for p in LOCAL_SOURCES] + [Path(p).expanduser().resolve() for p in extra_paths]
     terms = set(re.findall(r"[\w-]{4,}", register_text.lower())) - {
@@ -235,10 +235,15 @@ def source_context(register_text: str, extra_paths=()) -> List[dict]:
         try:
             text = path.read_text(encoding="utf-8")
         except (OSError, UnicodeError):
-            if path in [Path(p).expanduser().resolve() for p in extra_paths]:
+            if path.name == "THE_CODEX_FIBONACCI.md" or path in [Path(p).expanduser().resolve() for p in extra_paths]:
                 raise ValueError(f"Cannot read context file: {path}")
             continue
         lines = text.splitlines()
+        if path.name == "THE_CODEX_FIBONACCI.md":
+            passages.append({"path": str(path), "line": 1, "end_line": len(lines),
+                             "scope": "complete", "text": text,
+                             "sha256": hashlib.sha256(text.encode()).hexdigest()})
+            continue
         candidates = []
         for i in range(0, len(lines), 24):
             block = "\n".join(lines[i:i+24])
@@ -660,6 +665,30 @@ LLM_SYSTEM = (
     "FOUR is {N,T,F,B}; SIXTEEN_3 is the powerset of {T,F,t,f}. "
     "A six-Fibonacci-anyon ququart has four computational channels and a fifth leakage channel. "
     "Coherent superposition alone does not deposit contradictory evidence. "
+    "Apply the complete Fibonacci Codex with these register-bound distinctions: "
+    "an isomorphism must preserve composition and typed domains, not merely rename symbols. "
+    "The live glyph mapping is ⊙ identity/self-reference and ⊤ supporting evaluation; "
+    "some Codex passages transpose their operator names. Keep the live mapping and explicitly resolve that source conflict. "
+    "The exact FOUR residual identity μ∘δ=id uses coordinatewise knowledge join; "
+    "it is not proof of a coherent amplitude inverse, agreement of transformed arms, or zero physical leakage. "
+    "Keep the coherent carrier, evidence about that carrier, and emitted classical measurement distinct. "
+    "Non-destructive SIC analysis is not destructive deployment measurement. "
+    "FOUR coordinates are independently attributed support and refutation: N=(0,0), T=(1,0), F=(0,1), B=(1,1). "
+    "Rejected support does not automatically deposit refutation. Missing measurements and the middle band between "
+    "cleanliness acceptance and rejection thresholds yield N, not B. B requires accumulated conflicting evidence; "
+    "do not manufacture it by relabeling one observation. A witness name is attribution, not proof of source independence. "
+    "Computational error and leakage probability require separate actual measurements and explicitly bound policies. "
+    "Do not invent SIC outcomes, thresholds, witnesses, factors, periods, or measurement results to fill an adapter. "
+    "Illustrative Codex thresholds are not defaults. Request missing material bindings or declare them unresolved. "
+    "Codex classification uses computational and leakage cleanliness evidence separately: (T,T) Terminal, "
+    "(T,N) UnresolvedLeak, (T,F) Contaminated, (T,B) Crowley; computational B is InconsistentGate, "
+    "F is Failed, N is Unmeasured. These are not Vox's control-flow verdict or a CLI termination status. "
+    "A source-return component residual is not a target-gate error measurement. "
+    "Factor descent is incomplete until independently checked nontrivial factors multiply exactly to the sealed source; "
+    "screening primality is not a primality proof. Numeral cell meanings remain bound to their codec. "
+    "A return must consume an existing retained forward domain; never fabricate an exchange and immediately undo it "
+    "merely to satisfy a return symbol. Protocol examples guide compositions, not a whole-word allowlist. "
+    "Treat the Codex's malformed rendered code as exposition, not executable source. "
     "Use the supplied Vox region positions as context and state a source-bound reconstruction check. "
     "Also supply realization using exactly the supplied executable adapter schema. "
     "Every suggested operation must have concrete bindings and exact token coverage. "
@@ -688,7 +717,7 @@ def llm_translate(ops, glyphs, word, verdict, register_text, reg, generic, braid
         lines.append(f"Matched built-in register: {reg.name} - {reg.dim}")
     lines.append("Positions (index: symbol - structural action):")
     for i, (g, op) in enumerate(zip(glyphs, ops)):
-        action = (reg.ops[op][1] if reg is not None and reg.rid == "numeral" and op in reg.ops
+        action = (reg.ops[op][1] if reg is not None and reg.rid in {"numeral", "descent"} and op in reg.ops
                   else STRUCT_ACTIONS.get(op, ''))
         lines.append(f"  {i}: {g} - {action}")
     lines.append("Vox pairing report: " + json.dumps(pairing, ensure_ascii=False))
@@ -698,6 +727,11 @@ def llm_translate(ops, glyphs, word, verdict, register_text, reg, generic, braid
                      "Use steps:\"register-bound\" to request exact indexed native lowering. "
                      "Do not reinterpret cell glyphs as factor-verification evidence or SIC measurements. "
                      "Keep the independently named decimal source unchanged; native source binding will check the word.")
+    if reg is not None and reg.rid == "descent":
+        lines.append("This is the native semiprime descent register. Use semiprime-descent with "
+                     "steps:\"register-bound\" for the exact ∈⊤⊥⊞∋ arithmetic stages. "
+                     "Bind the decimal source and explicit cycle budgets. Extract only at the region's fuse. "
+                     "Retain failed attempt evidence; missing collision observations remain N.")
     lines.append("Local source excerpts:")
     for item in context:
         lines.append(f"{item['path']}:{item['line']}\n{item['text']}")
@@ -779,13 +813,13 @@ def llm_translate(ops, glyphs, word, verdict, register_text, reg, generic, braid
         if reg is not None and reg.rid == "numeral" and isinstance(proposed, dict) and proposed.get("backend") not in {"numeral-factor", "unsupported"}:
             raise ValueError("native numeral request requires numeral-factor cell morphisms; quantum/evidence workflow substitution is not a realization")
         if (re.search(r"\bfactor(?:s|ing|ization|isation)?\b", register_text, re.I) and
-                isinstance(proposed, dict) and proposed.get("backend") not in {"numeral-factor", "ququart-factor", "unsupported"}):
+                isinstance(proposed, dict) and proposed.get("backend") not in {"numeral-factor", "ququart-factor", "semiprime-descent", "unsupported"}):
             raise ValueError("factor extraction requires an arithmetic factor producer and product verifier; SIC threshold evidence cannot realize it")
         realization = compile_plan(obj.get("realization"), ops)
         if realization["status"] == "ready" and reg is not None:
             allowed = {"belnap": {"evidence"}, "anyon": {"anyon-ququart", "anyon-composition", "ququart-factor"},
                        "ququart": {"anyon-ququart", "anyon-composition", "ququart-factor"},
-                       "numeral": {"numeral-factor"}, "substrate": {"ququart-factor"}}.get(reg.rid, set())
+                       "numeral": {"numeral-factor"}, "descent": {"semiprime-descent"}, "substrate": {"ququart-factor", "semiprime-descent"}}.get(reg.rid, set())
             if realization["plan"]["backend"] not in allowed:
                 raise ValueError(f"adapter does not realize requested {reg.rid} carrier")
     except (ValueError, TypeError, KeyError) as exc:
@@ -839,6 +873,11 @@ def llm_translate(ops, glyphs, word, verdict, register_text, reg, generic, braid
             "Reconstruct the native numeral tape from the bound cell morphisms and compare it to the independently "
             "named source. Execute baked native tape factor extraction; verify the nontrivial factor multiset's "
             "exact tape product and report native Miller-Rabin screening separately from primality proof.")
+    if realization["status"] == "ready" and realization["plan"]["backend"] == "semiprime-descent":
+        definition["return_check"] = (
+            "Execute cyclic splitting, measured square congruence, GCD severing and FOUR knowledge joins "
+            "inside ∈⊤⊥⊞∋. At ∋ check exact division, the native tape product, the Gödel codec product "
+            "and support-polynomial synthesis against the retained source. Release only that verified pair.")
     meta = {"provider": provider, "model": model,
             "binding_repair_attempted": _repair is not None,
             "realization": realization,
@@ -1030,7 +1069,25 @@ IMAS = register_definition(
         "TANCH": ("readout", "retain the terminal register readout"),
     })
 
-REGISTERS = [ANYONIC, QUQUART, BELNAP, SIC, NUMERAL, SUBSTRATE, IMAS]
+DESCENT_REGISTER = register_definition(
+    "descent", "semiprime descent register", "native source tape and retained cycle witnesses",
+    "The five-stage descent retains attempt evidence and verifies exact source reconstruction.",
+    ["semiprime-descent", "semiprime descent", "five-stage descent"], "native", {
+        "VINIT": ("bind source", "bind the source without extracting factors"),
+        "IMSCRIB": ("retain source", "retain the bound source"),
+        "FSPLIT": ("cyclic split", "retain predecessors of a repeated quadratic recurrence image modulo the source"),
+        "EVALT": ("square congruence", "measure equality of the predecessor squares modulo the source"),
+        "EVALF": ("GCD severing", "compute the predecessor difference GCD and classify the candidate"),
+        "ENGAGR": ("FOUR engagement", "join attempt support and refutation coordinates while retaining failed attempts"),
+        "FFUSE": ("fundamental return", "divide by the strict candidate and verify exact native and Gödel source products"),
+        "AFWD": ("carry pair", "carry the verified pair forward"),
+        "CLINK": ("link pair", "encode the verified factors as retained canonical words"),
+        "AREV": ("verify return", "verify the retained pair reconstructs the source"),
+        "IFIX": ("latch pair", "copy the verified pair and accumulated evidence"),
+        "TANCH": ("release pair", "release the verified pair with its source return"),
+    })
+
+REGISTERS = [ANYONIC, QUQUART, BELNAP, SIC, DESCENT_REGISTER, NUMERAL, SUBSTRATE, IMAS]
 
 
 def carrier_plan(reg: Optional[Register], description: str) -> dict:
@@ -1056,6 +1113,10 @@ def carrier_plan(reg: Optional[Register], description: str) -> dict:
                     "retain the source word independently of candidate descriptions",
                     "decode with the Gödel codec, reconstruct the canonical word, and verify candidate factor multiplication against the sealed source",
                     ["source numeral word", "arithmetic operation"]),
+        "descent": ("native numeral tape and attributed cycle attempts",
+                    "retain source, recurrence preimages, square residues and FOUR attempt history",
+                    "verify exact cofactor division and native, Gödel and support-polynomial products against the retained source",
+                    ["decimal source", "seed", "constant", "attempt and iteration budgets"]),
         "substrate": ("actual executable module and its source bytes",
                       "retain format, architecture, symbols, and the complete lifted module",
                       "lift the executable, produce glyphs, recover the module, and compare bytes; compare native and lifted execution on the same inputs",
@@ -1075,6 +1136,8 @@ def carrier_plan(reg: Optional[Register], description: str) -> dict:
 
 def match_register(text: str) -> Tuple[Optional[Register], int]:
     t = text.lower()
+    if any(re.search(rf"(?<!\w){re.escape(k)}(?!\w)", t) for k in DESCENT_REGISTER.keywords):
+        return DESCENT_REGISTER, 100
     for reg in REGISTERS:
         if t.strip() in (reg.rid, reg.name.lower()):
             return reg, 100
@@ -1218,7 +1281,7 @@ def translate(word: str, register_text: str, runtime_arg: str = "auto",
               "rows": rows, "llm_meta": None, "llm_register": None}
     result["pairing"] = pairing
     result["checks"] = inspect_commands(word)
-    result["sources"] = [{k: item[k] for k in ("path", "line", "sha256")} for item in context]
+    result["sources"] = [{k: item[k] for k in ("path", "line", "sha256", "scope", "end_line") if k in item} for item in context]
     result["carrier"] = carrier_plan(reg if use_builtin else None, register_text)
     if (v is None or pairing.get("error")) and not dry_run:
         return finish_report(result)
@@ -1309,7 +1372,9 @@ def attach_execution(result: dict, witness: dict) -> None:
         for n in positions:
             event = events[n]
             measured = {key: event[key] for key in
-                        ("return", "source_return", "coordinate_return", "population_dual_verified", "domain", "codomain")
+                        ("return", "source_return", "coordinate_return", "population_dual_verified", "domain", "codomain",
+                         "square_congruence", "gcd", "deposit", "before", "after", "p", "q", "product",
+                         "godel_product_verified", "support_polynomial_product_verified", "mu_delta_source_return")
                         if key in event}
             if "observation" in event:
                 measured["observation"] = event["observation"]
@@ -1510,7 +1575,7 @@ def main():
             witness = execute_plan(compiled)
             witness["sources"] = saved.get("sources", [])
             print(json.dumps(witness, indent=2, ensure_ascii=False))
-            if witness.get("backend") in {"ququart-factor", "numeral-factor"} and witness.get("status") != "verified":
+            if witness.get("backend") in {"ququart-factor", "numeral-factor", "semiprime-descent"} and witness.get("status") != "verified":
                 sys.exit(1)
         except (OSError, ValueError, TypeError, KeyError, subprocess.TimeoutExpired) as exc:
             print(f"REALIZATION ERROR: {exc}", file=sys.stderr)
@@ -1564,7 +1629,7 @@ def main():
         print(render(r, emit=args.emit))
     if r["verdict"] is None or r["pairing"].get("error") or (r.get("llm_meta") or {}).get("error"):
         sys.exit(1)
-    if r.get("execution", {}).get("backend") in {"ququart-factor", "numeral-factor"} and r["execution"].get("status") != "verified":
+    if r.get("execution", {}).get("backend") in {"ququart-factor", "numeral-factor", "semiprime-descent"} and r["execution"].get("status") != "verified":
         sys.exit(1)
 
 if __name__ == "__main__":

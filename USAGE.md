@@ -422,6 +422,8 @@ Saved factor bindings also support `preparation: {"mode": "compiled", "path": ".
 
 ## Requirements and errors
 
+Model requests include the complete local Fibonacci Codex, with its digest and full line coverage in saved provenance. Other sources use selected passages. The grounding contract distinguishes coherent state, attributed FOUR evidence, classical measurement, numerical return residuals, and exact factor-product checks. It resolves the Codex's transposed operator names against the live glyph mapping. Missing measurement policies remain unresolved; example thresholds are not defaults. A return cannot manufacture a forward exchange at its own symbol merely to undo it. Supplying the text and these constraints does not guarantee model comprehension or establish an execution result.
+
 Use Python 3 with the existing constellation layout. Vox is expected at `Vox/target/release/vox`; `EXCRIBE_VOX_BIN` overrides that path. Model calls use `httpx`. Native anyonic execution requires `G-mOMonadOS/target/release/sic-tool`. Offline definitions and evidence-plan replay need no model server.
 
 A parse or argument error exits with status 2. Instrument failures, provider failures, malformed model responses, and realization failures exit with status 1. An unsupported adapter can be described successfully, but requesting execution or saving that realization fails. A provider error requires checking the selected server and model; an adapter error requires changing the bindings or choosing a supported operation sequence.
@@ -432,6 +434,21 @@ See the built-in descriptions and full CLI options:
 python3 excribe_vox.py --list-registers
 python3 excribe_vox.py --help
 ```
+
+## Five-stage semiprime descent
+
+Replay the native `∈⊤⊥⊞∋` pipeline with the supplied 8051 source:
+
+```bash
+python3 excribe_vox.py --run-plan semiprime_descent.plan.json
+../Vox/target/release/semiprime_descent 8051 --seed 0 --constant 0
+```
+
+The measured pair is 83 and 97. The fixed first cycle fails; subsequent success retains both evidence coordinates at B. Each attempt records its recurrence preimages, square residues, GCD and knowledge join. `∋` checks exact division, native multiplication, canonical word multiplication and support-polynomial carry reconstruction.
+
+The cyclic stage retains predecessors of a repeated recurrence image, which guarantees their square congruence. Collision search has explicit iteration budgets. An exhausted budget releases no factors and exits with status 1. Optional initialization and sealing carry the source and verified result without extracting factors. The standalone word `∈⊤⊥⊞∋` is supported.
+
+Use `semiprime descent` in a model request to select this register. Its plan contains source, seed, constant, attempt and step budgets, and indexed operations. Neither factors nor an unknown prime are supplied to the search. See the native command's `--help` for parameter controls.
 
 Run the regression controls:
 

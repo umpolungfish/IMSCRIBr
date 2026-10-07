@@ -9,6 +9,83 @@ import excribe_vox as exv
 
 
 class ExcriptionTests(unittest.TestCase):
+    def test_descent_register_selection_retains_arithmetic_stage_meanings(self):
+        reg, score = exv.match_register("semiprime descent factor extraction with FOUR evidence")
+        self.assertEqual(reg.rid, "descent")
+        self.assertEqual(score, 100)
+        self.assertIn("squares", reg.ops["EVALT"][1])
+        self.assertIn("GCD", reg.ops["EVALF"][1])
+        self.assertEqual(exv.match_register("native numeral factor extraction")[0].rid, "numeral")
+
+    def test_descent_model_binding_compiles_with_its_matched_register(self):
+        saved = json.loads((exv.Path(exv.HERE) / "semiprime_descent.plan.json").read_text())
+        word = saved["word"]
+        ops = exv.parse_word(word)
+        reg = exv.match_register("semiprime descent factor extraction")[0]
+        response = {"register": {"name": "descent", "dim": "native source tape",
+                                 "frame": "retained attempts", "return_check": "exact source product"},
+                    "tokens": [{"i": i, "process": "native descent", "concrete": reg.ops[op][1],
+                                "rationale": "bound register morphism", "input": "retained source",
+                                "output": "retained source and witnesses", "check": "execute native stage"}
+                               for i, op in enumerate(ops)], "realization": saved["plan"]}
+        with patch.object(exv.LlmBackend, "query", return_value=json.dumps(response)):
+            rows, meta = exv.llm_translate(ops, list(word), word, "T", "semiprime descent factor extraction",
+                                           reg, False, "e", 0, "local", "test")
+        self.assertIsNotNone(rows, meta)
+        self.assertEqual(meta["realization"]["plan"]["backend"], "semiprime-descent")
+
+    def test_descent_replay_measures_all_five_stages(self):
+        saved = json.loads((exv.Path(exv.HERE) / "semiprime_descent.plan.json").read_text())
+        compiled = exv.compile_plan(saved["plan"], exv.parse_word(saved["word"]))
+        report = exv.execute_plan(compiled)
+        self.assertEqual(report["status"], "verified")
+        self.assertEqual(sorted(map(int, report["factors"])), [83, 97])
+        self.assertEqual(report["evidence"], "B")
+        self.assertEqual({e["kind"] for e in report["events"] if e["symbol"] in "∈⊤⊥⊞∋"},
+                         {"cyclic_split", "square_congruence", "gcd_severing", "knowledge_join", "verify_and_fuse"})
+        fuse = next(e for e in report["events"] if e["kind"] == "verify_and_fuse")
+        self.assertTrue(fuse["mu_delta_source_return"])
+        self.assertTrue(fuse["support_polynomial_product_verified"])
+
+    def test_descent_has_no_universal_word_endpoint_rule(self):
+        saved = json.loads((exv.Path(exv.HERE) / "semiprime_descent.plan.json").read_text())
+        compiled = exv.compile_plan(saved["plan"], exv.parse_word("∈⊤⊥⊞∋"))
+        report = exv.execute_plan(compiled)
+        self.assertEqual(report["status"], "verified")
+        self.assertEqual(report["word"], "∈⊤⊥⊞∋")
+        ops = exv.parse_word("⊙")
+        plan = {"backend": "evidence", "frame": ["p"], "seed": {"p": [False, False]},
+                "steps": [{"i": 0, "op": ops[0]}]}
+        self.assertEqual(exv.compile_plan(plan, ops)["status"], "ready")
+
+    def test_descent_budget_exhaustion_and_wrong_stage_order(self):
+        saved = json.loads((exv.Path(exv.HERE) / "semiprime_descent.plan.json").read_text())
+        plan = saved["plan"] | {"attempts": 1, "steps_per_attempt": 1, "total_steps": 1}
+        report = exv.execute_plan(exv.compile_plan(plan, exv.parse_word(saved["word"])))
+        self.assertEqual(report["status"], "budget_exhausted")
+        self.assertIsNone(report["factors"])
+        self.assertEqual(report["returncode"], 1)
+        with self.assertRaisesRegex(ValueError, "ordered"):
+            exv.compile_plan(plan, exv.parse_word("∈⊥⊤⊞∋"))
+
+    def test_complete_codex_grounding(self):
+        context = exv.source_context("factor extraction")
+        codex = next(item for item in context if exv.Path(item["path"]).name == "THE_CODEX_FIBONACCI.md")
+        original = exv.Path(codex["path"]).read_text(encoding="utf-8")
+        self.assertEqual(codex["text"], original)
+        self.assertEqual(codex["scope"], "complete")
+        self.assertEqual(codex["end_line"], len(original.splitlines()))
+        self.assertIn("some Codex passages transpose", exv.LLM_SYSTEM)
+        self.assertIn("Rejected support does not automatically", exv.LLM_SYSTEM)
+        self.assertIn("Illustrative Codex thresholds are not defaults", exv.LLM_SYSTEM)
+
+    def test_return_cannot_manufacture_its_forward_domain(self):
+        word, plan = self.native_composition()
+        step = next(step for step in plan["steps"] if step["symbol"] == "≺")
+        step["actions"].insert(0, {"kind": "exchange", "generators": [1]})
+        with self.assertRaisesRegex(ValueError, "previously retained exchange"):
+            exv.compile_plan(plan, exv.parse_word(word))
+
     def test_numeral_factor_binds_cells_without_quantum_evidence(self):
         saved = json.loads((exv.Path(exv.HERE) / "numeral_semiprime.plan.json").read_text())
         compiled = exv.compile_plan(saved["plan"], exv.parse_word(saved["word"]))
