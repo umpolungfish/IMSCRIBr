@@ -1,4 +1,4 @@
-I bind collision-derived square witnesses to the descent register
+I route semiprime descent through my Vox carrier dispatcher
 
-I expose raw collisions and constructed square witnesses separately.
-I verify the corrected counterexample and all 44 frontend controls.
+I invoke vox descent from compiled plans and check the dispatcher command in regression tests.
+I update replay instructions and verify all 44 frontend controls.

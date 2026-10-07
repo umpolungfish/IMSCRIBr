@@ -6,7 +6,7 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parent.parent
-BINARY = ROOT / "Vox/target/release/semiprime_descent"
+BINARY = ROOT / "Vox/target/release/vox"
 DESCENT = "∈⊤⊥⊞∋"
 KINDS = {"⊢": "bind_source", "⊙": "retain_source", "∈": "cyclic_split",
          "⊤": "square_congruence", "⊥": "gcd_severing", "⊞": "knowledge_join",
@@ -45,7 +45,7 @@ def compile_descent(plan, ops, symbols):
         raise ValueError("descent stages must exactly bind each symbol's native operation")
     checked = copy.deepcopy(plan)
     checked["steps"] = steps
-    argv = [str(BINARY), plan["source"], "--word", word, "--seed", plan["seed"],
+    argv = [str(BINARY), "descent", plan["source"], "--word", word, "--seed", plan["seed"],
             "--constant", plan["constant"], "--steps", str(plan["steps_per_attempt"])]
     if mode == "until-closed":
         argv.append("--until-closed")

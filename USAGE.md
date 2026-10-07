@@ -439,9 +439,11 @@ python3 excribe_vox.py --help
 
 Replay the native `∈⊤⊥⊞∋` pipeline with the supplied 8051 source:
 
+The frontend invokes Vox's carrier dispatcher. The five-stage frame is registered there, and the same stage implementation handles standalone, sealed and nested carrier execution. The compatibility executable uses that shared dispatcher too.
+
 ```bash
 python3 excribe_vox.py --run-plan semiprime_descent.plan.json
-../Vox/target/release/semiprime_descent 8051 --seed 0 --constant 0
+../Vox/target/release/vox descent 8051 --seed 0 --constant 0
 ```
 
 The measured pair is 83 and 97. The fixed first cycle fails; subsequent success retains both evidence coordinates at B. Each attempt records its orbit collision states, collision GCD, lifted square witness, residues and knowledge join. `∋` checks exact division, native multiplication, canonical word multiplication and support-polynomial carry reconstruction.
@@ -454,7 +456,7 @@ For complete cyclic parameter traversal, select `search_mode: "until-closed"` or
 
 ```bash
 python3 excribe_vox.py --run-plan semiprime_until_closed.plan.json
-../Vox/target/release/semiprime_descent 271690685666312585018220346622515128917 --until-closed --steps 100000
+../Vox/target/release/vox descent 271690685666312585018220346622515128917 --until-closed --steps 100000
 ```
 
 This mode has no attempt, total-step or frontend time limit. Each finite attempt has at least two steps, advances the constant, and advances the seed on constant wrap. It eventually visits every residue pair. FOUR coordinates persist across attempts; complete frontend replay streams attempt traces into `measurements/descent/` instead of retaining the whole search in memory. Counters use native arbitrary-length tapes. A semiprime has a successful parameter pair in this traversal, giving eventual closure when uninterrupted with sufficient resources. This is not a practical runtime guarantee for large RSA inputs. The supplied fixture still uses 8051; no successful closure of the large source has been observed.

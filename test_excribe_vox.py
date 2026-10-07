@@ -14,6 +14,8 @@ class ExcriptionTests(unittest.TestCase):
         plan = saved["plan"] | {"search_mode": "until-closed", "attempts": 1,
                                 "total_steps": 1, "steps_per_attempt": 128}
         compiled = exv.compile_plan(plan, exv.parse_word(saved["word"]))
+        self.assertEqual(exv.Path(compiled["argv"][0]).name, "vox")
+        self.assertEqual(compiled["argv"][1], "descent")
         self.assertIn("--until-closed", compiled["argv"])
         self.assertNotIn("--total-steps", compiled["argv"])
         report = exv.execute_plan(compiled)
