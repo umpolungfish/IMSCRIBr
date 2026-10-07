@@ -68,6 +68,7 @@ def compile_factor(plan, ops, symbols):
     # boundary creates it from unit; a fragment consumes the supplied carrier.
     phase = "unit" if ops[0] == "VINIT" else "bound"
     input_phase = phase
+    extracted = False
     boundaries = []
     for i, (step, op) in enumerate(zip(steps, ops)):
         symbol = symbols.get(op)
@@ -85,8 +86,8 @@ def compile_factor(plan, ops, symbols):
             for key in schema[kind]:
                 if not isinstance(action[key], str) or not action[key].strip():
                     raise ValueError(f"{kind} requires a concrete {key}")
-            if phase in {"latched", "released"} and kind != "release":
-                raise ValueError("a fixed factor carrier admits only terminal release")
+            if phase == "released" and kind != "retain":
+                raise ValueError("a released factor carrier admits only identity retention")
             if kind == "bind":
                 if i != 0 or phase != "unit":
                     raise ValueError("source binding must initialize the carrier once")
@@ -97,10 +98,11 @@ def compile_factor(plan, ops, symbols):
                 inverses.append(phase)
                 phase = "prepared"
             elif kind == "extract":
-                if phase != "prepared":
+                if phase not in {"prepared", "readout"}:
                     raise ValueError("extraction consumes a validated prepared carrier")
                 inverses.append(phase)
                 phase = "readout"
+                extracted = True
             elif kind == "return":
                 if not inverses:
                     raise ValueError("return needs a retained forward carrier")
@@ -112,12 +114,13 @@ def compile_factor(plan, ops, symbols):
             elif kind == "rejoin":
                 if not frames or frames.pop() != action["id"]:
                     raise ValueError("factor rejoin must consume the retained inner frame")
-            elif kind == "link" and phase not in {"prepared", "readout"}:
+            elif kind == "link" and phase not in {"prepared", "readout", "latched"}:
                 raise ValueError("link needs a prepared operator and its modular work")
             elif kind == "evidence":
                 axis = "support" if symbol == "⊤" else "refutation"
-                if action["axis"] != axis or not any(s["symbol"] == "≻" and any(a["kind"] == "extract" for a in s["actions"]) for s in steps[:i]):
-                    raise ValueError("factor evidence requires an extracted readout and the symbol's evidence axis")
+                if action["axis"] != axis or not extracted:
+                    raise ValueError(f"factor evidence at position {i} requires a preceding extracted readout and evidence axis {axis}; "
+                                     "a forward symbol may compose prepare then extract in its ordered actions")
                 evidence.add((action["proposition"], axis))
             elif kind == "engage":
                 if any((action["proposition"], axis) not in evidence for axis in ("support", "refutation")):
@@ -128,7 +131,7 @@ def compile_factor(plan, ops, symbols):
                 latches.add(action["id"])
                 phase = "latched"
             elif kind == "release":
-                if frames or phase != "latched":
+                if frames or not latches:
                     raise ValueError("factor release needs a fixed, rejoined carrier")
                 phase = "released"
         boundaries.append({"i": i, "symbol": symbol, "domain": before, "codomain": phase})
@@ -221,6 +224,7 @@ def _execute_factor(compiled):
                "active": {k: plan[k] for k in ("source", "base", "radix", "seed")} if input_phase == "bound" else {}, "evidence": {},
                "frames": [], "returns": [], "latches": {}, "links": []}
     execution, verification, fields = None, None, None
+    fixed_fields = None
     invocations = {}
 
     def instrument(argv, name, seconds):
@@ -341,8 +345,10 @@ def _execute_factor(compiled):
                     carrier["latches"][action["id"]] = {"source": carrier["source"], "active": copy.deepcopy(carrier["active"]),
                                                         "evidence": copy.deepcopy(carrier["evidence"])}
                     carrier["phase"] = "latched"
+                    fixed_fields = copy.deepcopy(fields)
                 elif kind == "release":
                     carrier["phase"] = "released"
+                    fields = fixed_fields
                     if fields is not None:
                         def read_word(raw):
                             return subprocess.run([str(OPERATOR), "--read-numeral", raw], capture_output=True,

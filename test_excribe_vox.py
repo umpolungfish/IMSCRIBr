@@ -256,6 +256,34 @@ class ExcriptionTests(unittest.TestCase):
         self.assertEqual(report["carrier"]["active"]["source"], plan["source"])
         self.assertEqual(report["instruments"], [])
 
+    def test_user_factor_word_composes_actions_and_preserves_latch_continuation(self):
+        import copy
+        word = "⊢≻⊙∈⊤⋈⊥⊙≻⋈⊤⊥⊞≻⋈⊤≺⊞⊙⊤⊥⊞⊙⊤≻⋈⊥≺⊞≻⋈≺⊙≺⋈∋⊞⊡≺⋈⊣⊙"
+        saved = json.loads((exv.Path(exv.HERE) / "rsa100_factor.plan.json").read_text())
+        plan = copy.deepcopy(saved["plan"])
+        plan["source"] = "229513619370652772473594096727489823787"
+        actions = {"⊢": [{"kind": "bind"}], "⊙": [{"kind": "retain"}],
+                   "∈": [{"kind": "split", "id": "source_frame"}],
+                   "∋": [{"kind": "rejoin", "id": "source_frame"}],
+                   "≻": [{"kind": "extract"}], "≺": [{"kind": "return"}],
+                   "⋈": [{"kind": "link"}], "⊡": [{"kind": "latch", "id": "fixed"}],
+                   "⊣": [{"kind": "release"}], "⊞": [{"kind": "engage", "proposition": "factor_pair"}]}
+        for symbol, axis in (("⊤", "support"), ("⊥", "refutation")):
+            actions[symbol] = [{"kind": "evidence", "axis": axis,
+                                "proposition": "factor_pair", "witness": "producer_product_verifier"}]
+        plan["steps"] = [{"i": i, "symbol": symbol, "actions": copy.deepcopy(actions[symbol])}
+                         for i, symbol in enumerate(word)]
+        plan["steps"][1]["actions"].insert(0, {"kind": "prepare"})
+        compiled = exv.compile_plan(plan, exv.parse_word(word))
+        self.assertEqual(compiled["boundaries"][1]["codomain"], "readout")
+        self.assertEqual(compiled["boundaries"][38]["codomain"], "prepared")
+        self.assertEqual(compiled["output_phase"], "released")
+        # No factors or observations are supplied by this compilation control.
+        self.assertNotIn("factors", compiled)
+        plan["steps"][1]["actions"].pop()
+        with self.assertRaisesRegex(ValueError, "position 4.*preceding extracted readout"):
+            exv.compile_plan(plan, exv.parse_word(word))
+
     def test_factor_workflow_rejects_missing_coverage_and_injected_factors(self):
         saved = json.loads((exv.Path(exv.HERE) / "rsa100_factor.plan.json").read_text())
         plan, ops = saved["plan"], saved["word_ops"]

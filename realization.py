@@ -76,6 +76,9 @@ realization must use one of these schemas:
    ⊢ {kind:"bind"} initializes the source/base/radix/seed carrier.
    ≻ {kind:"prepare"} consumes bound source and produces a validated baked case;
       or {kind:"extract"} consumes prepared case and produces actual native readout.
+      Multiple ordered actions can share one ≻: [prepare,extract] is valid and
+      supplies a readout before the next evidence glyph. Later extraction can
+      reuse the validated prepared case while retaining each forward cursor.
    ⊙ {kind:"retain"} is identity on the entire carrier.
    ∈ {kind:"split",id:string} retains a source/active/evidence frame.
    ∋ {kind:"rejoin",id:string} consumes the retained inner frame, checks source
@@ -89,12 +92,19 @@ realization must use one of these schemas:
       A requested coherent inverse needs anyon-composition instead.
    ⊞ {kind:"engage",proposition:string} holds both already evaluated coordinates.
    ⊡ {kind:"latch",id:string} copies fixed carrier/evidence after all frames rejoin.
+      The copied latch stays immutable; it does not freeze the separate active
+      cursor. Returns and links may continue on that cursor before release.
    ⊣ {kind:"release"} releases the latch and verified factors at the terminal end.
+      ⊙ may retain the released carrier as identity after release.
    Each operation is restricted to its indicated symbol. Typed carrier phases
    compose as unit -> bound -> prepared -> readout; return restores the last
    forward domain; fixation -> latched and terminal release -> released.
    Bind actual frame ids, evidence proposition and witness ids. No stage labels
    or narrative-only position coverage can substitute for these morphisms.
+   Evidence here measures only the producer/product verifier. Renaming its
+   proposition cannot turn it into a purity, braid residual or distribution-law
+   measurement. Engage needs both evaluated axes for the same proposition;
+   evaluation of both axes does not imply both were accepted or that evidence is B.
    The native preparation script emits canonical numeral words and bakes the
    source, radix-scaled modular base, physical Fourier operator and shared-work
    schedule into a new executable. The extraction binary has NO runtime source

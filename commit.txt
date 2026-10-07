@@ -1,5 +1,5 @@
-I remove forced factor workflow word endpoints
+I compose factor actions and retain independent latch snapshots
 
-I bind boundary-free fragments to the supplied source carrier.
-I retain open outputs without manufacturing extraction or verified release.
-I preserve typed preparation prerequisites and verify fragment execution controls.
+I expose ordered prepare and extract actions at one forward position.
+I permit case reuse, active cursor returns after fixation and identity after release.
+I retain fixed verifier fields separately and test the supplied 42-position word.
