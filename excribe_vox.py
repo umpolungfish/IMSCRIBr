@@ -655,6 +655,11 @@ STRUCT_ACTIONS = {
 LLM_SYSTEM = (
     "Excribe each IMASM morphism into a target register. Vox supplies the word's control-flow reading. "
     "Name the carrier, its concrete operations, and the check that returns to the source. "
+    "The supplied IMASM operation word is a program: its glyphs are operator morphisms. "
+    "An IMASM numeral encoding is source data in an explicitly bound numeral codec, not the same thing as that program. "
+    "Sharing glyphs does not make the roles interchangeable. A decimal input, factor request, Gödel relationship, "
+    "or word length does not authorize decoding the operation word as a numeral. "
+    "Only an explicit numeral-codec target licenses zero/one cell interpretations; otherwise preserve each operator's typed action. "
     "Use the Grammar's spelling imscribe, imscription, imscriber and imscriptive, with m; "
     "do not substitute inscribe, inscription, inscriber or inscriptive in generated prose. "
     "Return one complete JSON object: "
@@ -710,7 +715,8 @@ def llm_translate(ops, glyphs, word, verdict, register_text, reg, generic, braid
                   pairing=None, context=(), _repair=None):
     """Query the LLM for per-token isomorphic processes and register synthesis.
     Returns (rows_or_None, meta)."""
-    lines = [f"IMASM word: {word}  ({len(ops)} positions)",
+    lines = [f"IMASM operation word (program): {word}  ({len(ops)} operator positions)",
+             "Source numeral data is a separate binding. Do not decode this program as that source unless an explicit numeral-codec target is selected.",
              f"Judge (vox verdict): {verdict or 'UNJUDGED'}"]
     if braidword and braidword != "∅":
         if braidword == "e":
@@ -1157,11 +1163,18 @@ def match_register(text: str) -> Tuple[Optional[Register], int]:
         return None, 0
     if any(re.search(rf"(?<!\w){re.escape(k)}(?!\w)", t) for k in DESCENT_REGISTER.keywords):
         return DESCENT_REGISTER, 100
+    if re.search(r"\b(?:native numeral|numeral register|numeral codec|numeral encoding|"
+                 r"numeral word|cell-binary|imasm[- ]encoded numeral)\b", t):
+        return NUMERAL, 100
     for reg in REGISTERS:
         if t.strip() in (reg.rid, reg.name.lower()):
             return reg, 100
     best, score = None, 0
     for reg in REGISTERS:
+        # Arithmetic operands and Gödel relations do not turn a program into
+        # numeral data. Cell semantics require an explicitly requested codec.
+        if reg.rid == "numeral":
+            continue
         s = sum(2 for k in reg.keywords if k not in {"register", "system", "computation", "real", "complete"}
                 and re.search(rf"(?<!\w){re.escape(k)}(?!\w)", t))
         if s > score:

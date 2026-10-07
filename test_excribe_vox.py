@@ -9,6 +9,23 @@ import excribe_vox as exv
 
 
 class ExcriptionTests(unittest.TestCase):
+    def test_operation_word_is_not_selected_as_numeral_by_arithmetic_keywords(self):
+        description = ("IMASM operation word acting on integer source 229513619370652772473594096727489823787 "
+                       "for native arithmetic prime factor extraction through Gödel-encoding relations")
+        reg, _ = exv.match_register(description)
+        self.assertTrue(reg is None or reg.rid != "numeral")
+        word = "∈⊤⊥⊞∋"
+        _, meta = exv.llm_translate(exv.parse_word(word), list(word), word, "T", description,
+                                   reg, reg is None, None, None, "local", "fixture", dry_run=True)
+        self.assertIn("IMASM operation word (program):", meta["prompt"])
+        self.assertNotIn("read the numeral codec's", meta["prompt"])
+        self.assertIn("An IMASM numeral encoding is source data", meta["system"])
+
+    def test_explicit_numeral_codec_still_binds_cell_semantics(self):
+        for description in ("native numeral factor extraction", "IMASM numeral encoding to prime factors",
+                            "canonical cell-binary IMASM word"):
+            self.assertEqual(exv.match_register(description)[0].rid, "numeral")
+
     def test_nested_factor_relations_are_not_flattened_to_a_numeral_register(self):
         description = ("Prime Factor - Gödel-Encoding Relationship nested in Semiprime Factor Pair - "
                        "Gödel-Encoding Relationship nested in Fundamental Law of Prime Distribution nested in "

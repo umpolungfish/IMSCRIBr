@@ -107,7 +107,10 @@ realization must use one of these schemas:
 4. numeral-factor: {backend:"numeral-factor",source:decimal_string,
    prepare_seconds:positive_integer,execute_seconds:positive_integer,
    steps:"register-bound"|[{i:position,symbol:canonical_symbol,actions:[operation]}]}.
-   Use for factor extraction from a numeral word in the native numeral register.
+   Use only for an explicitly requested numeral-codec target in the native numeral register.
+   The IMASM operation word is the program; the source numeral is separately bound data.
+   A factor request or Gödel-encoding relationship alone does not select this adapter
+   or authorize interpreting program glyphs as source numeral bits.
    Supported operators act on a least-significant-cell-first native numeral tape:
    ⊢ {kind:"open"}; ∈ {kind:"split",id:string};
    ⊤ {kind:"bit",value:0}; ⊥ {kind:"bit",value:1};

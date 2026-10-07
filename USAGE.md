@@ -387,7 +387,9 @@ Before execution, row checks describe pending procedures. After `--execute`, row
 
 ## Large semiprime factor extraction
 
-For a numeral word, use the native numeral carrier. The same symbols bind zero/one cell operations rather than SIC evidence policies. This saved request retains the supplied word and independently named source:
+An IMASM operation word is a program of operator morphisms. An IMASM numeral encoding is source data under a numeral codec. A decimal operand, factor request or Gödel relationship does not turn the program into a numeral encoding, and operator count is not source bit-length.
+
+Only for an explicitly requested numeral-codec target, use the native numeral carrier. In that domain the same symbols bind zero/one cell operations rather than SIC evidence policies. This saved request retains the supplied codec program and independently named source:
 
 ```bash
 python3 excribe_vox.py --run-plan numeral_semiprime.plan.json
