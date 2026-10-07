@@ -1,5 +1,5 @@
-I compose factor actions and retain independent latch snapshots
+I execute the supplied factor word and retain its native run
 
-I expose ordered prepare and extract actions at one forward position.
-I permit case reuse, active cursor returns after fixation and identity after release.
-I retain fixed verifier fields separately and test the supplied 42-position word.
+I save the source-bound 42-position execution plan for offline replay.
+I record successful preparation and completed cursor, latch and release operations.
+I record five bounded extraction timeouts and the missing completed factor readout.

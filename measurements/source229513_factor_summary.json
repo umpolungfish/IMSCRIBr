@@ -1,0 +1,15 @@
+{
+  "source": "229513619370652772473594096727489823787",
+  "plan": "source229513_factor.plan.json",
+  "result": "measurements/factors/a5e5c692b448468198d19cc61cca0d07/result.json",
+  "status": "unclosed",
+  "preparation_validated": true,
+  "completed_operator_positions": 42,
+  "executed_actions": 43,
+  "extraction_positions": [1, 8, 13, 24, 29],
+  "each_extraction_timed_out": true,
+  "execute_seconds_per_call": 120,
+  "verifier_error": "readout verification failed: missing completed factor readout",
+  "factors": [],
+  "final_carrier_phase": "released"
+}

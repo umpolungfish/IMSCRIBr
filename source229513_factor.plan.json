@@ -1,0 +1,433 @@
+{
+  "word": "⊢≻⊙∈⊤⋈⊥⊙≻⋈⊤⊥⊞≻⋈⊤≺⊞⊙⊤⊥⊞⊙⊤≻⋈⊥≺⊞≻⋈≺⊙≺⋈∋⊞⊡≺⋈⊣⊙",
+  "plan": {
+    "backend": "ququart-factor",
+    "source": "229513619370652772473594096727489823787",
+    "base": "2",
+    "radix": "4",
+    "seed": "1729",
+    "preparation": {
+      "mode": "fresh"
+    },
+    "prepare_seconds": 1800,
+    "execute_seconds": 120,
+    "steps": [
+      {
+        "i": 0,
+        "symbol": "⊢",
+        "actions": [
+          {
+            "kind": "bind"
+          }
+        ]
+      },
+      {
+        "i": 1,
+        "symbol": "≻",
+        "actions": [
+          {
+            "kind": "prepare"
+          },
+          {
+            "kind": "extract"
+          }
+        ]
+      },
+      {
+        "i": 2,
+        "symbol": "⊙",
+        "actions": [
+          {
+            "kind": "retain"
+          }
+        ]
+      },
+      {
+        "i": 3,
+        "symbol": "∈",
+        "actions": [
+          {
+            "kind": "split",
+            "id": "source_frame"
+          }
+        ]
+      },
+      {
+        "i": 4,
+        "symbol": "⊤",
+        "actions": [
+          {
+            "kind": "evidence",
+            "axis": "support",
+            "proposition": "factor_pair",
+            "witness": "producer_product_verifier"
+          }
+        ]
+      },
+      {
+        "i": 5,
+        "symbol": "⋈",
+        "actions": [
+          {
+            "kind": "link"
+          }
+        ]
+      },
+      {
+        "i": 6,
+        "symbol": "⊥",
+        "actions": [
+          {
+            "kind": "evidence",
+            "axis": "refutation",
+            "proposition": "factor_pair",
+            "witness": "producer_product_verifier"
+          }
+        ]
+      },
+      {
+        "i": 7,
+        "symbol": "⊙",
+        "actions": [
+          {
+            "kind": "retain"
+          }
+        ]
+      },
+      {
+        "i": 8,
+        "symbol": "≻",
+        "actions": [
+          {
+            "kind": "extract"
+          }
+        ]
+      },
+      {
+        "i": 9,
+        "symbol": "⋈",
+        "actions": [
+          {
+            "kind": "link"
+          }
+        ]
+      },
+      {
+        "i": 10,
+        "symbol": "⊤",
+        "actions": [
+          {
+            "kind": "evidence",
+            "axis": "support",
+            "proposition": "factor_pair",
+            "witness": "producer_product_verifier"
+          }
+        ]
+      },
+      {
+        "i": 11,
+        "symbol": "⊥",
+        "actions": [
+          {
+            "kind": "evidence",
+            "axis": "refutation",
+            "proposition": "factor_pair",
+            "witness": "producer_product_verifier"
+          }
+        ]
+      },
+      {
+        "i": 12,
+        "symbol": "⊞",
+        "actions": [
+          {
+            "kind": "engage",
+            "proposition": "factor_pair"
+          }
+        ]
+      },
+      {
+        "i": 13,
+        "symbol": "≻",
+        "actions": [
+          {
+            "kind": "extract"
+          }
+        ]
+      },
+      {
+        "i": 14,
+        "symbol": "⋈",
+        "actions": [
+          {
+            "kind": "link"
+          }
+        ]
+      },
+      {
+        "i": 15,
+        "symbol": "⊤",
+        "actions": [
+          {
+            "kind": "evidence",
+            "axis": "support",
+            "proposition": "factor_pair",
+            "witness": "producer_product_verifier"
+          }
+        ]
+      },
+      {
+        "i": 16,
+        "symbol": "≺",
+        "actions": [
+          {
+            "kind": "return"
+          }
+        ]
+      },
+      {
+        "i": 17,
+        "symbol": "⊞",
+        "actions": [
+          {
+            "kind": "engage",
+            "proposition": "factor_pair"
+          }
+        ]
+      },
+      {
+        "i": 18,
+        "symbol": "⊙",
+        "actions": [
+          {
+            "kind": "retain"
+          }
+        ]
+      },
+      {
+        "i": 19,
+        "symbol": "⊤",
+        "actions": [
+          {
+            "kind": "evidence",
+            "axis": "support",
+            "proposition": "factor_pair",
+            "witness": "producer_product_verifier"
+          }
+        ]
+      },
+      {
+        "i": 20,
+        "symbol": "⊥",
+        "actions": [
+          {
+            "kind": "evidence",
+            "axis": "refutation",
+            "proposition": "factor_pair",
+            "witness": "producer_product_verifier"
+          }
+        ]
+      },
+      {
+        "i": 21,
+        "symbol": "⊞",
+        "actions": [
+          {
+            "kind": "engage",
+            "proposition": "factor_pair"
+          }
+        ]
+      },
+      {
+        "i": 22,
+        "symbol": "⊙",
+        "actions": [
+          {
+            "kind": "retain"
+          }
+        ]
+      },
+      {
+        "i": 23,
+        "symbol": "⊤",
+        "actions": [
+          {
+            "kind": "evidence",
+            "axis": "support",
+            "proposition": "factor_pair",
+            "witness": "producer_product_verifier"
+          }
+        ]
+      },
+      {
+        "i": 24,
+        "symbol": "≻",
+        "actions": [
+          {
+            "kind": "extract"
+          }
+        ]
+      },
+      {
+        "i": 25,
+        "symbol": "⋈",
+        "actions": [
+          {
+            "kind": "link"
+          }
+        ]
+      },
+      {
+        "i": 26,
+        "symbol": "⊥",
+        "actions": [
+          {
+            "kind": "evidence",
+            "axis": "refutation",
+            "proposition": "factor_pair",
+            "witness": "producer_product_verifier"
+          }
+        ]
+      },
+      {
+        "i": 27,
+        "symbol": "≺",
+        "actions": [
+          {
+            "kind": "return"
+          }
+        ]
+      },
+      {
+        "i": 28,
+        "symbol": "⊞",
+        "actions": [
+          {
+            "kind": "engage",
+            "proposition": "factor_pair"
+          }
+        ]
+      },
+      {
+        "i": 29,
+        "symbol": "≻",
+        "actions": [
+          {
+            "kind": "extract"
+          }
+        ]
+      },
+      {
+        "i": 30,
+        "symbol": "⋈",
+        "actions": [
+          {
+            "kind": "link"
+          }
+        ]
+      },
+      {
+        "i": 31,
+        "symbol": "≺",
+        "actions": [
+          {
+            "kind": "return"
+          }
+        ]
+      },
+      {
+        "i": 32,
+        "symbol": "⊙",
+        "actions": [
+          {
+            "kind": "retain"
+          }
+        ]
+      },
+      {
+        "i": 33,
+        "symbol": "≺",
+        "actions": [
+          {
+            "kind": "return"
+          }
+        ]
+      },
+      {
+        "i": 34,
+        "symbol": "⋈",
+        "actions": [
+          {
+            "kind": "link"
+          }
+        ]
+      },
+      {
+        "i": 35,
+        "symbol": "∋",
+        "actions": [
+          {
+            "kind": "rejoin",
+            "id": "source_frame"
+          }
+        ]
+      },
+      {
+        "i": 36,
+        "symbol": "⊞",
+        "actions": [
+          {
+            "kind": "engage",
+            "proposition": "factor_pair"
+          }
+        ]
+      },
+      {
+        "i": 37,
+        "symbol": "⊡",
+        "actions": [
+          {
+            "kind": "latch",
+            "id": "fixed"
+          }
+        ]
+      },
+      {
+        "i": 38,
+        "symbol": "≺",
+        "actions": [
+          {
+            "kind": "return"
+          }
+        ]
+      },
+      {
+        "i": 39,
+        "symbol": "⋈",
+        "actions": [
+          {
+            "kind": "link"
+          }
+        ]
+      },
+      {
+        "i": 40,
+        "symbol": "⊣",
+        "actions": [
+          {
+            "kind": "release"
+          }
+        ]
+      },
+      {
+        "i": 41,
+        "symbol": "⊙",
+        "actions": [
+          {
+            "kind": "retain"
+          }
+        ]
+      }
+    ]
+  }
+}
