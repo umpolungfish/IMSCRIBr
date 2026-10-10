@@ -1,0 +1,149 @@
+```json
+{
+  "register": {
+    "name": "anyon-ququart-exchange-evidence",
+    "dim": "five-channel six-Fibonacci-anyon fusion space (four computational channels T,F,t,f plus one leakage channel)",
+    "frame": "outer[1..10] ⊃ inner[4..8]; outer interior indices {2,3,4,5,6,7,8,9}, inner interior indices {5,6,7}; source 340282366920938463463374607431768211507 in basis T (digit 0)",
+    "return_check": "After both inverse operations and both rejoins, measure all-five-channel source-return residual in fixed-point units; accept if computational residual < 1/16 and leakage amplitude < 1/16, confirming the carrier reconstructs the source state 340282366920938463463374607431768211507"
+  },
+  "tokens": [
+    {
+      "i": 0,
+      "process": "VINIT",
+      "concrete": "retain",
+      "rationale": "Source boundary establishes the resident coherent five-channel carrier from the decimal source in basis T; the only mark that creates",
+      "input": "decimal source 340282366920938463463374607431768211507, basis digit 0 (T)",
+      "output": "resident coherent five-channel carrier initialized in T",
+      "check": "carrier is non-zero on all five channels; source snapshot matches supplied decimal"
+    },
+    {
+      "i": 1,
+      "process": "FSPLIT",
+      "concrete": "split outer",
+      "rationale": "Fork δ opens the outer retained frame, banking source snapshot, phase, leakage, and native sixteen SIC masses plus outside-carrier mass",
+      "input": "resident coherent carrier",
+      "output": "outer frame open with retained snapshot id=outer",
+      "check": "retained snapshot equals source state at split point"
+    },
+    {
+      "i": 2,
+      "process": "AFWD",
+      "concrete": "exchange [2,3]",
+      "rationale": "Forward morphism applies ordered physical Artin exchanges 2,3 inside the outer retained frame; batch retained with its source",
+      "input": "carrier in outer frame",
+      "output": "carrier with exchange batch [2,3] applied and retained",
+      "check": "exchange batch [2,3] is the most recent retained batch; source binding intact"
+    },
+    {
+      "i": 3,
+      "process": "EVALT",
+      "concrete": "evidence support outcome=0 threshold=1/32",
+      "rationale": "Evaluate support for 'the computational carrier survives' using SIC outcome 0 with threshold 1/32; deposits TRUE arm observation",
+      "input": "carrier after exchange [2,3]",
+      "output": "support observation retained under proposition 'the computational carrier survives'",
+      "check": "SIC outcome 0 mass compared against rational threshold 1/32; observation accepted or rejected and retained with source attribution"
+    },
+    {
+      "i": 4,
+      "process": "FSPLIT",
+      "concrete": "split inner",
+      "rationale": "Fork δ opens the inner retained frame, banking source snapshot, phase, leakage, and SIC masses; nested inside outer frame",
+      "input": "carrier with support observation in outer frame",
+      "output": "inner frame open with retained snapshot id=inner",
+      "check": "retained snapshot equals current carrier state at inner split point"
+    },
+    {
+      "i": 5,
+      "process": "CLINK",
+      "concrete": "exchange [-3,4]",
+      "rationale": "Compose/link applies ordered physical Artin exchanges -3,4 inside the inner frame; batch retained with its source",
+      "input": "carrier in inner frame",
+      "output": "carrier with exchange batch [-3,4] applied and retained",
+      "check": "exchange batch [-3,4] is the most recent retained batch; source binding intact"
+    },
+    {
+      "i": 6,
+      "process": "EVALF",
+      "concrete": "evidence refutation outcome=16 threshold=1/1000",
+      "rationale": "Evaluate refutation using outside-carrier outcome 16 with threshold 1/1000; deposits FALSE arm observation",
+      "input": "carrier after exchange [-3,4]",
+      "output": "refutation observation retained under proposition 'the computational carrier survives'",
+      "check": "outside-carrier outcome 16 mass compared against rational threshold 1/1000; observation accepted or rejected and retained with source attribution"
+    },
+    {
+      "i": 7,
+      "process": "ENGAGR",
+      "concrete": "engage 'the computational carrier survives'",
+      "rationale": "Hold paradox: retain both previously evaluated evidence coordinates (support and refutation) for the proposition with their distinct policies; does not manufacture positive observations",
+      "input": "support observation (outcome 0, threshold 1/32) and refutation observation (outcome 16, threshold 1/1000)",
+      "output": "both observations engaged under proposition 'the computational carrier survives'",
+      "check": "both coordinates retained independently; no coordinate is overwritten or collapsed"
+    },
+    {
+      "i": 8,
+      "process": "FFUSE",
+      "concrete": "rejoin inner",
+      "rationale": "Rejoin the inner frame: close retained inner frame, evaluate native SIC dual reconstruction of current computational populations, retain coherent amplitudes separately, measure all-five-channel source return",
+      "input": "inner frame with engaged observations and exchange [-3,4]",
+      "output": "inner frame closed; SIC dual reconstruction evaluated; all-five-channel source return measured",
+      "check": "SIC dual reconstruction matches computational populations; source-return residual measured on all five channels"
+    },
+    {
+      "i": 9,
+      "process": "AREV",
+      "concrete": "inverse; inverse",
+      "rationale": "Self-inverse clearing reverse: undo both exchange batches in reverse order—first inverse reverses [-3,4], second inverse reverses [2,3]; each measures source-return residual in fixed-point units on all five channels",
+      "input": "carrier after inner rejoin with both exchange batches in history",
+      "output": "carrier with both exchange batches reversed; two source-return residuals measured",
+      "check": "first inverse residual (for [-3,4]) and second inverse residual (for [2,3]) each measured on all five channels in fixed-point units"
+    },
+    {
+      "i": 10,
+      "process": "FFUSE",
+      "concrete": "rejoin outer",
+      "rationale": "Rejoin the outer frame: close retained outer frame, evaluate native SIC dual reconstruction of current computational populations, retain coherent amplitudes separately, measure all-five-channel source return",
+      "input": "carrier after both inverses in outer frame",
+      "output": "outer frame closed; SIC dual reconstruction evaluated; all-five-channel source return measured",
+      "check": "SIC dual reconstruction matches computational populations; source-return residual measured on all five channels; carrier should reconstruct source state"
+    },
+    {
+      "i": 11,
+      "process": "IFIX",
+      "concrete": "latch final",
+      "rationale": "Irreversible commit: latch the carrier, leakage, evidence, and measured returns under a unique id; value becomes commitment",
+      "input": "carrier after outer rejoin with all observations and residuals",
+      "output": "latched immutable state id=final containing carrier, leakage, evidence, and measured returns",
+      "check": "latched state is complete and immutable; all five channels, both evidence coordinates, and all residuals present"
+    },
+    {
+      "i": 12,
+      "process": "TANCH",
+      "concrete": "retain",
+      "rationale": "Terminal anchor: sink confirms carrier is resident; out-port may stay open (living end); terminal readout returns actual native witnesses without stochastic collapse",
+      "input": "latched state id=final",
+      "output": "terminal readout with native witnesses on all five channels",
+      "check": "carrier non-zero on all five channels at terminal; source-bound reconstruction: all-five-channel residual confirms return to source 340282366920938463463374607431768211507"
+    }
+  ],
+  "realization": {
+    "backend": "anyon-composition",
+    "source": "340282366920938463463374607431768211507",
+    "digit": 0,
+    "steps": [
+      {"i": 0, "symbol": "⊢", "actions": [{"kind": "retain"}]},
+      {"i": 1, "symbol": "∈", "actions": [{"kind": "split", "id": "outer"}]},
+      {"i": 2, "symbol": "≻", "actions": [{"kind": "exchange", "generators": [2, 3]}]},
+      {"i": 3, "symbol": "⊤", "actions": [{"kind": "evidence", "proposition": "the computational carrier survives", "axis": "support", "outcome": 0, "numerator": "1", "denominator": "32", "witness": "sic_outcome_0_computational"}]},
+      {"i": 4, "symbol": "∈", "actions": [{"kind": "split", "id": "inner"}]},
+      {"i": 5, "symbol": "⋈", "actions": [{"kind": "exchange", "generators": [-3, 4]}]},
+      {"i": 6, "symbol": "⊥", "actions": [{"kind": "evidence", "proposition": "the computational carrier survives", "axis": "refutation", "outcome": 16, "numerator": "1", "denominator": "1000", "witness": "outside_carrier_16"}]},
+      {"i": 7, "symbol": "⊞", "actions": [{"kind": "engage", "proposition": "the computational carrier survives"}]},
+      {"i": 8, "symbol": "∋", "actions": [{"kind": "rejoin", "id": "inner"}]},
+      {"i": 9, "symbol": "≺", "actions": [{"kind": "inverse"}, {"kind": "inverse"}]},
+      {"i": 10, "symbol": "∋", "actions": [{"kind": "rejoin", "id": "outer"}]},
+      {"i": 11, "symbol": "⊡", "actions": [{"kind": "latch", "id": "final"}]},
+      {"i": 12, "symbol": "⊣", "actions": [{"kind": "retain"}]}
+    ]
+  }
+}
+```

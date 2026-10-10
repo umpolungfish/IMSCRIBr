@@ -1,0 +1,151 @@
+```json
+{
+  "register": {
+    "name": "ququart-factor",
+    "dim": "four computational channels (T,F,t,f) + one leakage channel; five-channel six-Fibonacci-anyon fusion space",
+    "frame": "∈ at position 3 opens frame_0; ∋ at position 7 closes frame_0; interior span [4,5,6] = ⊤⋈⊥; Vox pairing: split=3, fuse=7, span=4, work=true, unpaired_splits=[], unpaired_fuses=[]",
+    "return_check": "terminal verifier independently multiplies the returned nontrivial factor pair (p,q) using native Gödel numeral calculus against the sealed source word embedded in the executable; acceptance requires 1<p<N, 1<q<N, and p·q=N; source-bound reconstruction verified by independent product check, not by candidate's claimed product"
+  },
+  "tokens": [
+    {
+      "i": 0,
+      "process": "0→1 source boundary; the only mark that creates",
+      "concrete": "{kind:\"bind\"}",
+      "rationale": "Initializes the source/base/radix/seed carrier from unit to bound phase; the only position that creates the carrier",
+      "input": "unit (empty carrier)",
+      "output": "bound carrier with source, base=2, radix=4, seed=1729",
+      "check": "source is a valid decimal integer of at least 128 bits; base=2 and radix=4 are powers of two; seed=1729 is a positive integer"
+    },
+    {
+      "i": 1,
+      "process": "forward morphism; WORK",
+      "concrete": "{kind:\"prepare\"}",
+      "rationale": "Consumes bound source and produces a validated baked case; compiles source-dependent fixed-point precision, physical Fourier operator, and shared-work schedule into a new executable; this is the only ≻ in the word, so the carrier reaches prepared but cannot also execute extract to reach readout",
+      "input": "bound carrier",
+      "output": "prepared case: baked executable with source word, radix-scaled modular base, physical Fourier operator, and shared-work schedule",
+      "check": "baked executable is byte-identical to the Vox-lifted module; no factor values or known order enter the preparation; fresh preparation mode disables the classical native producer arm"
+    },
+    {
+      "i": 2,
+      "process": "identity / self-reference; the neutral generator, no work",
+      "concrete": "{kind:\"retain\"}",
+      "rationale": "Identity on the entire carrier per the live glyph mapping (⊙ = identity/self-reference); preserves the prepared state without modification; resolves the Codex transposition where ⊙ is labeled EVALT and ⊤ is labeled IMSCRIB",
+      "input": "prepared case",
+      "output": "prepared case (unchanged)",
+      "check": "carrier state is byte-identical before and after; no phase transition occurs"
+    },
+    {
+      "i": 3,
+      "process": "fork δ; the only brancher",
+      "concrete": "{kind:\"split\",\"id\":\"frame_0\"}",
+      "rationale": "Retains a source/active/evidence frame; opens the inner working domain for the evaluation pair at positions 4-6; this is the δ (Frobenius comultiplication) that differentiates the carrier",
+      "input": "prepared case",
+      "output": "prepared case with frame_0 open: source snapshot, active state, and evidence ledger retained separately",
+      "check": "frame_0 is uniquely identified; source snapshot matches the sealed source word; the frame is the innermost open frame for the subsequent ∋ at position 7"
+    },
+    {
+      "i": 4,
+      "process": "evaluate/deposit TRUE; WORK",
+      "concrete": "{kind:\"evidence\",\"axis\":\"support\",\"proposition\":\"source_reconstruction\",\"witness\":\"verifier_arm_0\"}",
+      "rationale": "Evaluates the independent terminal producer/product verifier on the actual readout; deposits support for source reconstruction per the live glyph mapping (⊤ = supporting evaluation); requires the carrier to be in readout phase, which is unreachable with a single ≻",
+      "input": "prepared case within frame_0",
+      "output": "evidence coordinate (support) for proposition source_reconstruction, attributed to witness verifier_arm_0",
+      "check": "witness verifier_arm_0 is a nonempty source identifier; evaluation requires actual readout from the prepared executable; support is deposited only when the independent verifier confirms p·q=N"
+    },
+    {
+      "i": 5,
+      "process": "compose/link; WORK",
+      "concrete": "{kind:\"link\"}",
+      "rationale": "Binds the baked Fourier/modular-work composition certificate; composes the preparation artifacts within the open frame",
+      "input": "prepared case within frame_0 with support evidence deposited",
+      "output": "prepared case within frame_0 with composition certificate bound",
+      "check": "certificate matches the baked Fourier operator and modular work schedule; composition is consistent with the preparation artifacts"
+    },
+    {
+      "i": 6,
+      "process": "evaluate/deposit FALSE; WORK",
+      "concrete": "{kind:\"evidence\",\"axis\":\"refutation\",\"proposition\":\"source_reconstruction\",\"witness\":\"verifier_arm_1\"}",
+      "rationale": "Evaluates failed verification; deposits refutation for source reconstruction only when the independent check actually fails; refutation is not manufactured by relabeling; requires the carrier to be in readout phase",
+      "input": "prepared case within frame_0",
+      "output": "evidence coordinate (refutation) for proposition source_reconstruction, attributed to witness verifier_arm_1",
+      "check": "witness verifier_arm_1 is a nonempty source identifier; refutation is deposited only when verification genuinely fails; a middle-band result yields N, not F; rejected support does not automatically deposit refutation"
+    },
+    {
+      "i": 7,
+      "process": "fuse μ; the only merger",
+      "concrete": "{kind:\"rejoin\",\"id\":\"frame_0\"}",
+      "rationale": "Consumes the retained inner frame; checks source binding and carries the transformed active state and attributed evidence; this is the μ (Frobenius multiplication) that reunifies the differentiated arms",
+      "input": "frame_0 (inner frame with both evidence coordinates)",
+      "output": "prepared case with frame_0 closed; source binding verified; transformed state and attributed evidence carried forward",
+      "check": "source binding check passes (sealed source in executable matches the bound source); evidence coordinates are preserved through the rejoin; the μ∘δ=id closure holds over the transformed object"
+    },
+    {
+      "i": 8,
+      "process": "hold paradox (Belnap diagonal); WORK",
+      "concrete": "{kind:\"engage\",\"proposition\":\"source_reconstruction\"}",
+      "rationale": "Holds both already evaluated coordinates (support and refutation) for the proposition without explosion; the Brass Vessel contains B locally without contaminating other propositions",
+      "input": "prepared case with both evidence coordinates for source_reconstruction",
+      "output": "prepared case with engaged FOUR-valued residual for source_reconstruction",
+      "check": "both coordinates were previously evaluated at positions 4 and 6; engagement does not manufacture new observations; if both support and refutation are present, the result is B retained without global collapse"
+    },
+    {
+      "i": 9,
+      "process": "irreversible commit; WORK",
+      "concrete": "{kind:\"latch\",\"id\":\"latch_0\"}",
+      "rationale": "Copies fixed carrier/evidence after all frames rejoin; commits the current state to the latched phase; frame_0 was closed at position 7 so all frames are rejoined",
+      "input": "prepared case with engaged evidence",
+      "output": "latched carrier (latch_0) with fixed state and evidence",
+      "check": "all frames are rejoined before latching; latch_0 is uniquely identified; the latched state is irreversible"
+    },
+    {
+      "i": 10,
+      "process": "self-inverse clearing reverse; WORK, T↔F, t↔f",
+      "concrete": "{kind:\"return\"}",
+      "rationale": "Restores the retained forward preparation cursor, preserving terminal evidence; this is a workflow cursor return, NOT coherent inversion; the last forward domain is the prepared phase from position 1",
+      "input": "latched carrier (latch_0)",
+      "output": "restored forward preparation domain with terminal evidence preserved",
+      "check": "return restores the last forward domain (prepared phase); terminal evidence from positions 4 and 6 is preserved; this is not a coherent amplitude inverse; the return consumes an existing retained forward domain"
+    },
+    {
+      "i": 11,
+      "process": "compose/link; WORK",
+      "concrete": "{kind:\"link\"}",
+      "rationale": "Binds the baked Fourier/modular-work composition certificate in the restored domain; re-establishes the composition link after the cursor return",
+      "input": "restored forward preparation domain",
+      "output": "restored domain with composition certificate bound",
+      "check": "certificate is consistent with the original preparation at position 1; the link is idempotent with respect to the same baked artifacts"
+    },
+    {
+      "i": 12,
+      "process": "terminal anchor; sink, out-port may stay open (living end)",
+      "concrete": "{kind:\"release\"}",
+      "rationale": "Releases the latch and verified factors at the terminal end; the out-port may stay open (living end) as the terminal anchor; this is the terminal boundary of the factor workflow",
+      "input": "latched carrier with verified factors",
+      "output": "released carrier with verified factor pair (p,q) and source reconstruction proof",
+      "check": "p·q = N verified by native Gödel multiplication against the sealed source; 1<p<N and 1<q<N; factors are nontrivial; the release is the terminal end of the factor workflow"
+    },
+    {
+      "i": 13,
+      "process": "identity / self-reference; the neutral generator, no work",
+      "concrete": "{kind:\"retain\"}",
+      "rationale": "Identity on the entire carrier per the live glyph mapping (⊙ = identity/self-reference); post-terminal operation on the released carrier; no phase transition occurs",
+      "input": "released carrier",
+      "output": "released carrier (unchanged)",
+      "check": "carrier state is byte-identical before and after; no phase transition occurs; this position is after the terminal boundary"
+    },
+    {
+      "i": 14,
+      "process": "irreversible commit; WORK",
+      "concrete": "{kind:\"latch\",\"id\":\"latch_1\"}",
+      "rationale": "Final copy of the fixed carrier/evidence; post-terminal fixation after release; the phase composition 'terminal release → released' implies released is the terminal state, making this operation structurally incompatible with the ququart-factor phase machine",
+      "input": "released carrier",
+      "output": "would-be latched carrier (latch_1); structurally invalid as a phase transition from released",
+      "check": "latch_1 is uniquely identified and distinct from latch_0; however, the phase composition does not define a transition from released to latched, making this position incompatible with the ququart-factor backend"
+    }
+  ],
+  "realization": {
+    "backend": "unsupported",
+    "reason": "Two structural incompatibilities with the ququart-factor phase machine: (1) The word contains a single ≻ at position 1, but the phase composition requires both a prepare step (bound→prepared) and an extract step (prepared→readout) to reach the readout phase where ⊤/⊥ evidence operations evaluate the actual readout. With only one forward morphism, the carrier cannot traverse bound→prepared→readout; it reaches at most prepared. (2) The terminal boundary (⊣ release) is at position 12, but positions 13 (⊙ retain) and 14 (⊡ latch) follow it. The phase composition defines 'terminal release → released' as the terminal state transition; no valid phase transition exists from released back to latched, so position 14's latch operation has no valid domain. The attempted composition was: bind→prepare→retain→split→evidence(support)→link→evidence(refutation)→rejoin→engage→latch→return→link→release→retain→latch, which violates the phase machine at both the missing extract step and the post-release latch."
+  }
+}
+```

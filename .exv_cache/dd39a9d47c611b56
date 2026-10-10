@@ -1,0 +1,127 @@
+{
+  "register": {
+    "name": "Belnap FOUR evidence carrier",
+    "dim": "4 (N, T, F, B)",
+    "frame": "p, q",
+    "return_check": "Source-bound reconstruction: Verify that the final state of proposition 'p' is [true, false] (T) and 'q' is [false, true] (F), matching the seed state after the swap-reverse cycle and sensor deposits."
+  },
+  "tokens": [
+    {
+      "i": 0,
+      "process": "VINIT",
+      "concrete": "Initialize evidence frame with propositions p and q. Seed p=[true, false] (T), q=[false, true] (F).",
+      "rationale": "Creates the source boundary and establishes the initial evidence coordinates for the two independent propositions.",
+      "input": "None",
+      "output": "State: p=T, q=F",
+      "check": "Seed values match target description: p supported, q refuted."
+    },
+    {
+      "i": 1,
+      "process": "FSPLIT",
+      "concrete": "Fork the evidence stream into separate arms for p and q to allow independent manipulation.",
+      "rationale": "The only brancher; enables the swap operation by isolating the coordinates.",
+      "input": "p=T, q=F",
+      "output": "Arms: [p=T], [q=F]",
+      "check": "Arms retain their initial evidence values."
+    },
+    {
+      "i": 2,
+      "process": "AFWD",
+      "concrete": "Apply permutation [q, p] to swap the coordinates of the two propositions.",
+      "rationale": "Forward morphism implementing the 'swap p and q' instruction.",
+      "input": "Arms: [p=T], [q=F]",
+      "output": "State: p=F, q=T (Coordinates swapped: p now holds q's evidence, q holds p's evidence)",
+      "check": "Permutation is bijective and correctly relabels coordinates."
+    },
+    {
+      "i": 3,
+      "process": "AREV",
+      "concrete": "Reverse the most recent AFWD permutation, restoring the original coordinate mapping [p, q].",
+      "rationale": "Self-inverse clearing reverse; implements 'reverse that swap'.",
+      "input": "State: p=F, q=T",
+      "output": "State: p=T, q=F (Coordinates restored to original mapping)",
+      "check": "State returns to pre-swap evidence distribution."
+    },
+    {
+      "i": 4,
+      "process": "ENGAGR",
+      "concrete": "Deposit support from sensor-A and refutation from sensor-B for proposition p. p becomes [true, true] (B).",
+      "rationale": "Holds paradox (Belnap diagonal); adds contradictory evidence to p as specified.",
+      "input": "State: p=T, q=F",
+      "output": "State: p=B, q=F",
+      "check": "Proposition p now exhibits both support and refutation (B)."
+    },
+    {
+      "i": 5,
+      "process": "FFUSE",
+      "concrete": "Fuse the separate arms back into the single evidence frame.",
+      "rationale": "The only merger; recombines the manipulated coordinates into the final register state.",
+      "input": "Arms: [p=B], [q=F]",
+      "output": "State: p=B, q=F",
+      "check": "Fuse recovers the combined state without loss."
+    },
+    {
+      "i": 6,
+      "process": "TANCH",
+      "concrete": "Terminal anchor; finalize the evaluation and expose the readout.",
+      "rationale": "Sink and out-port; completes the morphism.",
+      "input": "State: p=B, q=F",
+      "output": "Final Readout: p=B, q=F",
+      "check": "Final state matches the target description: p has support (from seed + sensor-A) and refutation (from sensor-B), q remains refuted."
+    }
+  ],
+  "realization": {
+    "backend": "evidence",
+    "frame": [
+      "p",
+      "q"
+    ],
+    "seed": {
+      "p": [
+        true,
+        false
+      ],
+      "q": [
+        false,
+        true
+      ]
+    },
+    "steps": [
+      {
+        "i": 0,
+        "op": "VINIT"
+      },
+      {
+        "i": 1,
+        "op": "FSPLIT"
+      },
+      {
+        "i": 2,
+        "op": "AFWD",
+        "permutation": [
+          "q",
+          "p"
+        ]
+      },
+      {
+        "i": 3,
+        "op": "AREV"
+      },
+      {
+        "i": 4,
+        "op": "ENGAGR",
+        "proposition": "p",
+        "support": "sensor-A",
+        "refutation": "sensor-B"
+      },
+      {
+        "i": 5,
+        "op": "FFUSE"
+      },
+      {
+        "i": 6,
+        "op": "TANCH"
+      }
+    ]
+  }
+}

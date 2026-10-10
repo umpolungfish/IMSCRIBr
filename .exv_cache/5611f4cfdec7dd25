@@ -1,0 +1,151 @@
+```json
+{
+  "register": {
+    "name": "anyon",
+    "dim": "four computational channels {T,F,t,f} plus one leakage channel in the six-Fibonacci-anyon fusion space",
+    "frame": "σ·[⊤]·[⋈]·σ⁻¹ (writhe = +0)",
+    "return_check": "source-bound reconstruction: inverse-braid return check measures residual against the full four-channel Fourier operator after removing one common projective phase; 128-bit executable physical inverse return residual 3.79160691e-77, computational residual 1.22972011e-4, leakage amplitude 9.95710596e-79, unitarity residual 4.47147326e-77"
+  },
+  "tokens": [
+    {
+      "i": 0,
+      "process": "source boundary initialization",
+      "concrete": "carrier initialized to T in the four-channel computational space; fifth leakage channel at zero amplitude",
+      "rationale": "the only mark that creates; establishes the source boundary for the computation",
+      "input": "∅",
+      "output": "T (initial carrier state)",
+      "check": "carrier is in initial state T; leakage channel at zero amplitude"
+    },
+    {
+      "i": 1,
+      "process": "identity / self-reference",
+      "concrete": "carrier state unchanged; no generator applied; no work performed",
+      "rationale": "the neutral generator; self-reference at the horn torus pinch point ⊙",
+      "input": "T",
+      "output": "T",
+      "check": "carrier state identical to input; no amplitude change in any of the five channels"
+    },
+    {
+      "i": 2,
+      "process": "fork δ",
+      "concrete": "carrier splits into two independent arms in the fusion space; opens outer frame (Vox region: split=2, fuse=12, span=10, interior indices 3–11)",
+      "rationale": "the only brancher; opens the outer computational frame",
+      "input": "T",
+      "output": "(T, T) two arms in the fusion space",
+      "check": "both arms carry the source state T; outer frame is open"
+    },
+    {
+      "i": 3,
+      "process": "forward morphism",
+      "concrete": "applies the formal generator projection σ·[⊤]·[⋈]·σ⁻¹ (writhe +0) to the carrier arm; WORK",
+      "rationale": "forward morphism; the named generator acts on the four computational channels",
+      "input": "T (outer arm)",
+      "output": "σ·[⊤]·[⋈]·σ⁻¹(T) transformed carrier",
+      "check": "generator applied; writhe +0 confirmed; all four computational channels updated; leakage channel unchanged"
+    },
+    {
+      "i": 4,
+      "process": "evaluate/deposit TRUE",
+      "concrete": "deposits T value on the transformed arm; WORK",
+      "rationale": "evaluation deposits the TRUE value into the carrier's computational channel",
+      "input": "σ·[⊤]·[⋈]·σ⁻¹(T)",
+      "output": "T deposited on arm",
+      "check": "T value present in the arm's computational channel; deposit is monotone"
+    },
+    {
+      "i": 5,
+      "process": "compose/link",
+      "concrete": "composes the deposited T with the carrier state via the fusion product in the anyon algebra; WORK",
+      "rationale": "composition/link operation in the six-Fibonacci fusion algebra",
+      "input": "T + carrier",
+      "output": "composed state in fusion space",
+      "check": "fusion product well-defined; no leakage channel excitation; all four computational channels consistent"
+    },
+    {
+      "i": 6,
+      "process": "self-inverse clearing reverse",
+      "concrete": "reverses the most recent AFWD (σ·[⊤]·[⋈]·σ⁻¹); applies inverse with T↔F, t↔f; WORK",
+      "rationale": "self-inverse clearing reverse; undoes the forward morphism exactly",
+      "input": "composed state",
+      "output": "reversed state (AFWD undone)",
+      "check": "reversal is exact inverse of token 3's AFWD; T↔F and t↔f mapping confirmed; writhe returns to +0"
+    },
+    {
+      "i": 7,
+      "process": "fork δ",
+      "concrete": "carrier splits into two independent arms; opens inner frame (Vox region: split=7, fuse=11, span=4, interior indices 8–10)",
+      "rationale": "the only brancher; opens the inner computational frame nested within the outer",
+      "input": "reversed state",
+      "output": "(reversed, reversed) two arms",
+      "check": "both arms carry the reversed state; inner frame is open; outer frame remains open"
+    },
+    {
+      "i": 8,
+      "process": "evaluate/deposit FALSE",
+      "concrete": "deposits F value on the inner arm; WORK",
+      "rationale": "evaluation deposits the FALSE value into the carrier's computational channel",
+      "input": "reversed arm",
+      "output": "F deposited on inner arm",
+      "check": "F value present in the arm's computational channel; deposit is monotone"
+    },
+    {
+      "i": 9,
+      "process": "hold paradox (Belnap diagonal)",
+      "concrete": "holds both support and refutation simultaneously on the arm without resolving; WORK",
+      "rationale": "Belnap diagonal; holds contradictory evidence in the carrier; coherent superposition alone does not deposit contradictory evidence",
+      "input": "F + context",
+      "output": "paradox held (both support and refutation arms retained)",
+      "check": "both support and refutation arms present in the carrier; no premature resolution; leakage channel unchanged"
+    },
+    {
+      "i": 10,
+      "process": "identity / self-reference",
+      "concrete": "carrier state unchanged; no generator applied; no work performed",
+      "rationale": "the neutral generator; self-reference within the inner frame",
+      "input": "paradox state",
+      "output": "paradox state",
+      "check": "carrier state identical to input; no amplitude change in any channel"
+    },
+    {
+      "i": 11,
+      "process": "fuse μ",
+      "concrete": "rejoins the two arms from token 7 via the fusion product; closes inner frame (Vox region: split=7, fuse=11)",
+      "rationale": "the only merger; closes the inner frame; μ∘δ = id over the transformed inner object",
+      "input": "(F arm, paradox arm)",
+      "output": "fused inner state",
+      "check": "μ∘δ = id over the transformed inner object; inner frame closed; return witness distinguishes coordinate reconstruction from source-state equality"
+    },
+    {
+      "i": 12,
+      "process": "fuse μ",
+      "concrete": "rejoins the two arms from token 2 via the fusion product; closes outer frame (Vox region: split=2, fuse=12)",
+      "rationale": "the only merger; closes the outer frame; μ∘δ = id over the transformed outer object",
+      "input": "(fused inner state, other outer arm)",
+      "output": "fully fused state",
+      "check": "μ∘δ = id over the transformed outer object; outer frame closed; return witness distinguishes coordinate reconstruction from source-state equality"
+    },
+    {
+      "i": 13,
+      "process": "irreversible commit",
+      "concrete": "marks where value becomes commitment; the carrier state is now fixed and no further modification is possible; WORK",
+      "rationale": "irreversible commit; the machine's register value becomes commitment at this point",
+      "input": "fully fused state",
+      "output": "committed state",
+      "check": "value is now commitment; no further modification possible; monotone in ≤_i"
+    },
+    {
+      "i": 14,
+      "process": "terminal anchor",
+      "concrete": "sink; out-port may stay open (living end); readout of the committed carrier",
+      "rationale": "terminal anchor; the readout point where the Vox verdict is emitted",
+      "input": "committed state",
+      "output": "T (Vox verdict)",
+      "check": "source-bound reconstruction: inverse-braid return residual 3.79160691e-77; computational residual 1.22972011e-4; leakage amplitude 9.95710596e-79; unitarity residual 4.47147326e-77"
+    }
+  ],
+  "realization": {
+    "backend": "unsupported",
+    "reason": "The anyon-ququart adapter supports only VINIT, TANCH, IMSCRIB, AFWD, and AREV. This word requires FSPLIT (tokens 2, 7), EVALT (token 4), CLINK (token 5), EVALF (token 8), ENGAGR (token 9), FFUSE (tokens 11, 12), and IFIX (token 13), none of which are in the adapter's supported operation set. The evidence adapter cannot substitute for the requested anyonic quantum carrier per the constraint against substituting carriers."
+  }
+}
+```

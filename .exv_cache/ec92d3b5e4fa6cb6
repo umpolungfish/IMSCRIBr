@@ -1,0 +1,310 @@
+{
+  "register": {
+    "name": "anyonic_ququart_membrane",
+    "dim": "5-channel six-Fibonacci-anyon fusion space (4 computational + 1 leakage)",
+    "frame": "Outer retained SIC frame 'outer_retained' enclosing inner retained frame 'inner_retained'; source bound to decimal 340282366920938463463374607431768211507; initial digit T",
+    "return_check": "Verify that the final coherent state and evidence latch 'final_latch' matches the source-bound reconstruction by checking that the inverse of the composed exchange batches (3, -4) followed by (1, 2) returns the carrier to the identity phase on all five channels, and that the native population synthesis at the terminal anchor reconstructs the initial SIC masses within the fixed-point residual bounds of the preparation."
+  },
+  "tokens": [
+    {
+      "i": 0,
+      "process": "VINIT",
+      "concrete": "Initialize the resident coherent five-channel carrier with source decimal 340282366920938463463374607431768211507 and digit T.",
+      "rationale": "Position 0 is the source boundary; it creates the carrier from the specified decimal source and initial truth value.",
+      "input": "decimal_source: 340282366920938463463374607431768211507, digit: T",
+      "output": "Initialized anyonic ququart carrier in state T",
+      "check": "Verify source binding and initial digit T are correctly loaded into the carrier."
+    },
+    {
+      "i": 1,
+      "process": "IMSCRIB",
+      "concrete": "Retain the resident coherent carrier without modification.",
+      "rationale": "Position 1 is the identity generator; it performs no work but preserves the state.",
+      "input": "Current carrier state",
+      "output": "Unchanged carrier state",
+      "check": "Verify state invariance under identity operation."
+    },
+    {
+      "i": 2,
+      "process": "FSPLIT",
+      "concrete": "Split the carrier into a named outer retained SIC frame 'outer_retained'.",
+      "rationale": "Position 2 is the fork; it creates a named frame to retain the source snapshot and SIC masses.",
+      "input": "Current carrier state",
+      "output": "Carrier split into 'outer_retained' frame",
+      "check": "Verify that the 'outer_retained' frame captures the source snapshot and SIC masses correctly."
+    },
+    {
+      "i": 3,
+      "process": "AFWD",
+      "concrete": "Apply exchange batch [1, 2] to the carrier.",
+      "rationale": "Position 3 is the forward morphism; it applies the first exchange batch as specified in the target register description.",
+      "input": "Carrier in 'outer_retained' frame",
+      "output": "Carrier with exchange batch [1, 2] applied",
+      "check": "Verify that the exchange batch [1, 2] is applied correctly and the batch is retained."
+    },
+    {
+      "i": 4,
+      "process": "EVALT",
+      "concrete": "Evaluate support for proposition 'p' from policy-A by testing SIC outcome 0 mass divided by total mass against threshold 1/32.",
+      "rationale": "Position 4 is the TRUE evaluation; it deposits support evidence based on the specified policy and threshold.",
+      "input": "Carrier state, proposition 'p', policy-A, threshold 1/32",
+      "output": "Support evidence for 'p' deposited",
+      "check": "Verify that the support evaluation for 'p' is correctly computed and deposited."
+    },
+    {
+      "i": 5,
+      "process": "CLINK",
+      "concrete": "Link by applying exchange batch [3, -4] to the carrier.",
+      "rationale": "Position 5 is the compose/link; it applies the second exchange batch as specified in the target register description.",
+      "input": "Carrier with support evidence for 'p'",
+      "output": "Carrier with exchange batch [3, -4] applied",
+      "check": "Verify that the exchange batch [3, -4] is applied correctly and the batch is retained."
+    },
+    {
+      "i": 6,
+      "process": "AREV",
+      "concrete": "Undo both retained exchange batches, most recent first.",
+      "rationale": "Position 6 is the self-inverse clearing reverse; it reverses the most recent exchange batch [3, -4] and then [1, 2].",
+      "input": "Carrier with exchange batches [3, -4] and [1, 2] retained",
+      "output": "Carrier with exchange batches reversed",
+      "check": "Verify that the exchange batches are reversed in the correct order and the source-return residual is measured."
+    },
+    {
+      "i": 7,
+      "process": "FSPLIT",
+      "concrete": "Split the carrier into an inner retained frame 'inner_retained'.",
+      "rationale": "Position 7 is the fork; it creates a nested frame to retain the source snapshot and SIC masses for the inner evaluation.",
+      "input": "Carrier with reversed exchange batches",
+      "output": "Carrier split into 'inner_retained' frame",
+      "check": "Verify that the 'inner_retained' frame captures the source snapshot and SIC masses correctly."
+    },
+    {
+      "i": 8,
+      "process": "EVALF",
+      "concrete": "Evaluate refutation for proposition 'p' from policy-B using outcome 1 mass divided by total mass against threshold 1/32.",
+      "rationale": "Position 8 is the FALSE evaluation; it deposits refutation evidence based on the specified policy and threshold.",
+      "input": "Carrier in 'inner_retained' frame, proposition 'p', policy-B, threshold 1/32",
+      "output": "Refutation evidence for 'p' deposited",
+      "check": "Verify that the refutation evaluation for 'p' is correctly computed and deposited."
+    },
+    {
+      "i": 9,
+      "process": "ENGAGR",
+      "concrete": "Engage the two measured evidence coordinates for proposition 'p' without manufacturing acceptance.",
+      "rationale": "Position 9 is the hold paradox; it retains both support and refutation evidence for 'p' without forcing a resolution.",
+      "input": "Carrier with support and refutation evidence for 'p'",
+      "output": "Carrier with engaged evidence coordinates for 'p'",
+      "check": "Verify that both evidence coordinates for 'p' are retained without manufacturing acceptance."
+    },
+    {
+      "i": 10,
+      "process": "IMSCRIB",
+      "concrete": "Retain identity; no work performed.",
+      "rationale": "Position 10 is the identity generator; it preserves the state before rejoining the frames.",
+      "input": "Carrier with engaged evidence coordinates for 'p'",
+      "output": "Unchanged carrier state",
+      "check": "Verify state invariance under identity operation."
+    },
+    {
+      "i": 11,
+      "process": "FFUSE",
+      "concrete": "Rejoin the inner retained frame 'inner_retained'.",
+      "rationale": "Position 11 is the fuse; it closes the inner frame and evaluates the native SIC dual reconstruction.",
+      "input": "Carrier in 'inner_retained' frame",
+      "output": "Carrier with inner frame rejoined",
+      "check": "Verify that the inner frame is rejoined correctly and the native SIC dual reconstruction is evaluated."
+    },
+    {
+      "i": 12,
+      "process": "FFUSE",
+      "concrete": "Rejoin the outer retained frame 'outer_retained'.",
+      "rationale": "Position 12 is the fuse; it closes the outer frame and checks native population synthesis and source return.",
+      "input": "Carrier with inner frame rejoined",
+      "output": "Carrier with outer frame rejoined",
+      "check": "Verify that the outer frame is rejoined correctly and the native population synthesis and source return are checked."
+    },
+    {
+      "i": 13,
+      "process": "IFIX",
+      "concrete": "Latch the final coherent state and evidence under id 'final_latch'.",
+      "rationale": "Position 13 is the irreversible commit; it fixes the final state and evidence for terminal readout.",
+      "input": "Carrier with outer frame rejoined",
+      "output": "Final coherent state and evidence latched under 'final_latch'",
+      "check": "Verify that the final state and evidence are correctly latched under 'final_latch'."
+    },
+    {
+      "i": 14,
+      "process": "TANCH",
+      "concrete": "Release non-destructive SIC analysis and terminate the operation.",
+      "rationale": "Position 14 is the terminal anchor; it closes the bounded operation and releases the result.",
+      "input": "Latched final state and evidence",
+      "output": "Terminal readout of the final coherent state and evidence",
+      "check": "Verify that the terminal readout correctly releases the final coherent state and evidence without destructive measurement."
+    }
+  ],
+  "realization": {
+    "backend": "anyon-composition",
+    "source": "340282366920938463463374607431768211507",
+    "digit": 0,
+    "steps": [
+      {
+        "i": 0,
+        "symbol": "⊢",
+        "actions": [
+          {
+            "kind": "retain"
+          }
+        ]
+      },
+      {
+        "i": 1,
+        "symbol": "⊙",
+        "actions": [
+          {
+            "kind": "retain"
+          }
+        ]
+      },
+      {
+        "i": 2,
+        "symbol": "∈",
+        "actions": [
+          {
+            "kind": "split",
+            "id": "outer_retained"
+          }
+        ]
+      },
+      {
+        "i": 3,
+        "symbol": "≻",
+        "actions": [
+          {
+            "kind": "exchange",
+            "generators": [1, 2]
+          }
+        ]
+      },
+      {
+        "i": 4,
+        "symbol": "⊤",
+        "actions": [
+          {
+            "kind": "evidence",
+            "proposition": "p",
+            "axis": "support",
+            "outcome": 0,
+            "numerator": "1",
+            "denominator": "32",
+            "witness": "policy-A"
+          }
+        ]
+      },
+      {
+        "i": 5,
+        "symbol": "⋈",
+        "actions": [
+          {
+            "kind": "exchange",
+            "generators": [3, -4]
+          }
+        ]
+      },
+      {
+        "i": 6,
+        "symbol": "≺",
+        "actions": [
+          {
+            "kind": "inverse"
+          },
+          {
+            "kind": "inverse"
+          }
+        ]
+      },
+      {
+        "i": 7,
+        "symbol": "∈",
+        "actions": [
+          {
+            "kind": "split",
+            "id": "inner_retained"
+          }
+        ]
+      },
+      {
+        "i": 8,
+        "symbol": "⊥",
+        "actions": [
+          {
+            "kind": "evidence",
+            "proposition": "p",
+            "axis": "refutation",
+            "outcome": 1,
+            "numerator": "1",
+            "denominator": "32",
+            "witness": "policy-B"
+          }
+        ]
+      },
+      {
+        "i": 9,
+        "symbol": "⊞",
+        "actions": [
+          {
+            "kind": "engage",
+            "proposition": "p"
+          }
+        ]
+      },
+      {
+        "i": 10,
+        "symbol": "⊙",
+        "actions": [
+          {
+            "kind": "retain"
+          }
+        ]
+      },
+      {
+        "i": 11,
+        "symbol": "∋",
+        "actions": [
+          {
+            "kind": "rejoin",
+            "id": "inner_retained"
+          }
+        ]
+      },
+      {
+        "i": 12,
+        "symbol": "∋",
+        "actions": [
+          {
+            "kind": "rejoin",
+            "id": "outer_retained"
+          }
+        ]
+      },
+      {
+        "i": 13,
+        "symbol": "⊡",
+        "actions": [
+          {
+            "kind": "latch",
+            "id": "final_latch"
+          }
+        ]
+      },
+      {
+        "i": 14,
+        "symbol": "⊣",
+        "actions": [
+          {
+            "kind": "sic"
+          }
+        ]
+      }
+    ]
+  }
+}

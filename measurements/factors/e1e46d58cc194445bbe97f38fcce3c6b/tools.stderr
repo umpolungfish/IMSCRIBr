@@ -1,0 +1,17 @@
+   Compiling libm v0.2.16
+   Compiling autocfg v1.5.1
+   Compiling serde_core v1.0.229
+   Compiling zmij v1.0.23
+   Compiling cfg-if v1.0.4
+   Compiling serde_json v1.0.151
+   Compiling vox v0.1.0 (/home/mrnob0dy666/imsgct/Vox)
+   Compiling cudarc v0.19.9
+   Compiling libloading v0.9.0
+   Compiling itoa v1.0.18
+   Compiling g-momonados v0.1.0 (/home/mrnob0dy666/imsgct/G-mOMonadOS)
+   Compiling memchr v2.8.3
+   Compiling num-traits v0.2.19
+   Compiling imasm_core v0.1.0 (/home/mrnob0dy666/imsgct/G-mOMonadOS/vendor/imasm_core)
+   Compiling num-integer v0.1.47
+   Compiling num-bigint v0.4.8
+    Finished `release` profile [optimized] target(s) in 23.04s

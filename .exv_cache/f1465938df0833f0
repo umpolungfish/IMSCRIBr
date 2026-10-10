@@ -1,0 +1,169 @@
+```json
+{
+  "register": {
+    "name": "anyonic ququart",
+    "dim": "five-channel six-Fibonacci-anyon fusion space (four computational channels T,F,t,f plus one leakage channel)",
+    "frame": "outer SIC frame: source 340282366920938463463374607431768211507, initial digit T, retaining source snapshot, phase, leakage, sixteen SIC masses, and outside-carrier mass; nested inner SIC frame retains the same coordinate set at its split point",
+    "return_check": "After rejoining inner then outer: evaluate native SIC dual reconstruction of current computational populations, retain coherent amplitudes separately, measure all-five-channel source return residual in fixed-point units; source state equality verified by comparing reconstructed populations against the original source snapshot retained at the outer split"
+  },
+  "tokens": [
+    {
+      "i": 0,
+      "process": "VINIT",
+      "concrete": "Initialize five-channel carrier from source 340282366920938463463374607431768211507 in basis T; retain resident coherent carrier",
+      "rationale": "Source boundary is the only mark that creates; digit 0 binds native basis T on all four computational channels with zero leakage",
+      "input": "source numeral 340282366920938463463374607431768211507, digit T",
+      "output": "resident five-channel coherent carrier in state T",
+      "check": "Verify source binding: carrier state equals T on all four computational channels, leakage channel zero"
+    },
+    {
+      "i": 1,
+      "process": "IMSCRIB",
+      "concrete": "Retain resident coherent five-channel carrier; no state change",
+      "rationale": "Identity and self-reference; the neutral generator performs no work",
+      "input": "resident carrier in state T",
+      "output": "resident carrier in state T (unchanged)",
+      "check": "Carrier state invariant: all five channels unchanged from prior step"
+    },
+    {
+      "i": 2,
+      "process": "FSPLIT",
+      "concrete": "Split into named outer SIC frame; retain source snapshot, phase, leakage, sixteen SIC masses, and outside-carrier mass",
+      "rationale": "Fork delta is the only brancher; opens the outer retained frame for subsequent exchange and evaluation operations",
+      "input": "resident carrier in state T",
+      "output": "outer frame retaining full source snapshot and carrier state",
+      "check": "Frame snapshot equality: retained source snapshot equals current carrier state on all five channels"
+    },
+    {
+      "i": 3,
+      "process": "AFWD",
+      "concrete": "Apply exchange batch [1, 2]: ordered physical Artin exchanges on strands 1 and 2, retaining batch and source",
+      "rationale": "Forward morphism; WORK operation applying the first exchange batch as a geometric action",
+      "input": "carrier in outer frame, state T",
+      "output": "carrier after Artin exchanges sigma_1 sigma_2, batch [1,2] retained with source",
+      "check": "Batch retention: exchange batch [1,2] recorded with source snapshot for later inverse"
+    },
+    {
+      "i": 4,
+      "process": "EVALT",
+      "concrete": "Evaluate support for proposition p from policy-A: test SIC outcome 0 mass divided by total mass against threshold 1/32",
+      "rationale": "Evaluate TRUE arm; deposits T-evidence for proposition p via policy-A threshold test",
+      "input": "carrier state, SIC outcome 0 mass, total mass, threshold 1/32, witness policy-A",
+      "output": "support coordinate for p: accepted or rejected observation with source attribution policy-A",
+      "check": "Threshold evaluation: (outcome 0 mass / total mass) compared against 1/32; observation retained with witness policy-A"
+    },
+    {
+      "i": 5,
+      "process": "CLINK",
+      "concrete": "Link by applying exchange batch [3, -4]: ordered physical Artin exchanges on strands 3 and -4, retaining batch and source",
+      "rationale": "Compose and link; WORK operation applying the second exchange batch as a linking composition",
+      "input": "carrier after first exchange, batch [1,2] retained",
+      "output": "carrier after Artin exchanges sigma_3 sigma_-4, batch [3,-4] retained with source",
+      "check": "Batch retention: exchange batch [3,-4] recorded with source snapshot for later inverse"
+    },
+    {
+      "i": 6,
+      "process": "AREV",
+      "concrete": "Undo both retained exchange batches most recent first: inverse of [3,-4] then inverse of [1,2], measuring source-return residual on all five channels after each",
+      "rationale": "Self-inverse clearing reverse; involution T to F, t to f applied to undo both batches in reverse order of retention",
+      "input": "carrier with batches [1,2] and [3,-4] retained",
+      "output": "carrier after both inverses applied, source-return residuals measured in fixed-point units",
+      "check": "After first inverse: source-return residual on all five channels for batch [3,-4]. After second inverse: source-return residual on all five channels for batch [1,2]. Both residuals in fixed-point units."
+    },
+    {
+      "i": 7,
+      "process": "FSPLIT",
+      "concrete": "Split into named inner SIC frame; retain source snapshot, phase, leakage, sixteen SIC masses, and outside-carrier mass",
+      "rationale": "Fork delta; opens the inner retained frame nested within the outer frame for refutation evaluation",
+      "input": "carrier after both inverses, in outer frame",
+      "output": "inner frame retaining full source snapshot and carrier state",
+      "check": "Frame snapshot equality: retained source snapshot equals current carrier state on all five channels"
+    },
+    {
+      "i": 8,
+      "process": "EVALF",
+      "concrete": "Evaluate refutation for proposition p from policy-B: test SIC outcome 1 mass divided by total mass against threshold 1/32",
+      "rationale": "Evaluate FALSE arm; deposits F-evidence for proposition p via policy-B threshold test",
+      "input": "carrier state in inner frame, SIC outcome 1 mass, total mass, threshold 1/32, witness policy-B",
+      "output": "refutation coordinate for p: accepted or rejected observation with source attribution policy-B",
+      "check": "Threshold evaluation: (outcome 1 mass / total mass) compared against 1/32; observation retained with witness policy-B"
+    },
+    {
+      "i": 9,
+      "process": "ENGAGR",
+      "concrete": "Engage both measured evidence coordinates for proposition p; retain support from policy-A and refutation from policy-B without manufacturing acceptance",
+      "rationale": "Hold paradox (Belnap diagonal); retains both coordinates without forcing a resolution or manufacturing positive observations",
+      "input": "support coordinate (policy-A), refutation coordinate (policy-B) for proposition p",
+      "output": "engaged evidence state for p: both coordinates retained, no manufactured positive observation",
+      "check": "Both coordinates present: support from policy-A and refutation from policy-B retained; no new observations manufactured"
+    },
+    {
+      "i": 10,
+      "process": "IMSCRIB",
+      "concrete": "Retain resident coherent five-channel carrier; no state change",
+      "rationale": "Identity and self-reference; the neutral generator performs no work before the rejoins",
+      "input": "carrier with engaged evidence in inner frame",
+      "output": "carrier with engaged evidence in inner frame (unchanged)",
+      "check": "Carrier state invariant: all five channels unchanged from prior step"
+    },
+    {
+      "i": 11,
+      "process": "FFUSE",
+      "concrete": "Rejoin inner frame: close retained inner frame, evaluate native SIC dual reconstruction of computational populations, retain coherent amplitudes separately, measure all-five-channel source return",
+      "rationale": "Fuse mu is the only merger; closes the inner frame with population synthesis and phase retention",
+      "input": "inner frame with engaged evidence",
+      "output": "carrier after inner rejoin: populations reconstructed, amplitudes retained, source return measured",
+      "check": "Native population synthesis: SIC dual reconstruction of computational populations matches; coherent amplitudes retained separately; all-five-channel source return residual measured"
+    },
+    {
+      "i": 12,
+      "process": "FFUSE",
+      "concrete": "Rejoin outer frame: close retained outer frame, evaluate native SIC dual reconstruction of computational populations, retain coherent amplitudes separately, measure all-five-channel source return",
+      "rationale": "Fuse mu; closes the outer frame completing the nested split-rejoin structure with source return verification",
+      "input": "carrier after inner rejoin, in outer frame",
+      "output": "carrier after outer rejoin: populations reconstructed, amplitudes retained, source return measured",
+      "check": "Native population synthesis: SIC dual reconstruction of computational populations matches; coherent amplitudes retained separately; all-five-channel source return residual measured; source state equality with original snapshot verified"
+    },
+    {
+      "i": 13,
+      "process": "IFIX",
+      "concrete": "Latch final coherent state and evidence under unique id 'final'; irreversible commit",
+      "rationale": "Irreversible commit; fixes the final topological verdict and evidence as a committed record",
+      "input": "carrier after both rejoins with engaged evidence",
+      "output": "latched state 'final': coherent state and evidence copied under unique identifier",
+      "check": "Latch integrity: copied state equals source state on all five channels; evidence coordinates for p preserved"
+    },
+    {
+      "i": 14,
+      "process": "TANCH",
+      "concrete": "Release non-destructive SIC analysis on the latched carrier; terminal anchor with out-port open",
+      "rationale": "Terminal anchor; sink with living end; releases the non-destructive analysis as final readout",
+      "input": "latched state 'final'",
+      "output": "SIC analysis results released; terminal readout with actual native witnesses",
+      "check": "Non-destructive: carrier state unchanged after SIC analysis; terminal readout returns actual native witnesses without stochastic collapse"
+    }
+  ],
+  "realization": {
+    "backend": "anyon-composition",
+    "source": "340282366920938463463374607431768211507",
+    "digit": 0,
+    "steps": [
+      {"i": 0, "symbol": "⊢", "actions": [{"kind": "retain"}]},
+      {"i": 1, "symbol": "⊙", "actions": [{"kind": "retain"}]},
+      {"i": 2, "symbol": "∈", "actions": [{"kind": "split", "id": "outer"}]},
+      {"i": 3, "symbol": "≻", "actions": [{"kind": "exchange", "generators": [1, 2]}]},
+      {"i": 4, "symbol": "⊤", "actions": [{"kind": "evidence", "proposition": "p", "axis": "support", "outcome": 0, "numerator": "1", "denominator": "32", "witness": "policy-A"}]},
+      {"i": 5, "symbol": "⋈", "actions": [{"kind": "exchange", "generators": [3, -4]}]},
+      {"i": 6, "symbol": "≺", "actions": [{"kind": "inverse"}, {"kind": "inverse"}]},
+      {"i": 7, "symbol": "∈", "actions": [{"kind": "split", "id": "inner"}]},
+      {"i": 8, "symbol": "⊥", "actions": [{"kind": "evidence", "proposition": "p", "axis": "refutation", "outcome": 1, "numerator": "1", "denominator": "32", "witness": "policy-B"}]},
+      {"i": 9, "symbol": "⊞", "actions": [{"kind": "engage", "proposition": "p"}]},
+      {"i": 10, "symbol": "⊙", "actions": [{"kind": "retain"}]},
+      {"i": 11, "symbol": "∋", "actions": [{"kind": "rejoin", "id": "inner"}]},
+      {"i": 12, "symbol": "∋", "actions": [{"kind": "rejoin", "id": "outer"}]},
+      {"i": 13, "symbol": "⊡", "actions": [{"kind": "latch", "id": "final"}]},
+      {"i": 14, "symbol": "⊣", "actions": [{"kind": "sic"}]}
+    ]
+  }
+}
+```

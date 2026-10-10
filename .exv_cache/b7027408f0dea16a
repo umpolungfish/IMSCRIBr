@@ -1,0 +1,394 @@
+```json
+{
+  "register": {
+    "name": "Prime Factor - Gödel-Encoding Relationship nested in Semiprime Factor Pair - Gödel-Encoding Relationship nested in Fundamental Law of Prime Distribution nested in braid word to semiprime factor pair nested in efficient factorization with a single pure ququart",
+    "dim": "128-bit native numeral tape; source = 229513619370652772473594096727489823787 (39 decimal digits, 2^127 < N < 2^128)",
+    "frame": "∈(3) … ∋(35): cell-deposition frame, span 32, work=true; interior [4..34] carries bit-cell deposition, composition, and witness engagement; outer [0..2] initializes and retains source; outer [36..41] fixes, releases, and re-asserts retention",
+    "return_check": "Source-bound reconstruction: deposited cells composed in least-significant-cell-first order must equal sealed source 229513619370652772473594096727489823787 exactly; native Miller-Rabin screening on released factors (screening, not primality proof); mismatch is source_binding_failed"
+  },
+  "tokens": [
+    {
+      "i": 0,
+      "process": "VINIT / Dimensionality — opens the state-space boundary",
+      "concrete": "{kind:\"open\"}",
+      "rationale": "Initializes the native numeral tape carrier, binding the sealed source for cell-by-cell deposition in least-significant-cell-first order",
+      "input": "sealed source 229513619370652772473594096727489823787",
+      "output": "open numeral tape frame, cursor at position 0, tape empty",
+      "check": "tape is empty, cursor at 0, source binding recorded"
+    },
+    {
+      "i": 1,
+      "process": "AFWD / Relational — advances the transformation",
+      "concrete": "{kind:\"advance\"}",
+      "rationale": "Advances the tape cursor to the first cell position for reading and deposition",
+      "input": "open numeral tape, cursor at position 0",
+      "output": "tape cursor at first cell position",
+      "check": "cursor index matches expected first cell offset"
+    },
+    {
+      "i": 2,
+      "process": "EVALT / Criticality — retains the source word independently",
+      "concrete": "{kind:\"retain\"}",
+      "rationale": "Retains the source word as an independent reference, separate from any candidate factor description that may later be produced",
+      "input": "source numeral bound to tape",
+      "output": "source retained as independent witness alongside tape",
+      "check": "retained source value equals sealed source 229513619370652772473594096727489823787"
+    },
+    {
+      "i": 3,
+      "process": "FSPLIT / Granularity — Frobenius comultiplication δ",
+      "concrete": "{kind:\"split\",id:\"cell_frame\"}",
+      "rationale": "Opens the cell-deposition frame; all subsequent bit-cell operations occur inside this frame so that the rejoin at position 35 can verify reconstruction",
+      "input": "open numeral tape with retained source",
+      "output": "inner frame cell_frame opened, cursor preserved",
+      "check": "frame is open, cursor position unchanged, source still retained"
+    },
+    {
+      "i": 4,
+      "process": "IMSCRIB / Kinetics — inscribes a zero cell",
+      "concrete": "{kind:\"bit\",value:0}",
+      "rationale": "Deposits a zero cell into the numeral tape at the current cursor position",
+      "input": "tape cursor at cell position, frame cell_frame open",
+      "output": "zero cell deposited at current position",
+      "check": "cell at current position has value 0"
+    },
+    {
+      "i": 5,
+      "process": "CLINK / Fidelity — composes operations preserving return structure",
+      "concrete": "{kind:\"compose\"}",
+      "rationale": "Composes deposited cells into the canonical numeral representation, maintaining the least-significant-cell-first ordering",
+      "input": "deposited cells on tape within frame cell_frame",
+      "output": "partial numeral composition updated",
+      "check": "composed prefix matches expected cell sequence"
+    },
+    {
+      "i": 6,
+      "process": "EVALF / Chirality — inscribes a one cell",
+      "concrete": "{kind:\"bit\",value:1}",
+      "rationale": "Deposits a one cell into the numeral tape at the current cursor position",
+      "input": "tape cursor at cell position, frame cell_frame open",
+      "output": "one cell deposited at current position",
+      "check": "cell at current position has value 1"
+    },
+    {
+      "i": 7,
+      "process": "EVALT / Criticality — retains the source word independently",
+      "concrete": "{kind:\"retain\"}",
+      "rationale": "Re-asserts independent retention of the source word after initial cell operations, ensuring the source reference is not corrupted by tape mutations",
+      "input": "source numeral bound to tape",
+      "output": "source retained as independent witness (re-asserted)",
+      "check": "retained source value still equals sealed source"
+    },
+    {
+      "i": 8,
+      "process": "AFWD / Relational — advances the transformation",
+      "concrete": "{kind:\"advance\"}",
+      "rationale": "Advances the tape cursor to the next cell position for continued deposition",
+      "input": "tape cursor at current position",
+      "output": "tape cursor at next cell position",
+      "check": "cursor index incremented by one from previous position"
+    },
+    {
+      "i": 9,
+      "process": "CLINK / Fidelity — composes operations preserving return structure",
+      "concrete": "{kind:\"compose\"}",
+      "rationale": "Composes newly deposited cells into the running canonical numeral",
+      "input": "deposited cells on tape within frame cell_frame",
+      "output": "partial numeral composition updated",
+      "check": "composed prefix matches expected cell sequence"
+    },
+    {
+      "i": 10,
+      "process": "IMSCRIB / Kinetics — inscribes a zero cell",
+      "concrete": "{kind:\"bit\",value:0}",
+      "rationale": "Deposits a zero cell into the numeral tape at the current cursor position",
+      "input": "tape cursor at cell position, frame cell_frame open",
+      "output": "zero cell deposited at current position",
+      "check": "cell at current position has value 0"
+    },
+    {
+      "i": 11,
+      "process": "EVALF / Chirality — inscribes a one cell",
+      "concrete": "{kind:\"bit\",value:1}",
+      "rationale": "Deposits a one cell into the numeral tape at the current cursor position",
+      "input": "tape cursor at cell position, frame cell_frame open",
+      "output": "one cell deposited at current position",
+      "check": "cell at current position has value 1"
+    },
+    {
+      "i": 12,
+      "process": "ENGAGR / Stoichiometry — engages the Belnap diagonal, permits contradiction without explosion",
+      "concrete": "UNBOUND in numeral-factor adapter",
+      "rationale": "Structurally retains both support and refutation coordinates for a proposition; however, the numeral-factor adapter defines no operation for ⊞, making this position unbindable in the native numeral register",
+      "input": "cell deposition evidence from positions 4-11",
+      "output": "no valid numeral-factor operation exists for this glyph",
+      "check": "no check possible; binding absent"
+    },
+    {
+      "i": 13,
+      "process": "AFWD / Relational — advances the transformation",
+      "concrete": "{kind:\"advance\"}",
+      "rationale": "Advances the tape cursor to the next cell position",
+      "input": "tape cursor at current position",
+      "output": "tape cursor at next cell position",
+      "check": "cursor index incremented correctly"
+    },
+    {
+      "i": 14,
+      "process": "CLINK / Fidelity — composes operations preserving return structure",
+      "concrete": "{kind:\"compose\"}",
+      "rationale": "Composes deposited cells into the canonical numeral representation",
+      "input": "deposited cells on tape within frame cell_frame",
+      "output": "partial numeral composition updated",
+      "check": "composed prefix matches expected cell sequence"
+    },
+    {
+      "i": 15,
+      "process": "IMSCRIB / Kinetics — inscribes a zero cell",
+      "concrete": "{kind:\"bit\",value:0}",
+      "rationale": "Deposits a zero cell into the numeral tape at the current cursor position",
+      "input": "tape cursor at cell position, frame cell_frame open",
+      "output": "zero cell deposited at current position",
+      "check": "cell at current position has value 0"
+    },
+    {
+      "i": 16,
+      "process": "AREV / Polarity — clears the transient cursor",
+      "concrete": "{kind:\"clear\"}",
+      "rationale": "Clears the transient cursor while retaining deposited cells banked inside the open frame cell_frame; no Artin exchange batch required",
+      "input": "tape cursor at current position, cells banked in frame cell_frame",
+      "output": "transient cursor cleared, banked cells preserved",
+      "check": "banked cells unchanged, cursor reset"
+    },
+    {
+      "i": 17,
+      "process": "ENGAGR / Stoichiometry — engages the Belnap diagonal",
+      "concrete": "UNBOUND in numeral-factor adapter",
+      "rationale": "Structurally accumulates evidence for a proposition; however, the numeral-factor adapter defines no operation for ⊞, making this position unbindable in the native numeral register",
+      "input": "cell deposition evidence including cleared cursor state",
+      "output": "no valid numeral-factor operation exists for this glyph",
+      "check": "no check possible; binding absent"
+    },
+    {
+      "i": 18,
+      "process": "EVALT / Criticality — retains the source word independently",
+      "concrete": "{kind:\"retain\"}",
+      "rationale": "Re-asserts independent retention of the source word after mid-frame operations",
+      "input": "source numeral bound to tape",
+      "output": "source retained as independent witness (re-asserted)",
+      "check": "retained source value still equals sealed source"
+    },
+    {
+      "i": 19,
+      "process": "IMSCRIB / Kinetics — inscribes a zero cell",
+      "concrete": "{kind:\"bit\",value:0}",
+      "rationale": "Deposits a zero cell into the numeral tape at the current cursor position",
+      "input": "tape cursor at cell position, frame cell_frame open",
+      "output": "zero cell deposited at current position",
+      "check": "cell at current position has value 0"
+    },
+    {
+      "i": 20,
+      "process": "EVALF / Chirality — inscribes a one cell",
+      "concrete": "{kind:\"bit\",value:1}",
+      "rationale": "Deposits a one cell into the numeral tape at the current cursor position",
+      "input": "tape cursor at cell position, frame cell_frame open",
+      "output": "one cell deposited at current position",
+      "check": "cell at current position has value 1"
+    },
+    {
+      "i": 21,
+      "process": "ENGAGR / Stoichiometry — engages the Belnap diagonal",
+      "concrete": "UNBOUND in numeral-factor adapter",
+      "rationale": "Structurally accumulates evidence for a proposition; however, the numeral-factor adapter defines no operation for ⊞, making this position unbindable in the native numeral register",
+      "input": "cell deposition evidence from positions 19-20",
+      "output": "no valid numeral-factor operation exists for this glyph",
+      "check": "no check possible; binding absent"
+    },
+    {
+      "i": 22,
+      "process": "EVALT / Criticality — retains the source word independently",
+      "concrete": "{kind:\"retain\"}",
+      "rationale": "Re-asserts independent retention of the source word",
+      "input": "source numeral bound to tape",
+      "output": "source retained as independent witness (re-asserted)",
+      "check": "retained source value still equals sealed source"
+    },
+    {
+      "i": 23,
+      "process": "IMSCRIB / Kinetics — inscribes a zero cell",
+      "concrete": "{kind:\"bit\",value:0}",
+      "rationale": "Deposits a zero cell into the numeral tape at the current cursor position",
+      "input": "tape cursor at cell position, frame cell_frame open",
+      "output": "zero cell deposited at current position",
+      "check": "cell at current position has value 0"
+    },
+    {
+      "i": 24,
+      "process": "AFWD / Relational — advances the transformation",
+      "concrete": "{kind:\"advance\"}",
+      "rationale": "Advances the tape cursor to the next cell position",
+      "input": "tape cursor at current position",
+      "output": "tape cursor at next cell position",
+      "check": "cursor index incremented correctly"
+    },
+    {
+      "i": 25,
+      "process": "CLINK / Fidelity — composes operations preserving return structure",
+      "concrete": "{kind:\"compose\"}",
+      "rationale": "Composes deposited cells into the canonical numeral representation",
+      "input": "deposited cells on tape within frame cell_frame",
+      "output": "partial numeral composition updated",
+      "check": "composed prefix matches expected cell sequence"
+    },
+    {
+      "i": 26,
+      "process": "EVALF / Chirality — inscribes a one cell",
+      "concrete": "{kind:\"bit\",value:1}",
+      "rationale": "Deposits a one cell into the numeral tape at the current cursor position",
+      "input": "tape cursor at cell position, frame cell_frame open",
+      "output": "one cell deposited at current position",
+      "check": "cell at current position has value 1"
+    },
+    {
+      "i": 27,
+      "process": "AREV / Polarity — clears the transient cursor",
+      "concrete": "{kind:\"clear\"}",
+      "rationale": "Clears the transient cursor while retaining deposited cells banked inside frame cell_frame",
+      "input": "tape cursor at current position, cells banked in frame cell_frame",
+      "output": "transient cursor cleared, banked cells preserved",
+      "check": "banked cells unchanged, cursor reset"
+    },
+    {
+      "i": 28,
+      "process": "ENGAGR / Stoichiometry — engages the Belnap diagonal",
+      "concrete": "UNBOUND in numeral-factor adapter",
+      "rationale": "Structurally accumulates evidence for a proposition; however, the numeral-factor adapter defines no operation for ⊞, making this position unbindable in the native numeral register",
+      "input": "cell deposition evidence from positions 23-26",
+      "output": "no valid numeral-factor operation exists for this glyph",
+      "check": "no check possible; binding absent"
+    },
+    {
+      "i": 29,
+      "process": "AFWD / Relational — advances the transformation",
+      "concrete": "{kind:\"advance\"}",
+      "rationale": "Advances the tape cursor to the next cell position",
+      "input": "tape cursor at current position",
+      "output": "tape cursor at next cell position",
+      "check": "cursor index incremented correctly"
+    },
+    {
+      "i": 30,
+      "process": "CLINK / Fidelity — composes operations preserving return structure",
+      "concrete": "{kind:\"compose\"}",
+      "rationale": "Composes deposited cells into the canonical numeral representation",
+      "input": "deposited cells on tape within frame cell_frame",
+      "output": "partial numeral composition updated",
+      "check": "composed prefix matches expected cell sequence"
+    },
+    {
+      "i": 31,
+      "process": "AREV / Polarity — clears the transient cursor",
+      "concrete": "{kind:\"clear\"}",
+      "rationale": "Clears the transient cursor while retaining deposited cells banked inside frame cell_frame",
+      "input": "tape cursor at current position, cells banked in frame cell_frame",
+      "output": "transient cursor cleared, banked cells preserved",
+      "check": "banked cells unchanged, cursor reset"
+    },
+    {
+      "i": 32,
+      "process": "EVALT / Criticality — retains the source word independently",
+      "concrete": "{kind:\"retain\"}",
+      "rationale": "Re-asserts independent retention of the source word before frame closure",
+      "input": "source numeral bound to tape",
+      "output": "source retained as independent witness (re-asserted)",
+      "check": "retained source value still equals sealed source"
+    },
+    {
+      "i": 33,
+      "process": "AREV / Polarity — clears the transient cursor",
+      "concrete": "{kind:\"clear\"}",
+      "rationale": "Final cursor clear before rejoin; all cells are banked in frame cell_frame",
+      "input": "tape cursor at current position, all cells banked",
+      "output": "transient cursor cleared, all cells preserved in frame",
+      "check": "all deposited cells intact in frame, cursor reset"
+    },
+    {
+      "i": 34,
+      "process": "CLINK / Fidelity — composes operations preserving return structure",
+      "concrete": "{kind:\"compose\"}",
+      "rationale": "Final composition of all deposited cells into the complete canonical numeral before frame closure",
+      "input": "all deposited cells on tape within frame cell_frame",
+      "output": "complete numeral composition ready for verification",
+      "check": "full composed numeral matches expected source bit pattern"
+    },
+    {
+      "i": 35,
+      "process": "FFUSE / Composition — Frobenius multiplication μ",
+      "concrete": "{kind:\"rejoin\",id:\"cell_frame\"}",
+      "rationale": "Closes the cell-deposition frame; verifies that composed cells reconstruct the sealed source; carries transformed state and attributed evidence outward",
+      "input": "frame cell_frame with all deposited and composed cells",
+      "output": "frame closed, source reconstruction verified, evidence carried outward",
+      "check": "composed cells equal sealed source 229513619370652772473594096727489823787; mismatch is source_binding_failed"
+    },
+    {
+      "i": 36,
+      "process": "ENGAGR / Stoichiometry — engages the Belnap diagonal",
+      "concrete": "UNBOUND in numeral-factor adapter",
+      "rationale": "Structurally retains both support and refutation coordinates for the source-reconstruction proposition after frame closure; however, the numeral-factor adapter defines no operation for ⊞, making this position unbindable in the native numeral register",
+      "input": "reconstruction evidence from rejoin at position 35",
+      "output": "no valid numeral-factor operation exists for this glyph",
+      "check": "no check possible; binding absent"
+    },
+    {
+      "i": 37,
+      "process": "IFIX / Winding — fixes the resulting invariant",
+      "concrete": "{kind:\"factor_latch\"}",
+      "rationale": "Seals the reconstructed source and invokes existing Vox native tape factor extraction; the latch copies the fixed carrier and evidence under a unique id",
+      "input": "verified reconstructed source, retained evidence",
+      "output": "latched carrier with sealed source and factor extraction invoked",
+      "check": "latched source equals sealed source; factor extraction is bound to the correct tape"
+    },
+    {
+      "i": 38,
+      "process": "AREV / Polarity — clears the transient cursor",
+      "concrete": "{kind:\"clear\"}",
+      "rationale": "Clears transient cursor after latching; all state is now in the latched carrier",
+      "input": "latched carrier, transient cursor active",
+      "output": "transient cursor cleared, latched state preserved",
+      "check": "latched carrier unchanged, cursor reset"
+    },
+    {
+      "i": 39,
+      "process": "CLINK / Fidelity — composes operations preserving return structure",
+      "concrete": "{kind:\"compose\"}",
+      "rationale": "Final composition check on the latched carrier before release",
+      "input": "latched carrier with sealed source",
+      "output": "final composition verified",
+      "check": "latched source composition matches sealed source"
+    },
+    {
+      "i": 40,
+      "process": "TANCH / Topology — anchors and closes the bounded operation",
+      "concrete": "{kind:\"release\"}",
+      "rationale": "Checks the tape product and native primality screening before releasing the factor multiset; release only after separate native tape verification",
+      "input": "latched carrier, verified tape product",
+      "output": "factor multiset released, tape verification complete",
+      "check": "tape product equals sealed source; native Miller-Rabin screening performed (screening, not primality proof); both factors strictly between 1 and N"
+    },
+    {
+      "i": 41,
+      "process": "EVALT / Criticality — retains the source word independently",
+      "concrete": "{kind:\"retain\"}",
+      "rationale": "Final retention of the source word independently of the released factor descriptions; the source remains the authoritative reference",
+      "input": "sealed source 229513619370652772473594096727489823787",
+      "output": "source retained as terminal independent witness",
+      "check": "retained source equals sealed source; factor descriptions do not overwrite source reference"
+    }
+  ],
+  "realization": {
+    "backend": "unsupported",
+    "reason": "The target register is the native numeral register (canonical cell-binary IMASM word), which requires the numeral-factor adapter. The numeral-factor adapter defines operations for ⊢(open), ∈(split), ⊤(bit 0), ⊥(bit 1), ≺(clear), ∋(rejoin), ≻(advance), ⋈(compose), ⊙(retain), ⊡(factor_latch), ⊣(release). The glyph ⊞ (ENGAGR) appears at positions 12, 17, 21, 28, and 36 but has no binding in the numeral-factor operation set. Substituting anyon-composition would replace the native numeral carrier with a coherent anyonic carrier, violating the register binding. No valid composition of numeral-factor primitives covers all 42 positions. The word requires either a numeral-factor extension adding an ENGAGR operation, or a different target register that natively supports ⊞ alongside the numeral cell operators."
+  }
+}
+```
