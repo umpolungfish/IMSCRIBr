@@ -348,6 +348,8 @@ def emit_scaffold(
     position_labels: Optional[Dict[int, str]] = None,
 ) -> str:
     tokens = tuple(Token(t) for t in arr)
+    if not tokens:
+        raise ValueError("Cannot emit a protocol for an empty word")
     graph = imscr_wiring(tokens)
     graph.name = name or "arrangement"
     fp = compute_fingerprint(arr)
@@ -394,7 +396,7 @@ def emit_scaffold(
     has_backprop = is_self_ref
 
     # Compute type flow
-    flow = _build_flow(tokens, pairs, graph)
+    flow = {}  # The term below follows explicit wires, not a second text walk.
     types = [_val(tok) for tok in tokens]
     start_type = types[0]
     end_type = types[-1] if not is_self_ref else types[0]
@@ -480,10 +482,12 @@ def emit_scaffold(
             ", ".join(f"{f} := {d[f]}" for f in _fields) +
             " }")
     
-    o_start = _stages[0][0]
+    o_start = f"{safe_name}_initial"
     o_end = _stages[-1][0]
     
     out.append("-- ── Stage Imscriptions (per-node cumulative) ────────────────")
+    out.append(f"private def {o_start} : Imscription :=")
+    out.append("  " + _ims_line(_IM_BASE_DICT))
     for sname, sdict in _stages:
         out.append(f"private def {sname} : Imscription :=")
         out.append("  " + _ims_line(sdict))
@@ -501,52 +505,73 @@ def emit_scaffold(
     if use_withgram:
         out.append("  .withGram Grammar.measure <|")
 
-    # Build term body. IGProtocol.seq is BINARY, so the whole body is emitted
-    # as ONE right-nested binary .seq. (Flat 3+-arg .seq produced "Function
-    # expected" and forced repeated hand-fixes of generated scaffolds.)
-    n = len(tokens)
-    def _arr(lbl, src, tgt):
-        return f"(.arrow {lbl} {src} {tgt})"
-    def _rnest(terms):
-        if len(terms) == 1:
-            return terms[0]
-        return f"(.seq {terms[0]} {_rnest(terms[1:])})"
-    if n == 1:
-        out.append(f"  {_arr(_labels[0][0], o_start, o_end)}")
-    elif pairs:
-        # Dual-Link self-pairing, as one right-nested binary .seq:
-        #   prefix arrows → .prod(fs→ff, fs→ff) → FFUSE closure → post-chain.
-        # The .prod arms both land on the FFUSE stage, which fuses to itself
-        # because tensorProduct x x = x (idempotent for every imscription).
-        fs_idx = min(p[0] for p in pairs)
-        ff_idx = min(p[1] for p in pairs)
-        fs_stage = _stages[fs_idx][0]
-        ff_stage = _stages[ff_idx][0]
-        fs_lbl = _labels[fs_idx][0]
-        ff_label = _labels[ff_idx][0]
-        prod = f"(.prod {_arr(fs_lbl, fs_stage, ff_stage)} {_arr(fs_lbl, fs_stage, ff_stage)})"
-        ffuse = _arr(ff_label, ff_stage, ff_stage)
-        post = [_arr(_labels[i-1][0], _stages[i-1][0], _stages[i][0])
-                for i in range(ff_idx + 1, n)]
-        fsplit_block = _rnest([prod, ffuse] + post)
-        prefix = [_arr(_labels[i-1][0], _stages[i-1][0], _stages[i][0])
-                  for i in range(1, fs_idx + 1)]
-        out.append(f"  -- Dual-Link self-pairing: .prod arms fuse via "
-                   f"tensorProduct {ff_stage} {ff_stage} = {ff_stage} (idempotent)")
-        out.append("  " + _rnest(prefix + [fsplit_block]))
-    else:
-        # Simple linear chain, right-nested binary .seq.
-        arrs = [_arr(_labels[i-1][0], _stages[i-1][0], _stages[i][0])
-                for i in range(1, n)]
-        out.append("  " + _rnest(arrs))
+    # Every source node is emitted with its own label. Nested fork/fuse
+    # blocks remain composable arm segments; empty arms are identity paths.
+    # IGProtocol arrows carry tuple transitions. Their typing does not prove
+    # the banked register or graph-flow operation denoted by an opcode.
+    pair_map = dict(pairs)
+    def _arr(i, src):
+        return f"(.arrow {_labels[i][0]} {src} {_stages[i][0]})"
 
+    def _compose(terms, src):
+        if not terms:
+            return f"(.refl {src})"
+        result = terms[-1]
+        for term in reversed(terms[:-1]):
+            result = f"(.seq {term} {result})"
+        return result
+
+    def _segments(lo, hi):
+        parts = []
+        while lo < hi:
+            end = pair_map.get(lo, lo)
+            parts.append((lo, end))
+            lo = end + 1
+        return parts
+
+    def _arm(fs, ff, port):
+        edges = [w for w in graph.out_wires(fs) if w.src_port == port]
+        if len(edges) != 1:
+            raise ValueError(f"Fork {fs} has no unique {port} arm")
+        cur = edges[0].dst_node
+        parts, seen = [], set()
+        while cur != ff:
+            if cur in seen:
+                raise ValueError("Cyclic wiring needs a retained continuation")
+            seen.add(cur)
+            end = pair_map.get(cur, cur)
+            parts.append((cur, end))
+            successors = graph.successors(end)
+            if len(successors) != 1:
+                raise ValueError(f"Arm from fork {fs} does not return to fuse {ff}")
+            cur = successors[0]
+        return parts
+
+    def _path(parts, src):
+        terms, depth = [], 0
+        for entry, exit in parts:
+            terms.append(_arr(entry, src))
+            src = _stages[entry][0]
+            depth += 1
+            if entry != exit:
+                left, lend, ld = _path(_arm(entry, exit, "T"), src)
+                right, rend, rd = _path(_arm(entry, exit, "F"), src)
+                terms.append(f"(.prod {left} {right})")
+                merged = f"(tensorProduct {lend} {rend})"
+                terms.append(_arr(exit, merged))
+                src = _stages[exit][0]
+                depth += max(ld, rd) + 1
+        return _compose(terms, src), src, depth
+
+    term, _, protocol_depth = _path(_segments(0, len(tokens)), o_start)
+    out.append("  " + term)
     out.append("")
     
     # ── EVALT / EVALF evaluation arm sub-defs ────────────────────────────────
     has_evalt = Token.EVALT in tokens
     has_evalf = Token.EVALF in tokens
     if has_evalt or has_evalf:
-        h_arg = " (by decide)" if is_oinf else ""
+        h_arg = ""
         out.append("-- ── Evaluation arm sub-defs ───────────────────────────────────")
         out.append("")
         if has_evalt:
@@ -577,7 +602,7 @@ def emit_scaffold(
     out.append(f"def {safe_name}_tier_ground : OuroboricityTier := TierFunctor.obj {o_start}")
     out.append(f"def {safe_name}_tier : OuroboricityTier := TierFunctor.obj {o_end}")
     out.append(f"#eval {safe_name}_tier_ground  -- tier of the ground (pre-transformation)")
-    out.append(f"#eval {safe_name}_tier  -- the Grammar's own verdict on the closed object")
+    out.append(f"#eval {safe_name}_tier  -- the Grammar's tuple-tier verdict")
     out.append("")
     # Frobenius — emit a REAL, compiling theorem (not a comment that only
     # looks like a proof). igFrobAlg_self_fusion : igFrobeniusAlg.mul a a = a
@@ -590,25 +615,16 @@ def emit_scaffold(
         out.append(f"    igFrobeniusAlg.mul {o_start} {o_start} = {o_start} :=")
         out.append(f"  igFrobAlg_self_fusion {o_start}")
         out.append("")
-    # Self-reference
+    # Measures are checked on the emitted term, not inferred from a token
+    # fingerprint. IGProtocol has no period projection.
+    out.append(f"theorem {safe_name}_protocol_depth :")
+    out.append(f"    {safe_name}_protocol.depth = {protocol_depth} := by rfl")
+    out.append("")
     if is_self_ref:
-        h_arg = " (by decide)" if is_oinf else ""
-        out.append(f"-- Self-reference: Δ is a dagger and μ = Δ†")
-        out.append(f"theorem {safe_name}_self_ref :")
-        out.append(f"    (igProtoDelta {o_start} (by decide)).isDagger = true ∧")
-        out.append(f"    igProtoMu_depth (paralogical_dagger (by decide)) = 1 := by")
-        out.append(f"  constructor")
-        out.append(f"  · exact igProtoCopy_isDagger")
-        out.append(f"  · exact igProtoMu_depth")
-        out.append("")
-    # Loop closure
-    if is_self_ref:
-        out.append(f"-- Loop closure: period={fp.period}, depth=1")
-        out.append(f"theorem {safe_name}_loop_closure :")
-        out.append(f"    ∃ (loop : IGProtocol {o_start} {o_end}),")
-        out.append(f"      loop = {safe_name}_protocol{' (by decide)' if is_oinf else ''} ∧")
-        out.append(f"      loop.period = {fp.period} ∧ loop.depth = 1 := by")
-        out.append(f"  exact ⟨_, rfl, by decide, by decide⟩")
+        out.append("-- The existing dagger theorem requires its O_inf hypothesis.")
+        out.append(f"theorem {safe_name}_self_ref (h : imscriptionTier {o_start} = .O_inf) :")
+        out.append(f"    (igProtoDelta {o_start} h).isDagger = true :=")
+        out.append(f"  igProtoCopy_isDagger {o_start} h")
         out.append("")
     # Back-prop
     if has_backprop:
@@ -624,6 +640,7 @@ def emit_scaffold(
             out.append(f"-- {st}[{w.src_node}].{w.src_port} → {dt}[{w.dst_node}].{w.dst_port}")
         out.append("")
 
+    out.append(f"end {namespace}")
     return "\n".join(out)
 
 

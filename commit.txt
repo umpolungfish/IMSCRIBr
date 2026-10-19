@@ -1,4 +1,1 @@
-I retain stream termination diagnostics for reasoning-only responses
-
-I request token usage and report finish reasons and response channel counts.
-I test token-limit, normal-stop and connection-close diagnostics.
+I align nested IMASM wiring and tuple scaffolds with their checked interpretations

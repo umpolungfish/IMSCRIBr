@@ -25,7 +25,8 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 from collections import namedtuple
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "IMSCRIBr"))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from tokens import Token, TOKEN_NAMES, TOKEN_FAMILY
 
 TOKEN_SHORT = ["VI","TA","AF","AR","CL","IM","FS","FF","ET","EF","EG","IX"]
@@ -39,7 +40,7 @@ TOKEN_SHORT = ["VI","TA","AF","AR","CL","IM","FS","FF","ET","EF","EG","IX"]
 _TOKEN_GLYPH = {
     "VINIT": "⊢", "TANCH": "⊣", "AFWD": "≻", "AREV": "≺",
     "CLINK": "⋈", "IMSCRIB": "⊙", "FSPLIT": "∈", "FFUSE": "∋",
-    "EVALT": "⊤", "EVALF": "⊥", "ENGAGR": "⊞", "IFIX": "◻",
+    "EVALT": "⊤", "EVALF": "⊥", "ENGAGR": "⊞", "IFIX": "⊡",
 }
 TOKEN_SYMBOLS = [_TOKEN_GLYPH[t.name] for t in Token]
 
@@ -123,33 +124,18 @@ PAIR_PALETTE = [
 VOID, TRUE, FALSE, BOTH = 0, 1, 2, 3
 
 def simulate_register(tokens: Tuple[int, ...]) -> list[int]:
-    """Simulate Belnap FOUR register traversal through a token sequence."""
-    reg = VOID; fixed = False
-    in_split = False; in_split_T = False
+    """Project the shared sequential banked evaluator onto its T/F lanes.
+
+    These are per-position observations of that walk, not independently
+    computed edge values of the wiring graph. Full SIXTEEN_3 carriers are
+    carried separately when the caller supplies the complete trace.
+    """
+    from ob3ect.digital.imasm16_3_core import IMASM16_3_Machine, IMASM12_TO_16_3
+    machine = IMASM16_3_Machine()
     result = []
-    for tok in tokens:
-        if fixed and tok not in (Token.IFIX.value, Token.IMSCRIB.value):
-            result.append(reg); continue
-        t = Token(tok)
-        if t == Token.VINIT:       reg = VOID; in_split = False; in_split_T = False
-        elif t == Token.AFWD:      reg = {VOID:TRUE, FALSE:BOTH}.get(reg, reg)
-        elif t == Token.AREV:      reg = {VOID:FALSE, TRUE:BOTH}.get(reg, reg)
-        elif t == Token.CLINK:     reg = VOID if reg in (TRUE, FALSE) else reg
-        elif t == Token.IMSCRIB:   reg = TRUE if reg == VOID else reg
-        elif t == Token.FSPLIT:    in_split = True
-        elif t == Token.FFUSE:
-            if in_split_T and reg == FALSE: reg = BOTH
-            elif reg == BOTH: reg = TRUE
-            in_split = False; in_split_T = False
-        elif t == Token.EVALT:
-            if in_split: in_split_T = True
-            if reg == FALSE: reg = BOTH
-            elif reg == VOID: reg = TRUE
-        elif t == Token.EVALF:
-            if reg == TRUE: reg = BOTH
-            elif reg == VOID: reg = FALSE
-        elif t == Token.IFIX:      fixed = True
-        result.append(reg)
+    for token in tokens:
+        value = machine.transition(IMASM12_TO_16_3[Token(token).name])
+        result.append(int("T" in value) | (int("F" in value) << 1))
     return result
 
 
