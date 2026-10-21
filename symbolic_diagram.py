@@ -19,7 +19,7 @@ Usage:
 """
 
 from __future__ import annotations
-import sys, os, math, argparse
+import sys, os, math, argparse, json
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
@@ -428,11 +428,10 @@ class SVGBuilder:
         self._closed = True
 
     def save(self, path: Path):
+        from ob3ect.core import atomic_write_text
         self.close()  # ensure closed before writing
         path.parent.mkdir(parents=True, exist_ok=True)
-        with open(path, "w") as f:
-            f.write("\n".join(self.parts))
-        return path
+        return atomic_write_text(path, "\n".join(self.parts))
 
 
 # ── Diagram Layout ──────────────────────────────────────────────────────────
@@ -459,17 +458,38 @@ class DiagramLayout:
     def y(self, idx): return self.pos[idx][1]
 
 
-def compute_layout(graph: WiredGraph) -> DiagramLayout:
+def _bound_graph_report(graph, report):
+    if report is None or report.get("status") != "checked":
+        return None
+    expected = [[w.src_node, w.src_port, w.dst_node, w.dst_port] for w in graph.wires]
+    if report.get("nodes") != [t.name for t in graph.tokens] or report.get("wires") != expected:
+        raise ValueError("Graph-flow report belongs to a different wiring")
+    return report
+
+
+def _native_name(value):
+    return "A" if value == 15 else "".join(c for bit, c in enumerate("TFtf") if value & (1 << bit)) or "N"
+
+
+def _graph_caption(svg, graph, report, width, ink):
+    if report:
+        svg.parts.append('<metadata id="native-wiring">' + _xml_escape(json.dumps(report)) + '</metadata>')
+        caption = f"Native edge carriers; node inputs (T/F hatch); ancestry {report['closure'].upper()}"
+    else:
+        caption = "Sequential position observations; graph ancestry and edge flow unchecked"
+    svg.text(width/2, SVG_H - 3, caption, 7, ink, "middle")
+
+
+def compute_layout(graph: WiredGraph, graph_report=None) -> DiagramLayout:
     """Full layout with enriched edge-semantic metadata."""
     tokens = graph.tokens
     n = len(tokens)
-    states = simulate_register(tuple(t.value for t in tokens))
-
-    # ── Topological layers (Kahn's algorithm) ──
-    layers = graph.topological_layers()
+    report = _bound_graph_report(graph, graph_report)
+    states = ([v & 3 for v in report["node_inputs"]] if report else
+              simulate_register(tuple(t.value for t in tokens)))
 
     # ── FSPLIT/FFUSE pairs ──
-    pairs = match_pairs(tuple(t.value for t in tokens))
+    pairs = report["pairs"] if report else match_pairs(tuple(t.value for t in tokens))
     fsplit_set = set(fs for fs, _ in pairs)
     ffuse_set = set(ff for _, ff in pairs)
     fsplit_to_ffuse = {fs: ff for fs, ff in pairs}
@@ -625,7 +645,8 @@ def _wire_edge_category(src_tok: Token, dst_tok: Token, w: Wire) -> str:
 
 def render_wiring_svg_v3(graph: WiredGraph, name: str = "", ourobor: str = "",
                           description: str = "", ig_type: str = "",
-                          pen_mode: bool = False, topology_report: dict = None, trilattice_data: dict = None) -> SVGBuilder:
+                          pen_mode: bool = False, topology_report: dict = None, trilattice_data: dict = None,
+                          graph_report: dict = None) -> SVGBuilder:
     """
     Render a complete wiring diagram as SVG with full edge granularity:
 
@@ -639,9 +660,10 @@ def render_wiring_svg_v3(graph: WiredGraph, name: str = "", ourobor: str = "",
     """
 
     if pen_mode:
-        return render_wiring_pen_svg(graph, name, ourobor, description, topology_report, trilattice_data)
+        return render_wiring_pen_svg(graph, name, ourobor, description, topology_report, trilattice_data, graph_report)
 
-    layout = compute_layout(graph)
+    report = _bound_graph_report(graph, graph_report)
+    layout = compute_layout(graph, report)
     tokens = layout.tokens
     n = layout.n
     states = layout.states
@@ -649,6 +671,7 @@ def render_wiring_svg_v3(graph: WiredGraph, name: str = "", ourobor: str = "",
 
     dw = layout.dynamic_width or SVG_W
     svg = SVGBuilder(w=dw)
+    _graph_caption(svg, graph, report, dw, FG)
 
     # ── Grid background (schematic feel) ──
     svg.draw_grid()
@@ -675,7 +698,7 @@ def render_wiring_svg_v3(graph: WiredGraph, name: str = "", ourobor: str = "",
     svg.lane_label(22, Y_MAIN, "main", "#555")
 
     # ── Pairs for cross-branch detection and pair coloring ──
-    pairs = match_pairs(tuple(t.value for t in tokens))
+    pairs = report["pairs"] if report else match_pairs(tuple(t.value for t in tokens))
     fsplit_set = set(fs for fs, _ in pairs)
     ffuse_set = set(ff for _, ff in pairs)
     default_ff = {fs: ff for fs, ff in pairs}
@@ -821,7 +844,9 @@ def render_wiring_svg_v3(graph: WiredGraph, name: str = "", ourobor: str = "",
                 svg.draw_orthogonal_arrow(xs, ys, xd, yd, color, 1.3, base_opacity, dash, ch)
 
         # ── Register delta label ──
-        if src_reg is not None and dst_reg is not None:
+        if report:
+            svg.draw_edge_label(mx, my, _native_name(report["edge_values"][wi]), FG, 6)
+        elif src_reg is not None and dst_reg is not None:
             delta = reg_delta_label(src_reg, dst_reg)
             d_color = reg_delta_color(src_reg, dst_reg)
             # Only show label if there's a change or BOTH involvement
@@ -1118,7 +1143,8 @@ def render_wiring_svg_v3(graph: WiredGraph, name: str = "", ourobor: str = "",
                     svg.text(fx, fy + NODE_R + 30, "open", 4.5, "#ed7d31", "middle")
 
     # ── Ouroboric back-arc (DRAWN LAST — on top of all elements) ──
-    if ourobor and ourobor != "O₀" and len(pos) >= 2:
+    if (ourobor and ourobor != "O₀" and len(pos) >= 2 and
+            any(w.src_node == max(pos) and w.dst_node == min(pos) for w in graph.wires)):
         i0, iN = min(pos), max(pos)
         if i0 in pos and iN in pos:
             x0, y0 = pos[i0]; xn, yn = pos[iN]
@@ -1307,16 +1333,19 @@ def _pen_backarc(svg: 'SVGBuilder', src, tgt, label: str, r: float = PEN_NODE_R)
 
 
 def render_wiring_pen_svg(graph: WiredGraph, name: str = "", ourobor: str = "",
-                          description: str = "", topology_report: dict = None, trilattice_data: dict = None) -> SVGBuilder:
+                          description: str = "", topology_report: dict = None, trilattice_data: dict = None,
+                          graph_report: dict = None) -> SVGBuilder:
     """Black-and-white pen diagram. Same layout engine as the color renderer;
     every colour dimension is re-expressed as a pen-drawable form."""
-    layout = compute_layout(graph)
+    report = _bound_graph_report(graph, graph_report)
+    layout = compute_layout(graph, report)
     layout.trilattice_data = trilattice_data
     tokens, n, states, pos = layout.tokens, layout.n, layout.states, layout.pos
 
     pdw = layout.dynamic_width or PEN_W
     svg = SVGBuilder(w=pdw)
     svg.parts[1] = f'<rect width="{pdw}" height="{SVG_H}" fill="#000000"/>'
+    _graph_caption(svg, graph, report, pdw, PEN_INK)
 
     # ── register-state hatch patterns ──
     svg.add_def('<pattern id="hatch-T" width="4" height="4" patternUnits="userSpaceOnUse">'
@@ -1383,8 +1412,9 @@ def render_wiring_pen_svg(graph: WiredGraph, name: str = "", ourobor: str = "",
             # I-lane: full 16₃ register name (the subset of {T,F,t,f})
             svg.text(x, Y_I + 10, rv, 4.5, PEN_INK, "middle")
             # C-lane: constructivity projection — constructive part | non-constructive part
-            c_part = ''.join(b for b in ['T','F'] if b in rv) or '·'
-            n_part = ''.join(b for b in ['t','f'] if b in rv) or '·'
+            members = "TFtf" if rv == "A" else rv
+            c_part = ''.join(b for b in ['T','F'] if b in members) or '·'
+            n_part = ''.join(b for b in ['t','f'] if b in members) or '·'
             c_proj = f"{c_part}|{n_part}"
             svg.text(x, Y_C + 10, c_proj, 4.5, PEN_INK, "middle")
 
@@ -1401,7 +1431,7 @@ def render_wiring_pen_svg(graph: WiredGraph, name: str = "", ourobor: str = "",
         svg.text(bx, _y_top - 7, "IFIX", 6, PEN_INK, "middle")
 
     # ── pair brackets (dashed arc + circled numeral) ──
-    for fs, ff in match_pairs(tuple(t.value for t in tokens)):
+    for fs, ff in (report["pairs"] if report else match_pairs(tuple(t.value for t in tokens))):
         if fs in pos and ff in pos:
             (xs, ys), (xd, yd) = pos[fs], pos[ff]
             yb = min(ys, yd) - 38
@@ -1505,7 +1535,8 @@ def render_wiring_pen_svg(graph: WiredGraph, name: str = "", ourobor: str = "",
             svg.text(mid_x, mid_y + 3, glyph, 7, PEN_INK, "middle")
 
         # register delta label
-        lbl = reg_delta_label(states[w.src_node], states[w.dst_node])
+        lbl = (_native_name(report["edge_values"][graph.wires.index(w)]) if report else
+               reg_delta_label(states[w.src_node], states[w.dst_node]))
         if lbl and lbl != "=":
             svg.text(mid_x, mid_y - 8, lbl, 6, PEN_INK, "middle")
 
@@ -1541,7 +1572,7 @@ def render_wiring_pen_svg(graph: WiredGraph, name: str = "", ourobor: str = "",
     if len(pos) >= 2:
         last = max(pos)
         tgt = _pen_return_target(tokens, last, pos)
-        if tgt != last:
+        if tgt != last and any(w.src_node == last and w.dst_node == tgt for w in graph.wires):
             _xs, _ys = pos[last]; _xt, _yt = pos[tgt]
             _pdx, _pdy = _xt - _xs, _yt - _ys
             _pL = math.hypot(_pdx, _pdy) or 1
@@ -1579,7 +1610,7 @@ def _pen_trilattice_panel(svg: 'SVGBuilder', layout, w: float):
     bx, by, bw, bh = w - 340, SVG_H - 95, 320, 80
     svg.add("rect", {"x": f"{bx:.1f}", "y": f"{by:.1f}", "width": f"{bw:.1f}", "height": f"{bh:.1f}",
                      "fill": "#000000", "stroke": PEN_INK, "stroke-width": "0.5", "opacity": "0.9"})
-    svg.text(bx + 6, by + 10, "SIXTEEN₃ TRILATTICE", 6, PEN_INK, "start", True)
+    svg.text(bx + 6, by + 10, "SEQUENTIAL SIXTEEN₃ WALK", 6, PEN_INK, "start", True)
     # 16_3 register sequence
     reg_seq = tri.get("register_seq", [])
     if reg_seq:
@@ -1595,7 +1626,7 @@ def _pen_trilattice_panel(svg: 'SVGBuilder', layout, w: float):
         svg.text(bx + 6, by + 46, f"Word: {glyph_word}", 4.5, PEN_INK, "start")
     closed = tri.get("closed", False)
     walk_label = "CLOSED" if closed else "OPEN"
-    svg.text(bx + 6, by + 58, f"Walk: {walk_label}", 4.5, PEN_INK, "start")
+    svg.text(bx + 6, by + 58, f"Sequential walk: {walk_label}", 4.5, PEN_INK, "start")
     # Lane summary — ordering labels are on the lanes themselves
     svg.text(bx + 160, by + 22, "I-lane: ≤_i register trace", 4, PEN_INK, "start")
     svg.text(bx + 160, by + 34, "C-lane: ≤_c projection", 4, PEN_INK, "start")
@@ -1751,25 +1782,22 @@ def _carrier_is_paradox(nm: str) -> bool:
 
 
 def render_wiring_ascii(graph: WiredGraph, name: str = "",
-                        carriers: "list[str] | None" = None) -> str:
-    """Terminal circuit diagram of a wired token graph, with edge weights
-    explicit.
+                        carriers: "list[str] | None" = None,
+                        graph_report: "dict | None" = None) -> str:
+    """Render actual native edge carriers when a bound graph report is supplied.
 
-    When ``carriers`` is given (one SIXTEEN_3 carrier name per node, in graph
-    order, e.g. from the trilattice register machine), the weight on each edge
-    is the full-lattice carrier the wire carries into its destination, written
-    ``src→dst`` (e.g. ``TF→A`` where ENGAGR deposits t+f and the register
-    reaches the top A). Otherwise the weight falls back to the FOUR-valued
-    Belnap register delta (↑ true, ↓ false, ↑↓ both, · none), the same label
-    the SVG carries.
-
-    A carrier or delta that holds a paradox is tagged «A» in the full-lattice
-    reading (both T,F or both t,f present, or the top A) or «B» in the
-    four-valued reading; a truth flip T↔F is tagged ⚡; a cross-branch wire (a
-    fork arm routed to a non-matched fuse) is drawn with a heavy ═▶ arrow.
-    Node-by-node, top to bottom, one connector line per outgoing wire."""
+    Otherwise label the sequential position observations explicitly. Equal
+    numbers of forks and fuses do not establish ancestry closure.
+    """
     tokens = graph.tokens
     n = len(tokens)
+    native = graph_report is not None and graph_report.get("status") == "checked"
+    if native:
+        expected = [[w.src_node, w.src_port, w.dst_node, w.dst_port] for w in graph.wires]
+        if graph_report.get("nodes") != [t.name for t in tokens] or graph_report.get("wires") != expected:
+            raise ValueError("Graph-flow report belongs to a different wiring")
+    def native_name(value):
+        return "A" if value == 15 else "".join(c for bit, c in enumerate("TFtf") if value & (1 << bit)) or "N"
     full = carriers is not None and len(carriers) == n
     regs = simulate_register(tuple(t.value for t in tokens))
     cross = set(graph.cross_branch_wires())
@@ -1778,6 +1806,8 @@ def render_wiring_ascii(graph: WiredGraph, name: str = "",
     fuses = {i for i, t in enumerate(tokens) if t == Token.FFUSE}
 
     def state(i: int) -> str:
+        if native:
+            return native_name(graph_report["node_inputs"][i])
         if full:
             return carriers[i] or "N"
         return REG_LABEL[regs[i]] or "·"
@@ -1812,14 +1842,15 @@ def render_wiring_ascii(graph: WiredGraph, name: str = "",
 
     out = []
     title = name or graph.name or "circuit"
-    out.append(f"◇ CIRCUIT  {title}   {n} nodes, {len(graph.wires)} wires"
-               f"   open forks {len(forks) - len(fuses) if len(forks) > len(fuses) else 0}")
-    if full:
-        out.append("  weight = SIXTEEN_3 carrier on the wire (src→dst): "
+    out.append(f"◇ CIRCUIT  {title}   {n} nodes, {len(graph.wires)} wires")
+    if native:
+        out.append(f"  Native graph flow: node inputs and actual wire carriers; seed {native_name(graph_report['seed'])}")
+    elif full:
+        out.append("  Sequential SIXTEEN_3 observations at linked positions (src→dst): "
                    "N T F TF Ttf … A=top (all four)"
                    "   «A» paradox held   ⚡ truth flip   ═▶ cross-branch")
     else:
-        out.append("  weight = Belnap register delta: ↑ true  ↓ false  ↑↓ both  · none"
+        out.append("  Sequential T/F observations at linked positions: ↑ true  ↓ false  ↑↓ both  · none"
                    "   «B» paradox held   ⚡ truth flip   ═▶ cross-branch")
     out.append("")
     for i in range(n):
@@ -1837,15 +1868,20 @@ def render_wiring_ascii(graph: WiredGraph, name: str = "",
             last = (k == len(ows) - 1)
             elbow = "└" if last else "├"
             arrow = "═▶" if w in cross else "─▶"
-            delta = weight(i, w.dst_node)
+            delta = (native_name(graph_report["edge_values"][graph.wires.index(w)])
+                     if native else weight(i, w.dst_node))
             port = f"{w.src_port}→{w.dst_port}"
             dstg = disp(tokens[w.dst_node])
             out.append(f"     {elbow}{arrow} {w.dst_node:>2} {dstg}   [{port}]  "
-                       f"{delta}{tag(i, w.dst_node)}")
+                       f"{delta}{'' if native else tag(i, w.dst_node)}")
     # closure line
-    closed = len(forks) == len(fuses)
     out.append("")
-    out.append(f"  walk: {'CLOSED' if closed else 'OPEN'}   final register {state(n - 1)}")
+    if native:
+        out.append(f"  Native ancestry: {graph_report['closure'].upper()}   pairs {graph_report['pairs']}")
+    else:
+        out.append("  Graph ancestry and edge flow unchecked; labels describe the sequential walk")
+    if n:
+        out.append(f"  Final {'node input' if native else 'sequential register'} {state(n - 1)}")
     return "\n".join(out)
 
 

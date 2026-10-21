@@ -1,0 +1,217 @@
+{
+  "register": {
+    "name": "g-momonados",
+    "dim": "ququart",
+    "frame": "source-boundary frame",
+    "return_check": "source boundary must be open before forward morphism; verified by ⊢→1"
+  },
+  "tokens": [
+    {
+      "i": 0,
+      "process": "source_boundary",
+      "concrete": "initializes source boundary (VINIT) – opens the state-space",
+      "rationale": "creates the only mark that defines the source start, establishing the initial carrier",
+      "input": "source numeral value 39074178327187721085927309290875912066446111978015933739562424791682292600001455789370400258814919322101633857951077754690727394687022333551428166607640526437",
+      "output": "source boundary established, carrier ready for forward morphism",
+      "check": "source boundary must be open before any forward operation; verified by ⊢"
+    },
+    {
+      "i": 1,
+      "process": "forward_morphism",
+      "concrete": "applies forward morphism (AFWD) – performs WORK",
+      "rationale": "forward morphism advances the transformation, consuming the source boundary and preparing for fork",
+      "input": "source boundary state",
+      "output": "forward transformed state ready for fork",
+      "check": "forward morphism must be applied after source boundary; verified by ⊢→1"
+    },
+    {
+      "i": 2,
+      "process": "fork",
+      "concrete": "forks (FSPLIT/δ) – splits into two branches",
+      "rationale": "the only brancher creates two distinct in-arms for subsequent evaluation",
+      "input": "forward transformed state",
+      "output": "two branch states (support and refutation arms)",
+      "check": "fork must have exactly one in-arm before fusion; verified by ∈"
+    },
+    {
+      "i": 3,
+      "process": "true_evaluation",
+      "concrete": "evaluates TRUE arm (EVALT) – deposits TRUE support",
+      "rationale": "TRUE evaluation deposits positive evidence, marking the branch as supported",
+      "input": "support branch state",
+      "output": "TRUE evidence recorded",
+      "check": "TRUE evaluation must be followed by FALSE evaluation or fusion; verified by ⊤"
+    },
+    {
+      "i": 4,
+      "process": "false_evaluation",
+      "concrete": "evaluates FALSE arm (EVALF) – deposits FALSE refutation",
+      "rationale": "FALSE evaluation deposits negative evidence, marking the branch as refuted",
+      "input": "refutation branch state",
+      "output": "FALSE evidence recorded",
+      "check": "FALSE evaluation must be followed by fusion or engagement; verified by ⊥"
+    },
+    {
+      "i": 5,
+      "process": "paradox_hold",
+      "concrete": "holds paradox (ENGAGR) – engages Belnap diagonal",
+      "rationale": "engages the Belnap diagonal, allowing both support and refutation to coexist without explosion",
+      "input": "both branch states",
+      "output": "paradox state with both T and F evidence",
+      "check": "paradox hold must be followed by fusion; verified by ⊞"
+    },
+    {
+      "i": 6,
+      "process": "fuse",
+      "concrete": "fuses (FFUSE/μ) – merges the two branches",
+      "rationale": "the only merger combines the two branches into a single state, applying knowledge join",
+      "input": "support and refutation states",
+      "output": "merged state",
+      "check": "fuse must consume the innermost split from which its in-arms descend; verified by ∋"
+    },
+    {
+      "i": 7,
+      "process": "identity",
+      "concrete": "identity (EVALT/⊙) – self-reference, no work",
+      "rationale": "identity preserves the current state, acting as neutral generator",
+      "input": "merged state",
+      "output": "unchanged state",
+      "check": "identity operation must leave state invariant; verified by ⊙"
+    },
+    {
+      "i": 8,
+      "process": "irreversible_commit",
+      "concrete": "commits irreversibly (IFIX) – fixes the resulting invariant",
+      "rationale": "irreversible commit locks the final state, preventing further changes",
+      "input": "merged state",
+      "output": "committed state",
+      "check": "commit must be irreversible; verified by ⊡"
+    },
+    {
+      "i": 9,
+      "process": "terminal_anchor",
+      "concrete": "terminal anchor (TANCH) – sink, out-port may stay open",
+      "rationale": "provides the living end of the computation, allowing continuation or release",
+      "input": "committed state",
+      "output": "terminal state with open out-port",
+      "check": "terminal anchor must be reached after all prior steps; verified by ⊣"
+    }
+  ],
+  "realization": {
+    "backend": "ququart-factor",
+    "source": "39074178327187721085927309290875912066446111978015933739562424791682292600001455789370400258814919322101633857951077754690727394687022333551428166607640526437",
+    "base": "2",
+    "radix": "4",
+    "seed": "1729",
+    "preparation": {
+      "mode": "fresh"
+    },
+    "prepare_seconds": 1800,
+    "execute_seconds": 120,
+    "steps": [
+      {
+        "i": 0,
+        "symbol": "⊢",
+        "actions": [
+          {
+            "kind": "bind"
+          }
+        ]
+      },
+      {
+        "i": 1,
+        "symbol": "≻",
+        "actions": [
+          {
+            "kind": "prepare"
+          },
+          {
+            "kind": "extract"
+          }
+        ]
+      },
+      {
+        "i": 2,
+        "symbol": "∈",
+        "actions": [
+          {
+            "kind": "split",
+            "id": "fork"
+          }
+        ]
+      },
+      {
+        "i": 3,
+        "symbol": "⊤",
+        "actions": [
+          {
+            "kind": "evidence",
+            "axis": "support",
+            "proposition": "factor_pair_valid",
+            "witness": "native_producer"
+          }
+        ]
+      },
+      {
+        "i": 4,
+        "symbol": "⊥",
+        "actions": [
+          {
+            "kind": "evidence",
+            "axis": "refutation",
+            "proposition": "factor_pair_valid",
+            "witness": "verification_failure"
+          }
+        ]
+      },
+      {
+        "i": 5,
+        "symbol": "⊞",
+        "actions": [
+          {
+            "kind": "engage",
+            "proposition": "factor_pair_valid"
+          }
+        ]
+      },
+      {
+        "i": 6,
+        "symbol": "∋",
+        "actions": [
+          {
+            "kind": "rejoin",
+            "id": "fork"
+          }
+        ]
+      },
+      {
+        "i": 7,
+        "symbol": "⊙",
+        "actions": [
+          {
+            "kind": "retain"
+          }
+        ]
+      },
+      {
+        "i": 8,
+        "symbol": "⊡",
+        "actions": [
+          {
+            "kind": "latch",
+            "id": "commit"
+          }
+        ]
+      },
+      {
+        "i": 9,
+        "symbol": "⊣",
+        "actions": [
+          {
+            "kind": "release"
+          }
+        ]
+      }
+    ]
+  }
+}

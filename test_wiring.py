@@ -12,6 +12,106 @@ def graph(names):
 
 
 class WiringTest(unittest.TestCase):
+    def test_cycle_is_explicit_and_can_still_be_rendered(self):
+        from native_wiring import inspect_wiring
+        from symbolic_diagram import render_wiring_svg_v3
+        g = WiredGraph((Token.AFWD, Token.CLINK), [Wire(0, "o", 1, "i"), Wire(1, "o", 0, "i")])
+        self.assertEqual(g.validate(), [])
+        with self.assertRaisesRegex(ValueError, "directed cycle"):
+            g.topological_layers()
+        self.assertIsNotNone(render_wiring_svg_v3(g, graph_report=inspect_wiring(g)))
+        bad = WiredGraph((Token.AFWD,), [Wire(-1, "o", 0, "i")])
+        for method in (bad.cross_branch_wires, bad.topological_layers):
+            with self.assertRaisesRegex(ValueError, "out of range"):
+                method()
+
+    def test_svg_binds_native_carriers_without_inventing_a_return_edge(self):
+        import json
+        import xml.etree.ElementTree as ET
+        from native_wiring import inspect_wiring
+        from symbolic_diagram import render_wiring_svg_v3
+        g = graph("VINIT FSPLIT AREV FFUSE TANCH")
+        report = inspect_wiring(g)
+        for pen in (False, True):
+            svg = render_wiring_svg_v3(g, ourobor="O₃", pen_mode=pen, graph_report=report)
+            xml = ET.fromstring("\n".join(svg.parts))
+            ns = {"s": "http://www.w3.org/2000/svg"}
+            bound = json.loads(xml.find("s:metadata", ns).text)
+            self.assertEqual(bound, report)
+            texts = [e.text for e in xml.findall("s:text", ns)]
+            self.assertIn("Ff", texts)
+            self.assertIn("Tt", texts)
+            self.assertTrue(any("ancestry CLOSED" in (t or "") for t in texts))
+            plain = render_wiring_svg_v3(g, pen_mode=pen, graph_report=report)
+            # A tuple tier is not an extra wire from the terminal to the source.
+            base = ET.fromstring("\n".join(plain.parts))
+            self.assertEqual(len(xml.findall("s:path", ns)), len(base.findall("s:path", ns)))
+            g.wires.reverse()
+            with self.assertRaisesRegex(ValueError, "different wiring"):
+                render_wiring_svg_v3(g, pen_mode=pen, graph_report=report)
+            g.wires.reverse()
+
+    def test_cross_overrides_cannot_be_silently_dropped_or_overwritten(self):
+        from wiring import cross_wiring
+        tokens = graph("VINIT FSPLIT EVALT FFUSE TANCH").tokens
+        for overrides in ([(1, "missing", 3, "F")], [(1, "F", -1, "i")],
+                          [(1, "F", 0, "i")], [(1, "F", 3, "F")] * 2):
+            with self.subTest(overrides=overrides), self.assertRaises(ValueError):
+                cross_wiring(tokens, overrides)
+    def test_native_flow_preserves_named_ports_and_wire_permutations(self):
+        from native_wiring import inspect_wiring
+        g = graph("VINIT FSPLIT EVALF EVALT FFUSE TANCH")
+        for seed in range(16):
+            report = inspect_wiring(g, seed)
+            reversed_graph = WiredGraph(g.tokens, list(reversed(g.wires)))
+            other = inspect_wiring(reversed_graph, seed)
+            self.assertEqual(report["node_inputs"], other["node_inputs"])
+            self.assertEqual(report["node_inputs"][2:4], [seed & 10, seed & 5])
+            self.assertEqual(report["node_inputs"][-1], seed)
+            self.assertEqual(report["pairs"], [[1, 4]])
+            self.assertEqual(report["pair_recovers_input"], [True])
+            self.assertEqual(report["edge_values"], list(reversed(other["edge_values"])))
+
+    def test_native_reports_actual_ancestry_and_loss_separately(self):
+        from native_wiring import inspect_wiring
+        g = graph("VINIT FSPLIT AREV FFUSE TANCH")
+        report = inspect_wiring(g)
+        self.assertTrue(report["closure_verified"])
+        self.assertEqual(report["pair_recovers_input"], [False])
+        # Change only the wires: the fuse no longer has two ancestral inputs.
+        g.wires = [w for w in g.wires if (w.src_node, w.src_port) != (1, "T")]
+        other = inspect_wiring(g)
+        self.assertEqual(other["closure"], "open")
+        self.assertEqual(other["pairs"], [])
+
+    def test_native_open_f_slot_is_not_reinterpreted_as_t(self):
+        from native_wiring import inspect_wiring
+        g = WiredGraph((Token.VINIT, Token.FSPLIT, Token.TANCH),
+                       [Wire(0, "o", 1, "i"), Wire(1, "F", 2, "i")])
+        report = inspect_wiring(g)
+        self.assertEqual(report["node_inputs"][-1], 10)
+        self.assertEqual(report["closure"], "open")
+        g.wires.append(Wire(1, "F", 2, "i"))
+        with self.assertRaises(ValueError):
+            inspect_wiring(g)
+
+    def test_ascii_uses_bound_edge_flow_and_never_counts_pairs_as_closure(self):
+        from native_wiring import inspect_wiring
+        from symbolic_diagram import render_wiring_ascii
+        g = graph("VINIT FSPLIT AREV FFUSE TANCH")
+        report = inspect_wiring(g)
+        text = render_wiring_ascii(g, graph_report=report)
+        self.assertIn("Native ancestry: CLOSED", text)
+        self.assertIn("[T→T]  Tt", text)
+        self.assertIn("[F→i]  Ff", text)
+        fallback = render_wiring_ascii(g)
+        self.assertNotIn("CLOSED", fallback)
+        self.assertIn("unchecked", fallback)
+        self.assertIn("unchecked", render_wiring_ascii(WiredGraph((), [])))
+        g.wires.reverse()
+        with self.assertRaisesRegex(ValueError, "different wiring"):
+            render_wiring_ascii(g, graph_report=report)
+
     def test_nested_block_stays_between_its_enclosing_arm_operations(self):
         g = graph("VINIT FSPLIT EVALT FSPLIT EVALT EVALF FFUSE CLINK EVALF FFUSE TANCH")
         self.assertEqual(g.validate(), [])

@@ -112,6 +112,8 @@ class WiredGraph:
         ffuse_nodes = {ff for _, ff in pairs}
         result = []
         for w in self.wires:
+            if not (0 <= w.src_node < self.n() and 0 <= w.dst_node < self.n()):
+                raise ValueError(f"node index out of range: {w}")
             if self.tokens[w.src_node] != Token.FSPLIT:
                 continue
             if w.src_port not in ('T', 'F'):
@@ -181,6 +183,8 @@ class WiredGraph:
         in_deg: Dict[int, int] = {i: 0 for i in range(n)}
         adj:    Dict[int, List[int]] = {i: [] for i in range(n)}
         for w in self.wires:
+            if not (0 <= w.src_node < n and 0 <= w.dst_node < n):
+                raise ValueError(f"node index out of range: {w}")
             in_deg[w.dst_node] += 1
             adj[w.src_node].append(w.dst_node)
 
@@ -199,6 +203,8 @@ class WiredGraph:
                         if in_deg[nb] == 0:
                             nxt.append(nb)
             queue = sorted(set(nxt))
+        if len(visited) != n:
+            raise ValueError("Graph contains a directed cycle; no complete topological layering exists")
         return layers
 
     def wire_y_hint(self, wire: Wire) -> float:
@@ -316,7 +322,18 @@ def cross_wiring(
     Any existing wire from (src_node, src_port) is replaced.
     """
     base = imscr_wiring(tokens)
-    override_map = {(s, sp): (d, dp) for s, sp, d, dp in overrides}
+    override_map = {}
+    existing = {(w.src_node, w.src_port) for w in base.wires}
+    for s, sp, d, dp in overrides:
+        if not (0 <= s < len(tokens) and 0 <= d < len(tokens)):
+            raise ValueError("override node index out of range")
+        if (s, sp) not in existing:
+            raise ValueError(f"override has no existing source wire: {(s, sp)}")
+        if dp not in in_ports(tokens[d]):
+            raise ValueError(f"override destination has no port: {(d, dp)}")
+        if (s, sp) in override_map:
+            raise ValueError(f"duplicate override source: {(s, sp)}")
+        override_map[s, sp] = (d, dp)
     new_wires: List[Wire] = []
     for w in base.wires:
         key = (w.src_node, w.src_port)
@@ -410,14 +427,14 @@ def _build_novel_graphs() -> Dict[str, WiredGraph]:
             "FSPLIT1.F→FFUSE_inner; FSPLIT2.F→FFUSE_outer. "
             "Creates an X-crossing: depth-1 F-wire terminates at depth-2 join, "
             "depth-2 F-wire terminates at depth-1 join. "
-            "Non-planar wiring — cannot be embedded in a plane without crossing."
+            "Crossed port routing in this layout; the underlying graph is planar."
         ),
     )
 
     # ── XXI — Paradox Bridge ─────────────────────────────────────────────────
     # Tokens: ENGAGR(0) FSPLIT(1) FSPLIT(2) EVALT(3) EVALF(4) FFUSE(5) FFUSE(6) IMSCRIB(7)
     #
-    # ENGAGR produces B; feeds FSPLIT1.
+    # Native ENGAGR adds the information values t,f; feeds FSPLIT1.
     # Cross: FSPLIT1.F bridges OVER the inner FSPLIT2/FFUSE5 block into FFUSE5.F.
     # Inner block: FSPLIT2.T→EVALT→FFUSE5.T; FSPLIT2.F→EVALF→FFUSE6.T
     # FFUSE5 (inner) receives: T from EVALT, F from FSPLIT1.F  [CROSS]
@@ -450,10 +467,10 @@ def _build_novel_graphs() -> Dict[str, WiredGraph]:
         name="XXI_Paradox_Bridge",
         description=(
             "ENGAGR-sourced fork with outer F-wire bridging into the inner FFUSE. "
-            "B-state from ENGAGR splits: T-path reaches inner split where gates "
+            "ENGAGR adds t,f: T-path reaches inner split where gates "
             "EVALT/EVALF discriminate; F-path bypasses inner FSPLIT entirely and "
-            "enters inner FFUSE directly. B penetrates a gate boundary it normally "
-            "cannot cross."
+            "enters inner FFUSE directly. The returned information support remains "
+            "attached to its routed arms."
         ),
     )
 
@@ -531,9 +548,9 @@ def _build_novel_graphs() -> Dict[str, WiredGraph]:
         name="XXIII_Mobius_Fork",
         description=(
             "IMSCRIB-bounded self-referential fork with Möbius-like X-crossing. "
-            "ENGAGR on inner T-branch injects B into inner FFUSE; outer F-wire "
-            "from FSPLIT1 also feeds inner FFUSE, creating a dual-source B-path. "
-            "CLINK composes the two join results. Non-planar topology."
+            "ENGAGR on inner T-branch adds t,f before inner FFUSE; outer F-wire "
+            "from FSPLIT1 also feeds inner FFUSE. "
+            "CLINK carries the join result. Crossed planar port routing."
         ),
     )
 

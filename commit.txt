@@ -1,1 +1,1 @@
-I align nested IMASM wiring and tuple scaffolds with their checked interpretations
+I bind my SVG diagrams to native graph flow and preserve actual routing, cycle and topology observations.
