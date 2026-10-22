@@ -1,0 +1,167 @@
+{
+  "register": {
+    "name": "factor extraction via Wild Arcs",
+    "dim": "ququart-factor",
+    "frame": "split@2/fuse@14 span=12 interior=[3,4,5,6,7,8,9,10,11,12,13]",
+    "return_check": "source-return residual: verified factor pair multiplies exactly to sealed source; independent terminal producer/product verifier accepts on actual readout; latch released at ⊣"
+  },
+  "tokens": [
+    {
+      "i": 0,
+      "process": "bind source carrier",
+      "concrete": "ququart-factor bind: initialize source/base/radix/seed carrier with base=2, radix=4, seed=1729, preparation mode=fresh",
+      "rationale": "⊢ opens the bounded operation and binds the source numeral, modular base, work radix, and Gödel seed into the executable carrier; no source argument at runtime",
+      "input": "unbound source numeral (separate binding required)",
+      "output": "bound carrier: {source, base=2, radix=4, seed=1729, preparation=fresh}",
+      "check": "carrier bound: source word emitted by Gödel codec matches sealed source; base/radix/seed recorded in manifest"
+    },
+    {
+      "i": 1,
+      "process": "retain carrier identity",
+      "concrete": "ququart-factor retain: identity on entire carrier (source, preparation artifacts, cursors, evidence)",
+      "rationale": "⊙ is the neutral generator; no work performed, carrier passes through unchanged",
+      "input": "bound carrier from token 0",
+      "output": "same bound carrier",
+      "check": "carrier identity preserved: all fields bitwise equal"
+    },
+    {
+      "i": 2,
+      "process": "split frame for factor extraction",
+      "concrete": "ququart-factor split id=\"wild_arcs_frame\": retain source/active/evidence frame; records forward cursor for later return",
+      "rationale": "∈ is the only brancher (FSPLIT/δ); opens a frame that will be closed by ∋ at token 14; retains source snapshot and active cursor",
+      "input": "bound carrier from token 1",
+      "output": "carrier with retained frame \"wild_arcs_frame\" (source snapshot, active cursor, evidence log)",
+      "check": "frame retained: frame id recorded, source snapshot stored, forward cursor marked for return at ≺ (token 8) and rejoin at ∋ (token 14)"
+    },
+    {
+      "i": 3,
+      "process": "evaluate support evidence on preparation",
+      "concrete": "ququart-factor evidence axis=support proposition=\"preparation_valid\" witness=\"prep_verifier_001\": evaluate independent terminal producer verifier on baked preparation artifacts",
+      "rationale": "⊤ deposits positive support (EVALT/IMSCRIB); checks that the prepared executable (Fourier operator, modular schedule, braid) is valid before extraction",
+      "input": "carrier with frame from token 2",
+      "output": "carrier with evidence coordinate support=accepted/rejected for \"preparation_valid\"",
+      "check": "evidence recorded: witness \"prep_verifier_001\" attributed; support axis evaluated on actual preparation manifest"
+    },
+    {
+      "i": 4,
+      "process": "prepare and extract factor candidate",
+      "concrete": "ququart-factor prepare then extract: [kind:\"prepare\", kind:\"extract\"] consumes bound source, produces validated baked case, then executes extraction binary for actual native readout",
+      "rationale": "≻ is forward morphism (AFWD); at this position it composes preparation (baking Fourier/modular work into executable) and extraction (running baked binary to produce readout) before next evidence glyph",
+      "input": "carrier with frame and preparation evidence from token 3",
+      "output": "carrier with prepared case validated and extraction readout produced; forward cursor advanced",
+      "check": "preparation baked: manifest, executable, source word, physical braid, Vox module emitted; extraction executed: terminal readout captured, prepare_seconds=1800, execute_seconds=120 budgets honored"
+    },
+    {
+      "i": 5,
+      "process": "link Fourier/modular composition certificate",
+      "concrete": "ququart-factor link: bind baked Fourier/modular-work composition certificate to carrier",
+      "rationale": "⋈ (CLINK) composes operations while preserving return structure; attaches the shared-work schedule certificate",
+      "input": "carrier with extraction readout from token 4",
+      "output": "carrier with composition certificate linked",
+      "check": "certificate bound: Fourier operator, controlled-S phases, final swap, Hadamards verified against shared-work schedule"
+    },
+    {
+      "i": 6,
+      "process": "evaluate support evidence on extraction readout",
+      "concrete": "ququart-factor evidence axis=support proposition=\"extraction_readout_valid\" witness=\"readout_verifier_002\": evaluate independent terminal producer verifier on actual extraction readout",
+      "rationale": "⊤ deposits support for the proposition that the extraction readout (phase/SIC populations) is valid",
+      "input": "carrier with linked certificate from token 5",
+      "output": "carrier with evidence coordinate support=accepted/rejected for \"extraction_readout_valid\"",
+      "check": "evidence recorded: witness \"readout_verifier_002\" attributed; support axis evaluated on actual native readout"
+    },
+    {
+      "i": 7,
+      "process": "evaluate refutation evidence on extraction readout",
+      "concrete": "ququart-factor evidence axis=refutation proposition=\"extraction_readout_valid\" witness=\"readout_verifier_002\": evaluate independent terminal producer verifier for refutation on same readout",
+      "rationale": "⊥ deposits refutation (EVALF); same proposition as token 6 but refutation axis; enables B accumulation if both axes accepted",
+      "input": "carrier with support evidence from token 6",
+      "output": "carrier with both support and refutation evidence coordinates for \"extraction_readout_valid\"",
+      "check": "evidence recorded: same witness \"readout_verifier_002\"; refutation axis evaluated; both axes now available for engage at token 12"
+    },
+    {
+      "i": 8,
+      "process": "return forward preparation cursor",
+      "concrete": "ququart-factor return: restore retained forward preparation cursor from frame \"wild_arcs_frame\"; preserves terminal evidence",
+      "rationale": "≺ (AREV) is workflow cursor return, NOT coherent inversion; restores the last forward domain (prepared case) for reuse",
+      "input": "carrier with dual-axis evidence from token 7",
+      "output": "carrier with active cursor restored to prepared case; evidence retained",
+      "check": "cursor restored: preparation case reusable for second extraction at token 10; evidence log unchanged"
+    },
+    {
+      "i": 9,
+      "process": "evaluate refutation evidence on leakage",
+      "concrete": "ququart-factor evidence axis=refutation proposition=\"leakage_clean\" witness=\"leakage_verifier_003\": evaluate leakage channel cleanliness verifier on measured leakage amplitude",
+      "rationale": "⊥ deposits refutation for leakage cleanliness; separate proposition from extraction readout",
+      "input": "carrier with restored cursor from token 8",
+      "output": "carrier with refutation evidence for \"leakage_clean\"",
+      "check": "evidence recorded: witness \"leakage_verifier_003\" attributed; refutation axis evaluated on measured leakage population"
+    },
+    {
+      "i": 10,
+      "process": "extract second factor candidate (reusing prepared case)",
+      "concrete": "ququart-factor extract: consumes validated prepared case (retained from token 8 return) and produces second actual native readout",
+      "rationale": "≻ at this position performs extraction only (preparation already validated); reuses baked executable while retaining forward cursor",
+      "input": "carrier with restored prepared case and leakage refutation from token 9",
+      "output": "carrier with second extraction readout produced",
+      "check": "extraction executed: second readout captured; execute_seconds=120 budget honored; prepared case unchanged"
+    },
+    {
+      "i": 11,
+      "process": "link second composition certificate",
+      "concrete": "ququart-factor link: bind second baked Fourier/modular-work composition certificate (same certificate, re-attached)",
+      "rationale": "⋈ composes the second extraction's verification certificate; preserves return structure",
+      "input": "carrier with second readout from token 10",
+      "output": "carrier with second composition certificate linked",
+      "check": "certificate bound: same Fourier operator verification attached to second readout"
+    },
+    {
+      "i": 12,
+      "process": "engage contradictory evidence on extraction validity",
+      "concrete": "ququart-factor engage proposition=\"extraction_readout_valid\": retain both previously evaluated support (token 6) and refutation (token 7) coordinates for this proposition",
+      "rationale": "⊞ (ENGAGR) holds Belnap diagonal; does not manufacture positive observations; requires both axes already evaluated",
+      "input": "carrier with dual-axis evidence for \"extraction_readout_valid\" from tokens 6-7",
+      "output": "carrier with engaged proposition \"extraction_readout_valid\" holding both coordinates",
+      "check": "engage recorded: both support and refutation witnesses (\"readout_verifier_002\") retained; no new evidence manufactured"
+    },
+    {
+      "i": 13,
+      "process": "retain carrier identity",
+      "concrete": "ququart-factor retain: identity on entire carrier (source, prepared case, both readouts, all evidence, engaged proposition)",
+      "rationale": "⊙ neutral generator; no work, carrier passes through before frame rejoin",
+      "input": "carrier with engaged proposition from token 12",
+      "output": "same carrier",
+      "check": "carrier identity preserved"
+    },
+    {
+      "i": 14,
+      "process": "rejoin frame and check source binding",
+      "concrete": "ququart-factor rejoin id=\"wild_arcs_frame\": consume retained inner frame; check source binding; carry transformed active state and attributed evidence",
+      "rationale": "∋ (FFUSE/μ) is the only merger; closes the frame opened by ∈ at token 2; verifies source binding integrity",
+      "input": "carrier with frame \"wild_arcs_frame\" from token 13",
+      "output": "carrier with frame rejoined; source binding verified; active state and all evidence carried forward",
+      "check": "source binding check: sealed source word matches original; frame evidence log complete; forward cursor at terminal state"
+    },
+    {
+      "i": 15,
+      "process": "latch fixed carrier and evidence",
+      "concrete": "ququart-factor latch id=\"factor_latch_001\": copy fixed carrier/evidence after all frames rejoined; latch stays immutable",
+      "rationale": "⊡ (IFIX) fixes the resulting invariant; copies carrier and evidence immutably; active cursor may continue",
+      "input": "carrier with rejoined frame from token 14",
+      "output": "carrier with immutable latch \"factor_latch_001\" containing verified factors and evidence; active cursor still live",
+      "check": "latch created: factor pair, Gödel product verification, all evidence coordinates copied; latch immutable"
+    },
+    {
+      "i": 16,
+      "process": "release latch and verified factors",
+      "concrete": "ququart-factor release: release latch \"factor_latch_001\" and verified factors at terminal end; ⊙ may retain released carrier as identity after release",
+      "rationale": "⊣ (TANCH) is terminal anchor; sink with living end; releases the factor multiset after native tape verification",
+      "input": "carrier with latched factors from token 15",
+      "output": "released factor pair {p, q} with 1<p<N, 1<q<N, pq=N; terminal report emitted",
+      "check": "terminal verification: native tape verification passes; Gödel multiplication check exact; factor multiset released; execution closed"
+    }
+  ],
+  "realization": {
+    "backend": "unsupported",
+    "reason": "Missing required material binding: source numeral (decimal natural) for ququart-factor preparation. The schema requires a concrete decimal source string to bake into the executable; no source numeral was supplied in the request. Cannot synthesize a valid preparation without the source integer. Attempted composition uses ququart-factor backend with base=2, radix=4, seed=1729, fresh preparation, but source binding is absent."
+  }
+}
