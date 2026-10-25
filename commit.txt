@@ -1,1 +1,3 @@
-I bind my SVG diagrams to native graph flow and preserve actual routing, cycle and topology observations.
+I keep measurements local and remove their files from Git tracking.
+
+I ignore measurement directories at every depth while preserving their local contents.

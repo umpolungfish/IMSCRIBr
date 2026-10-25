@@ -4,3 +4,6 @@ __pycache__/
 *.json
 !pathway_ledger.json
 imasm_summary.txt
+
+# Local measurements and execution receipts
+measurements/
