@@ -837,7 +837,8 @@ Examples:
     lift_p.add_argument("--output", "-o", required=True, help="Output file path")
     lift_p.add_argument("--format", default="markdown", choices=["markdown", "latex"])
     lift_p.add_argument("--style", help="Style guidance for the LLM")
-    lift_p.add_argument("--model", default=os.environ.get("IG_MODEL") or os.environ.get("MODEL", "deepseek-chat"))
+    lift_p.add_argument("--model", default=os.environ.get("IG_MODEL") or os.environ.get("MODEL"))
+    lift_p.add_argument("--provider", default=os.environ.get("IG_PROVIDER", "deepseek"))
     lift_p.add_argument("--max-retries", type=int, default=3)
     lift_p.add_argument("--quiet", action="store_true")
     lift_p.add_argument("--ledger-path", default=str(DEFAULT_LEDGER_PATH), help="Path to pathway ledger JSON")
@@ -850,7 +851,8 @@ Examples:
     dissolve_p.add_argument("findings", help="JSON file with grammar findings")
     dissolve_p.add_argument("--format", default="markdown", choices=["markdown", "latex"])
     dissolve_p.add_argument("--style")
-    dissolve_p.add_argument("--model", default=os.environ.get("IG_MODEL") or os.environ.get("MODEL", "deepseek-chat"))
+    dissolve_p.add_argument("--model", default=os.environ.get("IG_MODEL") or os.environ.get("MODEL"))
+    dissolve_p.add_argument("--provider", default=os.environ.get("IG_PROVIDER", "deepseek"))
     dissolve_p.add_argument("--quiet", action="store_true")
 
     verify_p = sub.add_parser("verify", help="Verify only (check prose for grammar notation)")
@@ -897,11 +899,23 @@ Examples:
             ledger_p.print_help()
         return
 
-    base_url = "https://api.deepseek.com/v1"
-    api_key = os.environ.get("DEEPSEEK_API_KEY", "")
-
+    provider = getattr(args, "provider", "deepseek").strip().lower()
+    if provider == "mulrouter":
+        provider = "mulerouter"
+    provider_routes = {
+        "deepseek": ("https://api.deepseek.com/v1", "DEEPSEEK_API_KEY", "deepseek-chat"),
+        "mulerouter": ("https://api.mulerouter.ai/vendors/openai/v1", "MULEROUTER_API_KEY", "qwen3-max"),
+        "openrouter": ("https://openrouter.ai/api/v1", "OPENROUTER_API_KEY", "deepseek/deepseek-chat"),
+    }
+    if provider not in provider_routes:
+        sys.exit(f"Unknown provider '{provider}'. Choose deepseek, mulerouter, or openrouter.")
+    base_url, key_name, default_model = provider_routes[provider]
+    api_key = os.environ.get(key_name, "")
+    if not api_key and provider == "mulerouter":
+        api_key = os.environ.get("MULROUTER_API_KEY", "")
     if not api_key:
-        sys.exit("No API key — set DEEPSEEK_API_KEY")
+        sys.exit(f"No API key — set {key_name}")
+    model = args.model or default_model
 
     spec = load_spec(args.findings)
 
@@ -917,12 +931,12 @@ Examples:
     verbose = not getattr(args, "quiet", False)
 
     if args.command == "dissolve":
-        prose = dissolve(spec, args.model, api_key, base_url, verbose=verbose)
+        prose = dissolve(spec, model, api_key, base_url, verbose=verbose)
         print(prose)
 
     elif args.command == "lift":
         prose, grammar_result, semantic_result = lift(
-            spec, args.model, api_key, base_url,
+            spec, model, api_key, base_url,
             max_retries=args.max_retries, verbose=verbose,
             enable_semantic_checks=not args.no_semantic_checks,
             ledger_path=args.ledger_path,

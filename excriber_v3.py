@@ -3,15 +3,15 @@
 EXCRIBER v3 -- IMASM Word Elaborator with LLM Backend
 =====================================================
 Takes an IMASM word and domain context. Elaborates each opcode into
-concrete domain-specific content using DeepSeek or OpenRouter LLMs.
+concrete domain-specific content using configured OpenAI-compatible LLMs.
 
-Providers: deepseek (direct API), openrouter (multi-model gateway).
-API keys: DEEPSEEK_API_KEY, OPENROUTER_API_KEY env vars.
+Providers: MuleRouter, DeepSeek, and OpenRouter.
+API keys: MULEROUTER_API_KEY, DEEPSEEK_API_KEY, OPENROUTER_API_KEY.
 Environment: IG_PROVIDER sets default provider; IG_MODEL sets default model.
-Provider chain (auto-detect): --provider flag > IG_PROVIDER > openrouter > deepseek.
+Provider chain (auto-detect): --provider flag > IG_PROVIDER > mulerouter > openrouter > deepseek.
 
 Usage:
-  python3 excriber_v3.py '<word>' <context> [--desc '<desc>'] [--provider deepseek|openrouter] [--model <slug>] [--dry-run]
+  python3 excriber_v3.py '<word>' <context> [--desc '<desc>'] [--provider mulrouter|deepseek|openrouter] [--model <slug>] [--dry-run]
 """
 import sys, json, os, re, hashlib, time
 from typing import List, Dict, Tuple, Optional
@@ -146,12 +146,19 @@ PROVIDER_CONFIG = {
         "max_tokens": 1024,
         "temperature": 0.3,
     },
+    "mulerouter": {
+        "base_url": "https://api.mulerouter.ai/vendors/openai/v1/chat/completions",
+        "default_model": "qwen3-max",
+        "env_key": "MULEROUTER_API_KEY",
+        "max_tokens": 1024,
+        "temperature": 0.3,
+    },
 }
 
 # ── Provider resolution (respects IG_PROVIDER / IG_MODEL env vars) ──
 # Resolution chain: explicit arg > IG_PROVIDER env > first available provider
 # Model chain: explicit arg > IG_MODEL env > provider default
-_PROVIDER_CHAIN = ["openrouter", "deepseek"]  # default preference order
+_PROVIDER_CHAIN = ["mulerouter", "openrouter", "deepseek"]  # default preference order
 
 def resolve_provider_model(provider_arg=None, model_arg=None, api_key_arg=None):
     """Resolve provider and model, respecting IG_PROVIDER / IG_MODEL env vars.
@@ -161,6 +168,14 @@ def resolve_provider_model(provider_arg=None, model_arg=None, api_key_arg=None):
     """
     # ── Determine provider ──
     ig_provider = os.environ.get("IG_PROVIDER", "").strip().lower()
+    if provider_arg:
+        provider_arg = provider_arg.strip().lower()
+    if provider_arg and provider_arg.lower() == "mulrouter":
+        provider_arg = "mulerouter"
+    if ig_provider == "mulrouter":
+        ig_provider = "mulerouter"
+    if provider_arg == "mulrouter":
+        provider_arg = "mulerouter"
 
     # Build ordered preference: [explicit_arg, IG_PROVIDER, chain...]
     candidates = []
@@ -201,13 +216,16 @@ def resolve_provider_model(provider_arg=None, model_arg=None, api_key_arg=None):
     return provider, model, api_key
 
 class LlmBackend:
-    """Synchronous LLM backend for DeepSeek and OpenRouter."""
+    """Synchronous backend for configured OpenAI-compatible providers."""
 
     def __init__(self, provider: str = "deepseek", model: Optional[str] = None,
                  api_key: Optional[str] = None):
+        provider = provider.strip().lower()
+        if provider == "mulrouter":
+            provider = "mulerouter"
         cfg = PROVIDER_CONFIG.get(provider)
         if not cfg:
-            raise ValueError(f"Unknown provider: {provider}. Use deepseek or openrouter.")
+            raise ValueError(f"Unknown provider: {provider}. Use mulrouter, deepseek, or openrouter.")
         self.provider = provider
         self.base_url = cfg["base_url"]
         self.model = model or cfg["default_model"]
@@ -478,7 +496,7 @@ if __name__ == "__main__":
     parser.add_argument("word", nargs="?", help="IMASM word (glyphs or opcode names)")
     parser.add_argument("context", nargs="?", help="Context name (e.g. sic_povm_d2048)")
     parser.add_argument("--desc", help="Context description", default="")
-    parser.add_argument("--provider", choices=["deepseek", "openrouter"],
+    parser.add_argument("--provider", choices=["deepseek", "openrouter", "mulerouter", "mulrouter"],
                         default=None, help="LLM provider (default: IG_PROVIDER env or auto-detect)")
     parser.add_argument("--model", help="Model slug override")
     parser.add_argument("--api-key", help="API key (or use env var)")

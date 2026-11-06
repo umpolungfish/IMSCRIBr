@@ -285,9 +285,15 @@ PROVIDER_CONFIG = {
         "env_key": "OPENROUTER_API_KEY",
         "temperature": 0.3,
     },
+    "mulerouter": {
+        "base_url": "https://api.mulerouter.ai/vendors/openai/v1/chat/completions",
+        "default_model": "qwen3-max",
+        "env_key": "MULEROUTER_API_KEY",
+        "temperature": 0.3,
+    },
 }
 
-_PROVIDER_CHAIN = ["local", "openrouter", "deepseek"]
+_PROVIDER_CHAIN = ["local", "mulerouter", "openrouter", "deepseek"]
 
 # Reasoning / thinking blocks we strip from every model response.
 _THINK_RE = re.compile(
@@ -341,6 +347,14 @@ def _list_local_models(models_url: str) -> List[str]:
 
 def resolve_provider_model(provider_arg=None, model_arg=None, api_key_arg=None):
     ig_provider = os.environ.get("IG_PROVIDER", "").strip().lower()
+    if provider_arg:
+        provider_arg = provider_arg.strip().lower()
+    if provider_arg and provider_arg.lower() == "mulrouter":
+        provider_arg = "mulerouter"
+    if ig_provider == "mulrouter":
+        ig_provider = "mulerouter"
+    if provider_arg == "mulrouter":
+        provider_arg = "mulerouter"
     candidates: List[str] = []
     if provider_arg:
         if provider_arg not in PROVIDER_CONFIG:
@@ -1343,6 +1357,8 @@ def translate(word: str, register_text: str, runtime_arg: str = "auto",
         try:
             if dry_run:
                 provider = prov or os.environ.get("IG_PROVIDER") or "local"
+                if provider.strip().lower() == "mulrouter":
+                    provider = "mulerouter"
                 if provider not in PROVIDER_CONFIG:
                     raise ValueError(f"Unknown provider: {provider}")
                 model = model_arg or os.environ.get("IG_MODEL") or PROVIDER_CONFIG[provider]["default_model"]
@@ -1579,7 +1595,7 @@ def main():
     ap.add_argument("--execute", action="store_true", help="execute the validated model realization and report its witnesses")
     ap.add_argument("--list-registers", action="store_true", help="list the built-in register catalog (fallback only)")
     ap.add_argument("--llm", nargs="?", const="auto", default=None, metavar="PROVIDER",
-                    help="force LLM translation (provider chain: local → openrouter → deepseek). "
+                    help="force LLM translation (provider chain: local → mulerouter → openrouter → deepseek). "
                          "By default, LLM is used automatically for NLP register descriptions not in the catalog. "
                          "Pass a provider name to force one. Also on when IG_LLM=1.")
     ap.add_argument("--model", help="model slug override (or IG_MODEL env)")

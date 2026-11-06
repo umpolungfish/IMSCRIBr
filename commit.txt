@@ -1,3 +1,5 @@
-I keep measurements local and remove their files from Git tracking.
+I make MulRouter available as a provider in my excriber tools.
 
-I ignore measurement directories at every depth while preserving their local contents.
+I expose both `mulrouter` and `mulerouter` spellings through Excriber v3, use its configured endpoint and Qwen default, and update provider-chain help in Vox translation.
+
+I normalize the `mulrouter` spelling in Vox translation's dry-run provider selection too.
